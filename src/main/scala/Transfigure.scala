@@ -37,6 +37,16 @@ trait TransfigureInstances {
     (implicit X0: Functor[X0], X1: Functor[X1], tf: Transfigure[F, G, Z]) = new Transfigure[({type λ[α] = X0[X1[F[α]]]})#λ, ({type λ[α] =X0[X1[G[α]]]})#λ, Z] {
       def transfigure[A, B](x0a: X0[X1[F[A]]])(f: A => Z[B]): X0[X1[G[B]]] = X0.map(x0a)(x1a => X1.map(x1a)(fa => tf.transfigure(fa)(f)))
     }
+
+  implicit def mapR2[X0[_], X1[_], X2[_], F[_], G[_], Z[_]]
+    (implicit X0: Functor[X0], X1: Functor[X1], X2: Functor[X2], tf: Transfigure[F, G, Z]) = new Transfigure[({type λ[α] = X0[X1[X2[F[α]]]]})#λ, ({type λ[α] =X0[X1[X2[G[α]]]]})#λ, Z] {
+      def transfigure[A, B](x0a: X0[X1[X2[F[A]]]])(f: A => Z[B]): X0[X1[X2[G[B]]]] = X0.map(x0a)(x1a => X1.map(x1a)(x2a => X2.map(x2a)(fa => tf.transfigure(fa)(f))))
+    }
+
+  implicit def mapR3[X0[_], X1[_], X2[_], X3[_], F[_], G[_], Z[_]]
+    (implicit X0: Functor[X0], X1: Functor[X1], X2: Functor[X2], X3: Functor[X3], tf: Transfigure[F, G, Z]) = new Transfigure[({type λ[α] = X0[X1[X2[X3[F[α]]]]]})#λ, ({type λ[α] =X0[X1[X2[X3[G[α]]]]]})#λ, Z] {
+      def transfigure[A, B](x0a: X0[X1[X2[X3[F[A]]]]])(f: A => Z[B]): X0[X1[X2[X3[G[B]]]]] = X0.map(x0a)(x1a => X1.map(x1a)(x2a => X2.map(x2a)(x3a => X3.map(x3a)(fa => tf.transfigure(fa)(f)))))
+    }
 }
 
 trait TransfigureSyntax {
