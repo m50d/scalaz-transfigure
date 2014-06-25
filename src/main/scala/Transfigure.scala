@@ -57,6 +57,7 @@ trait TransfigureSyntax {
   }
 
   class TransfigureTo[F[_], G[_], A](fa: F[A]) {
+    // FIXME In a perfect world, this function would be in fact polymorphic in term of kind nesting and choose the deepest one.
     def apply[Z[_], B](f: A => Z[B])(implicit tf: Transfigure[F, G, Z]): G[B] = flatMap(f)
 
     def map[B](f: A => B)(implicit tf: Transfigure[F, G, Id]): G[B] = tf.transfigure(fa)(f)
