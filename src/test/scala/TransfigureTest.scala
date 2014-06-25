@@ -18,44 +18,51 @@ class TransfigureSpec extends mutable.Specification {
   "Transfigure" should {
     "map" in {
       val fa: Option[Int] = Some(42)
-      val f: Int => Id[String] = _.toString
+      val f: Int => String = _.toString
 
-      fa.transfigureTo[Option](f) mustEqual Some("42")
+      fa.transfigureTo[Option].map(f) mustEqual Some("42")
     }
 
     "flatMap" in {
       val fa: Option[Int] = Some(42)
       val f: Int => Option[String] = x => Some((x - 10).toString)
 
-      fa.transfigureTo[Option](f) mustEqual Some("32")
+      fa.transfigureTo[Option].flatMap(f) mustEqual Some("32")
     }
 
     "traverse" in {
       val fa: Option[Int] = Some(42)
       val f: Int => List[String] = x => List((x - 10).toString)
 
-      fa.transfigureTo[LO](f) mustEqual List(Some("32"))
+      fa.transfigureTo[LO].flatMap(f) mustEqual List(Some("32"))
+    }
+
+    "traverse.join" in {
+      val fa: List[Option[Int]] = List(Some(42))
+      val f: Int => List[Option[String]] = x => List(Some((x - 10).toString))
+
+      fa.transfigureTo[LO].flatMap1(f) mustEqual List(Some("32"))
     }
 
     "map.map" in {
       val fa: List[Option[Int]] = List(Some(42))
-      val f: Int => Id[String] = _.toString
+      val f: Int => String = _.toString
 
-      fa.transfigureTo[LO](f) mustEqual List(Some("42"))
+      fa.transfigureTo[LO].map(f) mustEqual List(Some("42"))
     }
 
     "map.map.map" in {
       val fa: List[List[Option[Int]]] = List(List(Some(42)))
-      val f: Int => Id[String] = _.toString
+      val f: Int => String = _.toString
 
-      fa.transfigureTo[LLO](f) mustEqual List(List(Some("42")))
+      fa.transfigureTo[LLO].map(f) mustEqual List(List(Some("42")))
     }
 
     "map.flatMap" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int => Option[String] = x => Some((x - 10).toString)
 
-      fa.transfigureTo[LO](f) mustEqual List(Some("32"))
+      fa.transfigureTo[LO].flatMap(f) mustEqual List(Some("32"))
     }
   }
 }

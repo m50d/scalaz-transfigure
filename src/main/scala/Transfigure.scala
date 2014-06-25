@@ -23,6 +23,11 @@ trait TransfigureInstances {
       def transfigure[A, B](fa: F[A])(f: A => Z[B]): Z[F[B]] = F.traverse(fa)(f)
     }
 
+  implicit def traverse_join[F[_], G[_]]
+    (implicit F: Monad[F], G: Traverse[G] with Bind[G]) = new Transfigure[({type λ[α] = F[G[α]]})#λ, ({type λ[α] = F[G[α]]})#λ, ({type λ[α]= F[G[α]]})#λ] {
+      def transfigure[A, B](fga: F[G[A]])(f: A => F[G[B]]): F[G[B]] = F.map(F.bind(fga)(G.traverse(_)(f)))(G.join(_))
+    }
+
   implicit def mapR0[X[_], F[_], G[_], Z[_]]
     (implicit X: Functor[X], tf: Transfigure[F, G, Z]) = new Transfigure[({type λ[α] = X[F[α]]})#λ, ({type λ[α] = X[G[α]]})#λ, Z] {
       def transfigure[A, B](xa: X[F[A]])(f: A => Z[B]): X[G[B]] = X.map(xa)(fa => tf.transfigure(fa)(f))
@@ -52,7 +57,11 @@ trait TransfigureSyntax {
   }
 
   class TransfigureTo[F[_], G[_], A](fa: F[A]) {
-    def apply[Z[_], B](f: A => Z[B])(implicit tf: Transfigure[F, G, Z]): G[B] = tf.transfigure(fa)(f)
+    def apply[Z[_], B](f: A => Z[B])(implicit tf: Transfigure[F, G, Z]): G[B] = flatMap(f)
+
+    def map[B](f: A => B)(implicit tf: Transfigure[F, G, Id]): G[B] = tf.transfigure(fa)(f)
+    def flatMap[Z[_], B](f: A => Z[B])(implicit tf: Transfigure[F, G, Z]): G[B] = tf.transfigure(fa)(f)
+    def flatMap1[Z0[_], Z1[_], B](f: A => Z0[Z1[B]])(implicit tf: Transfigure[F, G, ({type λ[α] = Z0[Z1[α]]})#λ]): G[B] = tf.transfigure(fa)(f)
   }
 }
 
