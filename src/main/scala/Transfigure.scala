@@ -62,6 +62,8 @@ trait TransfigureSyntax {
     def map[B](f: A => B)(implicit tf: Transfigure[F, G, Id]): G[B] = tf.transfigure(fa)(f)
     def flatMap[Z[_], B](f: A => Z[B])(implicit tf: Transfigure[F, G, Z]): G[B] = tf.transfigure(fa)(f)
     def flatMap1[Z0[_], Z1[_], B](f: A => Z0[Z1[B]])(implicit tf: Transfigure[F, G, ({type λ[α] = Z0[Z1[α]]})#λ]): G[B] = tf.transfigure(fa)(f)
+    def flatMap2[Z0[_], Z1[_], Z2[_], B](f: A => Z0[Z1[Z2[B]]])(implicit tf: Transfigure[F, G, ({type λ[α] = Z0[Z1[Z2[α]]]})#λ]): G[B] = tf.transfigure(fa)(f)
+    def flatMap3[Z0[_], Z1[_], Z2[_], Z3[_], B](f: A => Z0[Z1[Z2[Z3[B]]]])(implicit tf: Transfigure[F, G, ({type λ[α] = Z0[Z1[Z2[Z3[α]]]]})#λ]): G[B] = tf.transfigure(fa)(f)
   }
 }
 
