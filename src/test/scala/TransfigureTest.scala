@@ -71,6 +71,13 @@ class TransfigureSpec extends mutable.Specification {
 
       fa.transfigureTo[LLO](f) mustEqual List(List(Some("32")))
     }
+
+    "point.map" in {
+      val fa: Option[Int] = Some(42)
+      val f: Int => String = _.toString
+
+      fa.transfigureTo[LO].map(f) mustEqual List(Some("42"))
+    }
   }
 }
 
