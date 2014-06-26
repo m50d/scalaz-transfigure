@@ -8,6 +8,11 @@ trait Transfigure[F[_], G[_], Z[_]] {
 
 trait TransfigureInstances {
 
+  implicit def join[F[_]]
+    (implicit F: Bind[F]) = new Transfigure[({type λ[α] = F[F[α]]})#λ, F, Id] {
+      def transfigure[A, B](ffa: F[F[A]])(f: A => B): F[B] = F.bind(ffa)(fa => F.map(fa)(f))
+    }
+
   implicit def map[F[_]]
     (implicit F: Functor[F]) = new Transfigure[F, F, Id] {
       def transfigure[A, B](fa: F[A])(f: A => Id[B]): F[B] = F.map(fa)(f)
@@ -75,6 +80,7 @@ trait TransfigureSyntax {
     // FIXME In a perfect world, this function would be in fact polymorphic in term of kind nesting and choose the deepest one.
     def apply[Z[_], B](f: A => Z[B])(implicit tf: Transfigure[F, G, Z]): G[B] = flatMap(f)
 
+    def identity(implicit tf: Transfigure[F, G, Id]): G[A] = tf.transfigure(fa)(x => x)
     def map[B](f: A => B)(implicit tf: Transfigure[F, G, Id]): G[B] = tf.transfigure(fa)(f)
     def flatMap[Z[_], B](f: A => Z[B])(implicit tf: Transfigure[F, G, Z]): G[B] = tf.transfigure(fa)(f)
     def flatMap1[Z0[_], Z1[_], B](f: A => Z0[Z1[B]])(implicit tf: Transfigure[F, G, ({type λ[α] = Z0[Z1[α]]})#λ]): G[B] = tf.transfigure(fa)(f)

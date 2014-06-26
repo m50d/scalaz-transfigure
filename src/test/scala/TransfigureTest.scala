@@ -16,6 +16,12 @@ class TransfigureSpec extends mutable.Specification {
   type LLO[A] = List[List[Option[A]]]
 
   "Transfigure" should {
+    "join" in {
+      val fa: Option[Option[Int]] = Some(Some(42))
+
+      fa.transfigureTo[Option].identity mustEqual Some(42)
+    }
+
     "map" in {
       val fa: Option[Int] = Some(42)
       val f: Int => String = _.toString
