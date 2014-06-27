@@ -58,14 +58,16 @@ class TransfigureSpec extends mutable.Specification {
 
       fa.transfigureTo[List, Option](f) mustEqual List(Some("32"))
     }
-    // TODO Make those tests work again...
-    /*
+
     "traverse.join" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int => List[Option[String]] = x => List(Some((x - 10).toString))
 
       fa.transfigureTo[List, Option](f) mustEqual List(Some("32"))
     }
+
+    // TODO Make those tests work again...
+    /*
 
     "map.map" in {
       val fa: List[Option[Int]] = List(Some(42))
