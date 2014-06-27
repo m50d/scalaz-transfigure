@@ -8,6 +8,11 @@ trait Transfigure[F[_], G[_], Z[_]] {
 
 trait TransfigureInstances {
 
+  implicit def point[X[_], F[_], G[_], Z[_]]
+    (implicit X: Applicative[X], tf: Transfigure[F, G, Z]) = new Transfigure[F, λ[α => X[G[α]]], Z] {
+      def transfigure[A, B](fa: F[A])(f: A => Z[B]): X[G[B]] = X.point(tf.transfigure(fa)(f))
+    }
+
   implicit def join[F[_]]
     (implicit F: Bind[F]) = new Transfigure[λ[α => F[F[α]]], F, Id] {
       def transfigure[A, B](ffa: F[F[A]])(f: A => B): F[B] = F.bind(ffa)(fa => F.map(fa)(f))
@@ -31,11 +36,6 @@ trait TransfigureInstances {
   implicit def traverse_join[F[_], G[_]]
     (implicit F: Monad[F], G: Traverse[G] with Bind[G]) = new Transfigure[λ[α => F[G[α]]], λ[α => F[G[α]]], λ[α => F[G[α]]]] {
       def transfigure[A, B](fga: F[G[A]])(f: A => F[G[B]]): F[G[B]] = F.map(F.bind(fga)(G.traverse(_)(f)))(G.join(_))
-    }
-
-  implicit def point[X[_], F[_], G[_], Z[_]]
-    (implicit X: Applicative[X], tf: Transfigure[F, G, Z]) = new Transfigure[F, λ[α => X[G[α]]], Z] {
-      def transfigure[A, B](fa: F[A])(f: A => Z[B]): X[G[B]] = X.point(tf.transfigure(fa)(f))
     }
 
     // TODO Find a way to avoid those instances by using recursive implicit resolution

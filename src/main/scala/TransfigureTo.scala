@@ -58,12 +58,17 @@ object TransfigureTo {
     def apply(a: A)(f: F): B
   }
 
-  object UnapplyS1 {
+  trait UnapplyS1I0 {
     def fromFunction[S0[_], S1[_], A, F, BB](x: A => F => BB) = new UnapplyS1[S0, S1, A, F] {
       type B = BB
       def apply(a: A)(f: F): B = x(a)(f)
     }
 
+    implicit def point[S0[_], S1[_], A, B](implicit ts: Transfigure[S1, λ[α => S0[S1[α]]], Id]): UnapplyS1[S0, S1, S1[A], A => B] =
+      fromFunction[S0, S1, S1[A], A => B, S0[S1[B]]](ts.transfigure)
+  }
+
+  object UnapplyS1 extends UnapplyS1I0 {
     implicit def traverse[S0[_], S1[_], A, B](implicit ts: Transfigure[S1, λ[α => S0[S1[α]]], S0]): UnapplyS1[S0, S1, S1[A], A => S0[B]] =
       fromFunction[S0, S1, S1[A], A => S0[B], S0[S1[B]]](ts.transfigure)
   }
