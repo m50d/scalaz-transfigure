@@ -66,21 +66,11 @@ class TransfigureSpec extends mutable.Specification {
       fa.transfigureTo[List, Option](f) mustEqual List(Some("32"))
     }
 
-    // TODO Make those tests work again...
-    /*
-
     "map.map" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int => String = _.toString
 
       fa.transfigureTo[List, Option](f) mustEqual List(Some("42"))
-    }
-
-    "map.map.map" in {
-      val fa: List[List[Option[Int]]] = List(List(Some(42)))
-      val f: Int => String = _.toString
-
-      fa.transfigureTo[List, List, Option](f) mustEqual List(List(Some("42")))
     }
 
     "map.flatMap" in {
@@ -89,15 +79,6 @@ class TransfigureSpec extends mutable.Specification {
 
       fa.transfigureTo[List, Option](f) mustEqual List(Some("32"))
     }
-
-    "map.map.flatMap" in {
-      val fa: List[List[Option[Int]]] = List(List(Some(42)))
-      val f: Int => Option[String] = x => Some((x - 10).toString)
-
-      fa.transfigureTo[List, List, Option](f) mustEqual List(List(Some("32")))
-    }
-
-    */
   }
 }
 

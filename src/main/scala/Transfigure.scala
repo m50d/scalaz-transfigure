@@ -7,7 +7,6 @@ trait Transfigure[F[_], G[_], Z[_]] {
 }
 
 trait TransfigureInstances {
-
   implicit def point[X[_], F[_], G[_], Z[_]]
     (implicit X: Applicative[X], tf: Transfigure[F, G, Z]) = new Transfigure[F, λ[α => X[G[α]]], Z] {
       def transfigure[A, B](fa: F[A])(f: A => Z[B]): X[G[B]] = X.point(tf.transfigure(fa)(f))
@@ -38,28 +37,10 @@ trait TransfigureInstances {
       def transfigure[A, B](fga: F[G[A]])(f: A => F[G[B]]): F[G[B]] = F.map(F.bind(fga)(G.traverse(_)(f)))(G.join(_))
     }
 
-    // TODO Find a way to avoid those instances by using recursive implicit resolution
-    /*
-  implicit def mapR0[X[_], F[_], G[_], Z[_]]
+  implicit def mapR[X[_], F[_], G[_], Z[_]]
     (implicit X: Functor[X], tf: Transfigure[F, G, Z]) = new Transfigure[λ[α => X[F[α]]], λ[α => X[G[α]]], Z] {
       def transfigure[A, B](xa: X[F[A]])(f: A => Z[B]): X[G[B]] = X.map(xa)(fa => tf.transfigure(fa)(f))
     }
-
-  implicit def mapR1[X0[_], X1[_], F[_], G[_], Z[_]]
-    (implicit X0: Functor[X0], X1: Functor[X1], tf: Transfigure[F, G, Z]) = new Transfigure[λ[α => X0[X1[F[α]]]], λ[α => X0[X1[G[α]]]], Z] {
-      def transfigure[A, B](x0a: X0[X1[F[A]]])(f: A => Z[B]): X0[X1[G[B]]] = X0.map(x0a)(x1a => X1.map(x1a)(fa => tf.transfigure(fa)(f)))
-    }
-
-  implicit def mapR2[X0[_], X1[_], X2[_], F[_], G[_], Z[_]]
-    (implicit X0: Functor[X0], X1: Functor[X1], X2: Functor[X2], tf: Transfigure[F, G, Z]) = new Transfigure[λ[α => X0[X1[X2[F[α]]]]], λ[α => X0[X1[X2[G[α]]]]], Z] {
-      def transfigure[A, B](x0a: X0[X1[X2[F[A]]]])(f: A => Z[B]): X0[X1[X2[G[B]]]] = X0.map(x0a)(x1a => X1.map(x1a)(x2a => X2.map(x2a)(fa => tf.transfigure(fa)(f))))
-    }
-
-  implicit def mapR3[X0[_], X1[_], X2[_], X3[_], F[_], G[_], Z[_]]
-    (implicit X0: Functor[X0], X1: Functor[X1], X2: Functor[X2], X3: Functor[X3], tf: Transfigure[F, G, Z]) = new Transfigure[λ[α => X0[X1[X2[X3[F[α]]]]]], λ[α => X0[X1[X2[X3[G[α]]]]]], Z] {
-      def transfigure[A, B](x0a: X0[X1[X2[X3[F[A]]]]])(f: A => Z[B]): X0[X1[X2[X3[G[B]]]]] = X0.map(x0a)(x1a => X1.map(x1a)(x2a => X2.map(x2a)(x3a => X3.map(x3a)(fa => tf.transfigure(fa)(f)))))
-    }
-    */
 }
 
 object Transfigure extends TransfigureInstances {

@@ -42,7 +42,6 @@ object TransfigureTo {
   }
 
   object UnapplyS0 extends UnapplyS0I0 {
-
     implicit def map[S0[_], A, B](implicit ts: Transfigure[S0, S0, Id]): UnapplyS0[S0, S0[A], A => B] =
       fromFunction[S0, S0[A], A => B, S0[B]](ts.transfigure)
 
@@ -81,5 +80,15 @@ object TransfigureTo {
       (implicit ts: Transfigure[λ[α => S0[S1[α]]], λ[α => S0[S1[α]]], λ[α => S0[S1[α]]]]):
         UnapplyS1[S0, S1, S0[S1[A]], A => S0[S1[B]]] =
           fromFunction[S0, S1, S0[S1[A]], A => S0[S1[B]], S0[S1[B]]](ts.transfigure)
+
+    implicit def map_map[S0[_], S1[_], A, B]
+      (implicit ts: Transfigure[λ[α => S0[S1[α]]], λ[α => S0[S1[α]]], Id]):
+        UnapplyS1[S0, S1, S0[S1[A]], A => B] =
+          fromFunction[S0, S1, S0[S1[A]], A => B, S0[S1[B]]](ts.transfigure)
+
+    implicit def map_flatMap[S0[_], S1[_], A, B]
+      (implicit ts: Transfigure[λ[α => S0[S1[α]]], λ[α => S0[S1[α]]], S1]):
+        UnapplyS1[S0, S1, S0[S1[A]], A => S1[B]] =
+          fromFunction[S0, S1, S0[S1[A]], A => S1[B], S0[S1[B]]](ts.transfigure)
   }
 }
