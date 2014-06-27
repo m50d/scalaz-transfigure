@@ -4,6 +4,7 @@ import org.specs2._
 
 import scalaz.Id._
 import scalaz.Transfigure._
+import scalaz.TransfigureTo.syntax._
 
 import scalaz.std.option._
 import scalaz.std.list._
