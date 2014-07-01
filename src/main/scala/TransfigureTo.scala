@@ -67,6 +67,7 @@ object TransfigureTo {
         fromFunction(ts.transfigure)
 
   }
+
   trait UnapplyS1I1 extends UnapplyS1I0 {
     implicit def traverse[S0[_], S1[_], A, B]
       (implicit ts: Transfigure[S1, λ[α => S0[S1[α]]], S0]): UnapplyS1[S0, S1, S1[A], A => S0[B], S0[S1[B]]] =
@@ -78,15 +79,23 @@ object TransfigureTo {
           fromFunction(ts.transfigure)
   }
 
-  object UnapplyS1 extends UnapplyS1I1 {
+  trait UnapplyS1I2 extends UnapplyS1I1 {
+    implicit def map_flatMap[S0[_], S1[_], A, B]
+      (implicit ts: Transfigure[λ[α => S0[S1[α]]], λ[α => S0[S1[α]]], S1]):
+        UnapplyS1[S0, S1, S0[S1[A]], A => S1[B], S0[S1[B]]] =
+          fromFunction(ts.transfigure)
+
+    implicit def bind_traverse[S0[_], S1[_], A, B]
+      (implicit ts: Transfigure[λ[α => S0[S1[α]]], λ[α => S0[S1[α]]], S0]):
+        UnapplyS1[S0, S1, S0[S1[A]], A => S0[B], S0[S1[B]]] =
+          fromFunction(ts.transfigure)
+  }
+
+  object UnapplyS1 extends UnapplyS1I2 {
     implicit def traverse_join[S0[_], S1[_], A, B]
       (implicit ts: Transfigure[λ[α => S0[S1[α]]], λ[α => S0[S1[α]]], λ[α => S0[S1[α]]]]):
         UnapplyS1[S0, S1, S0[S1[A]], A => S0[S1[B]], S0[S1[B]]] =
           fromFunction(ts.transfigure)
 
-    implicit def map_flatMap[S0[_], S1[_], A, B]
-      (implicit ts: Transfigure[λ[α => S0[S1[α]]], λ[α => S0[S1[α]]], S1]):
-        UnapplyS1[S0, S1, S0[S1[A]], A => S1[B], S0[S1[B]]] =
-          fromFunction(ts.transfigure)
   }
 }

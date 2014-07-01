@@ -59,6 +59,13 @@ class TransfigureSpec extends mutable.Specification {
       fa.transfigureTo[List, Option](f) ==== List(Some("32"))
     }
 
+    "bind.traverse" in {
+      val fa: List[Option[Int]] = List(Some(42))
+      val f: Int => List[String] = x => List((x - 10).toString)
+
+      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
+    }
+
     "traverse.join" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int => List[Option[String]] = x => List(Some((x - 10).toString))

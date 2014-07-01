@@ -27,6 +27,11 @@ trait TransfigureInstances {
       def transfigure[A, B](fa: F[A])(f: A => F[B]): F[B] = F.bind(fa)(f)
     }
 
+  implicit def bind_traverse[F[_], G[_]]
+    (implicit F: Bind[F] with Applicative[F], G: Traverse[G]) = new Transfigure[λ[α => F[G[α]]], λ[α => F[G[α]]], F] {
+      def transfigure[A, B](fga: F[G[A]])(f: A => F[B]): F[G[B]] = F.bind(fga)(ga => G.traverse(ga)(f))
+    }
+
   implicit def traverse[F[_], Z[_]]
     (implicit F: Traverse[F], Z: Applicative[Z]) = new Transfigure[F, λ[α => Z[F[α]]], Z] {
       def transfigure[A, B](fa: F[A])(f: A => Z[B]): Z[F[B]] = F.traverse(fa)(f)
