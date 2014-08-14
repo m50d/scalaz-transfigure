@@ -14,7 +14,7 @@ object Transfigure extends Build {
     settings = sharedSettings
   ) settings (
     libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-core" % "7.0.6",
+      "org.scalaz" %% "scalaz-core" % "7.1.0",
       "org.specs2" %% "specs2" % "2.3.12" % "test"
     )
   )
