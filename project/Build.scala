@@ -3,9 +3,17 @@ import Keys._
 
 object Transfigure extends Build {
   lazy val sharedSettings = Defaults.defaultSettings ++ Seq(
-    scalaVersion := "2.11.1",
+    scalaVersion := "2.11.2",
     organization := "org.scalaz",
     version := "0.1.0-SNAPSHOT"
+  )
+
+  lazy val macro = Project(
+    id = "scalaz-transfigure-macro",
+    base = file("macro"),
+    settings = sharedSettings
+  ) settings (
+    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _)
   )
 
   lazy val root = Project(
@@ -17,5 +25,5 @@ object Transfigure extends Build {
       "org.scalaz" %% "scalaz-core" % "7.1.0",
       "org.specs2" %% "specs2" % "2.3.12" % "test"
     )
-  )
+  ) dependsOn(macro)
 }
