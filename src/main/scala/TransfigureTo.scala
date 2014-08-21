@@ -3,7 +3,7 @@ package scalaz
 import scala.annotation._
 import scalaz.Id._
 import scala.language.experimental.macros
-import scala.reflect.macros.whitebox.Context
+import scala.reflect.macros.Context
 
 object TransfigureToMacro {
   def impl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
@@ -47,6 +47,7 @@ class TransfigureToS2[A, S0[_], S1[_], S2[_]](a: A) {
 object TransfigureTo {
   val syntax = new TransfigureToSyntax {}
 
+  @TransfigureToMacro
   @implicitNotFound(
     """S0
   It's not possible to go from ${A} to ${S0} using ${F}.
