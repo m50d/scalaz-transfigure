@@ -7,15 +7,18 @@ import scala.reflect.macros.whitebox.Context
 object TransfigureToMacro {
   def impl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
-    val inputs = annottees.map(_.tree).toList
-    val (annottee, expandees) = inputs match {
-      case (param: ValDef) :: (rest @ (_ :: _)) ⇒ (param, rest)
-      case (param: TypeDef) :: (rest @ (_ :: _)) ⇒ (param, rest)
-      case _ ⇒ (EmptyTree, inputs)
-    }
-    println((annottee, expandees))
-    val outputs = expandees
-    c.Expr[Any](Block(outputs, Literal(Constant(()))))
+    val input = annottees.map(_.tree).toList.head
+//    val (annottee, expandees) = inputs match {
+//      case (param: ValDef) :: (rest @ (_ :: _)) ⇒ (param, rest)
+//      case (param: TypeDef) :: (rest @ (_ :: _)) ⇒ (param, rest)
+//      case _ ⇒ (EmptyTree, inputs)
+//    }
+//    println((annottee, expandees))
+//    val outputs = expandees
+    val ClassDef(mods, name, tparams, impl) = input
+    println(tparams.size)
+    throw new RuntimeException(s"In macro; size=${tparams.size}")
+    c.Expr[Any](input)
   }
 }
 
