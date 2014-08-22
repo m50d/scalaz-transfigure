@@ -49,7 +49,7 @@ object TransfigureToMacro {
       bname = TypeName("B")
 
       i0 = q"""trait $i0Name {
-	def fromFunction[$s0tree, $aname, F, B](x: ${Ident(aname)} ⇒ ${Ident(fname)} ⇒ ${Ident(bname)}) = new ${unapplyName}[$s0name, $aname, $fname, $bname] {
+	def fromFunction[$s0tree, $aname, $fname, $bname](x: ${Ident(aname)} ⇒ ${Ident(fname)} ⇒ ${Ident(bname)}) = new ${unapplyName}[$s0name, $aname, $fname, $bname] {
     def apply(a: $aname)(f: $fname): $bname = x(a)(f)
   }
 }"""
