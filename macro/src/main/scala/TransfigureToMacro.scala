@@ -43,8 +43,8 @@ object TransfigureToMacro {
       ai = Ident(aname)
       
       i0 = q"""trait $i0Name {
-	def fromFunction[S0[_], $aname, F, B](x: $ai ⇒ F ⇒ B) = new ${unapplyName}[S0, A, F, B] {
-    def apply(a: A)(f: F): B = x(a)(f)
+	def fromFunction[S0[_], $aname, F, B](x: $ai ⇒ F ⇒ B) = new ${unapplyName}[S0, $ai, F, B] {
+    def apply(a: $ai)(f: F): B = x(a)(f)
   }
 }"""
       i2Name = name(1)
