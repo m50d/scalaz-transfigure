@@ -32,7 +32,6 @@ object TransfigureToMacro {
       name: (Int ⇒ TypeName) = { x: Int ⇒ TypeName(s"${unapplyName.decodedName.toString}I$x") }
 
       _ = contexts.toSet.subsets
-      i0Name = name(0)
 
       functionName = TermName("fromFunction")
       contextIds = 0 until contexts.size
@@ -49,12 +48,19 @@ object TransfigureToMacro {
       bname = TypeName("B")
       btree = TypeDef(Modifiers(Flag.PARAM), bname, List(), TypeBoundsTree(TypeTree(), TypeTree()))
 
-      i0 = q"""trait $i0Name {
+      baseCompanionName = name(0)
+      baseCompanion = q"""trait $baseCompanionName {
 	def fromFunction[..${contextTrees :+ atree :+ ftree :+ btree}](x: ${Ident(aname)} ⇒ ${Ident(fname)} ⇒ ${Ident(bname)}) =
     new ${unapplyName}[..${contextNames :+ aname :+ fname :+ bname}] {
       def apply(a: $aname)(f: $fname): $bname = x(a)(f)
   }
 }"""
+      (currentName, companions) = ((baseCompanionName, List(baseCompanion)) /: sublistPairs(contextIds).zipWithIndex) {
+        case ((lastName, lastCompanions), ((leftContexts, rightContexts), i)) ⇒
+          val currentName = name(i + 1)
+          val currentCompanion = q""""""
+      }
+
       i2Name = name(1)
       i2 = q"""trait $i2Name extends $i0Name {
 implicit def map[S0[_], A, B](implicit ts: Transfigure[S0, S0, Id]): ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] =
