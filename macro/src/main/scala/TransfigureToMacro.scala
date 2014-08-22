@@ -29,21 +29,19 @@ object TransfigureToMacro {
       unapply ← body.collect { case cd: ClassDef ⇒ cd }
       ClassDef(_, unapplyName, tparams, _) = unapply
       (contexts, List(a, f, b)) = tparams.splitAt(tparams.size - 3)
-      name = { x: Int ⇒ TypeName(s"${unapplyName.decodedName.toString}I$x") }
+      name: (Int ⇒ TypeName) = { x: Int ⇒ TypeName(s"${unapplyName.decodedName.toString}I$x") }
 
       _ = contexts.toSet.subsets
       i0Name = name(0)
 
       functionName = TermName("fromFunction")
-      //      innerTypeParameter = TypeDef(newTypeParameter(TypeName("_")))
-      //      typeParameters = List(TypeDef(newTypeParameter(TypeName("S0")), List(innerTypeParameter)),
-      //          TypeDef(newTypeParameter(TypeName("A"))), TypeDef(newTypeParameter(TypeName("F"))), TypeDef(newTypeParameter(TypeName("B"))))
-
-      //      s0tree = tq"S0[_]"
-      //      s0name = Ident(s0tree)
-      s0name = TypeName("S0")
-      s0tree = TypeDef(Modifiers(Flag.PARAM), s0name, List(TypeDef(Modifiers(Flag.PARAM), typeNames.WILDCARD, List(),
-        TypeBoundsTree(TypeTree(), TypeTree()))), TypeBoundsTree(TypeTree(), TypeTree()))
+      contextIds = 0 until contexts.size
+      contextNames = contextIds map { x ⇒ TypeName(s"S$x") }
+      contextTrees = contextNames map {
+        cn ⇒
+          TypeDef(Modifiers(Flag.PARAM), cn, List(TypeDef(Modifiers(Flag.PARAM), typeNames.WILDCARD, List(),
+            TypeBoundsTree(TypeTree(), TypeTree()))), TypeBoundsTree(TypeTree(), TypeTree()))
+      }
       aname = TypeName("A")
       atree = TypeDef(Modifiers(Flag.PARAM), aname, List(), TypeBoundsTree(TypeTree(), TypeTree()))
       fname = TypeName("F")
@@ -52,26 +50,26 @@ object TransfigureToMacro {
       btree = TypeDef(Modifiers(Flag.PARAM), bname, List(), TypeBoundsTree(TypeTree(), TypeTree()))
 
       i0 = q"""trait $i0Name {
-	def fromFunction[..${List(s0tree, atree, ftree, btree)}](x: ${Ident(aname)} ⇒ ${Ident(fname)} ⇒ ${Ident(bname)}) = new ${unapplyName}[..${List(s0name, aname, fname, bname)}] {
-    def apply(a: $aname)(f: $fname): $bname = x(a)(f)
+	def fromFunction[..${contextTrees :+ atree :+ ftree :+ btree}](x: ${Ident(aname)} ⇒ ${Ident(fname)} ⇒ ${Ident(bname)}) =
+    new ${unapplyName}[..${contextNames :+ aname :+ fname :+ bname}] {
+      def apply(a: $aname)(f: $fname): $bname = x(a)(f)
   }
 }"""
       i2Name = name(1)
       i2 = q"""trait $i2Name extends $i0Name {
-implicit def map[$s0tree, A, B](implicit ts: Transfigure[S0, S0, Id]): ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] =
+implicit def map[S0[_], A, B](implicit ts: Transfigure[S0, S0, Id]): ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] =
       fromFunction(ts.transfigure)
 }"""
 
-      i3Name = name(2)
+      i3Name: TypeName = name(2)
       i3 = q"""trait $i3Name extends $i2Name {
-    implicit def flatMap[$s0tree, A, B](implicit ts: Transfigure[S0, S0, S0]): ${unapplyName}[S0, S0[A], A ⇒ S0[B], S0[B]] =
+    implicit def flatMap[S0[_], A, B](implicit ts: Transfigure[S0, S0, S0]): ${unapplyName}[S0, S0[A], A ⇒ S0[B], S0[B]] =
       fromFunction(ts.transfigure)
 }"""
 
-      companionName = unapplyName.toTermName
-      unapplyObject = q"""object $companionName extends $i3Name
-"""
-      traitOrCompanion ← List(i0, i2, i3, unapplyObject)
+      companionName: TermName = unapplyName.toTermName
+      companionObject = q"""object $companionName extends $i3Name"""
+      traitOrCompanion ← List(i0, i2, i3, companionObject)
     } yield traitOrCompanion
 
     //splice the new traits into the object
