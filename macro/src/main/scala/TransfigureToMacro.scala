@@ -67,7 +67,7 @@ object TransfigureToMacro {
 //}"""
           (currentName, lastCompanions :+ currentCompanion)
       }
-//      _ = println(companions)
+      _ = println(companions)
 
       i2Name = name(1)
       i2 = q"""trait $i2Name extends $baseCompanionName {
