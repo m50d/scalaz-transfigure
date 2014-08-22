@@ -23,5 +23,5 @@ object TransfigureToMacro {
 }
 
 class TransfigureToMacro extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro TransfigureToMacro.impl
+  def macroTransform(annottees: Any*) = macro TransfigureToMacro.impl
 }
