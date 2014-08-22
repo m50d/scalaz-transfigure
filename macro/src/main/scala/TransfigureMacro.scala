@@ -14,7 +14,7 @@ object TransfigureToMacro {
 
     val List(a, f, b) = tparams.takeRight(3)
 
-    val i0Name = TypeName("UnapplyS0I0")
+    val i0Name = TypeName(s"${unapplyName.decodedName.toString}I0")
 
     val i0 = q"""trait $i0Name {
 	def fromFunction[S0[_], A, F, B](x: A ⇒ F ⇒ B) = new ${unapplyName}[S0, A, F, B] {
