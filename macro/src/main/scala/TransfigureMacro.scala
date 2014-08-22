@@ -20,19 +20,20 @@ object TransfigureToMacro {
     val List(s0) = relevantTparams
     val baseName = name.decodedName.toString
     val i0 = newTypeName(baseName + "I0")
-    
+
     val fromFunctionBody = q"new ${input} {def apply(a: A)(f: F): B = x(a)(f) }"
-    
-//    val fromFunctionDef = 
-    
-//    val t = ClassDef(Modifiers(TRAIT), i0, List())
-    
+
+    //    val fromFunctionDef = 
+
+    //    val t = ClassDef(Modifiers(TRAIT), i0, List())
+
     val r = q"""trait $i0 {
-	def fromFunction[${tparams}] = new ${input} {
+	def fromFunction[${tparams: _*}] = new ${input} {
     def apply(a: A)(f: F): B = x(a)(f)
   }
 }"""
     //    throw new RuntimeException(s"In macro; size=${tparams.size}")
+    println(r)
     c.Expr[Any](r)
   }
 }
