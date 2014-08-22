@@ -33,22 +33,24 @@ object TransfigureToMacro {
 
       _ = contexts.toSet.subsets
       i0Name = name(0)
-      
-      functionName = TermName("fromFunction")
-//      innerTypeParameter = TypeDef(newTypeParameter(TypeName("_")))
-//      typeParameters = List(TypeDef(newTypeParameter(TypeName("S0")), List(innerTypeParameter)),
-//          TypeDef(newTypeParameter(TypeName("A"))), TypeDef(newTypeParameter(TypeName("F"))), TypeDef(newTypeParameter(TypeName("B"))))
 
-//      s0tree = tq"S0[_]"
-//      s0name = Ident(s0tree)
+      functionName = TermName("fromFunction")
+      //      innerTypeParameter = TypeDef(newTypeParameter(TypeName("_")))
+      //      typeParameters = List(TypeDef(newTypeParameter(TypeName("S0")), List(innerTypeParameter)),
+      //          TypeDef(newTypeParameter(TypeName("A"))), TypeDef(newTypeParameter(TypeName("F"))), TypeDef(newTypeParameter(TypeName("B"))))
+
+      //      s0tree = tq"S0[_]"
+      //      s0name = Ident(s0tree)
       s0name = TypeName("S0")
       s0tree = TypeDef(Modifiers(Flag.PARAM), s0name, List(TypeDef(Modifiers(Flag.PARAM), typeNames.WILDCARD, List(),
-          TypeBoundsTree(TypeTree(), TypeTree()))), TypeBoundsTree(TypeTree(), TypeTree()))
+        TypeBoundsTree(TypeTree(), TypeTree()))), TypeBoundsTree(TypeTree(), TypeTree()))
       aname = TypeName("A")
-      
+      fname = TypeName("F")
+      bname = TypeName("B")
+
       i0 = q"""trait $i0Name {
-	def fromFunction[$s0tree, $aname, F, B](x: ${Ident(aname)} ⇒ F ⇒ B) = new ${unapplyName}[$s0name, $aname, F, B] {
-    def apply(a: $aname)(f: F): B = x(a)(f)
+	def fromFunction[$s0tree, $aname, F, B](x: ${Ident(aname)} ⇒ ${Ident(fname)} ⇒ ${Ident(bname)}) = new ${unapplyName}[$s0name, $aname, $fname, $bname] {
+    def apply(a: $aname)(f: $fname): $bname = x(a)(f)
   }
 }"""
       i2Name = name(1)
