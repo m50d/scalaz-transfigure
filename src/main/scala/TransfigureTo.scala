@@ -13,6 +13,10 @@ trait TransfigureToSyntax {
   }
 }
 
+class TransfigureToS0[A, S0[_]](a: A) {
+  def apply[F, B](f: F)(implicit U: TransfigureTo1.UnapplyS0[S0, A, F, B]): B = U(a)(f)
+}
+
 class TransfigureToS1[A, S0[_], S1[_]](a: A) {
   def apply[F, B](f: F)(implicit U: TransfigureTo.UnapplyS1[S0, S1, A, F, B]): B = U(a)(f)
 }
@@ -23,33 +27,6 @@ class TransfigureToS2[A, S0[_], S1[_], S2[_]](a: A) {
 
 object TransfigureTo {
   val syntax = new TransfigureToSyntax {}
-
-  @implicitNotFound(
-    """S0
-  It's not possible to go from ${A} to ${S0} using ${F}.
-  """)
-  trait UnapplyS0[S0[_], A, F, B] {
-    def apply(a: A)(f: F): B
-  }
-
-  trait UnapplyS0I0 {
-    def fromFunction[S0[_], A, F, B](x: A ⇒ F ⇒ B) = new UnapplyS0[S0, A, F, B] {
-      def apply(a: A)(f: F): B = x(a)(f)
-    }
-
-    implicit def join[S0[_], A, B](implicit ts: Transfigure[λ[α ⇒ S0[S0[α]]], S0, Id]): UnapplyS0[S0, S0[S0[A]], A ⇒ B, S0[B]] =
-      fromFunction(ts.transfigure)
-  }
-
-  trait UnapplyS0I1 extends UnapplyS0I0 {
-    implicit def map[S0[_], A, B](implicit ts: Transfigure[S0, S0, Id]): UnapplyS0[S0, S0[A], A ⇒ B, S0[B]] =
-      fromFunction(ts.transfigure)
-  }
-
-  object UnapplyS0 extends UnapplyS0I1 {
-    implicit def flatMap[S0[_], A, B](implicit ts: Transfigure[S0, S0, S0]): UnapplyS0[S0, S0[A], A ⇒ S0[B], S0[B]] =
-      fromFunction(ts.transfigure)
-  }
 
   @implicitNotFound(
     """S1
@@ -102,12 +79,11 @@ object TransfigureTo {
 
 @TransfigureToMacro
 object TransfigureTo1 {
+  @implicitNotFound(
+    """S0
+  It's not possible to go from ${A} to ${S0} using ${F}.
+  """)
   trait UnapplyS0[S0[_], A, F, B] {
     def apply(a: A)(f: F): B
   }
-}
-
-class TransfigureToS0[A, S0[_]](a: A) {
-  def apply[F, B](f: F)(implicit U: TransfigureTo1.UnapplyS0[S0, A, F, B]): B = U(a)(f)
-  //  def apply[F, B](f: F)(implicit U: TransfigureTo.UnapplyS0[S0, A, F, B]): B = U(a)(f)
 }
