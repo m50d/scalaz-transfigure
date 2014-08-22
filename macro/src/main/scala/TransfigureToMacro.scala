@@ -33,9 +33,16 @@ object TransfigureToMacro {
 
       _ = contexts.toSet.subsets
       i0Name = name(0)
+      
+      functionName = TermName("fromFunction")
+//      innerTypeParameter = TypeDef(newTypeParameter(TypeName("_")))
+//      typeParameters = List(TypeDef(newTypeParameter(TypeName("S0")), List(innerTypeParameter)),
+//          TypeDef(newTypeParameter(TypeName("A"))), TypeDef(newTypeParameter(TypeName("F"))), TypeDef(newTypeParameter(TypeName("B"))))
 
+      aname = TypeName("A")
+      
       i0 = q"""trait $i0Name {
-	def fromFunction[S0[_], A, F, B](x: A ⇒ F ⇒ B) = new ${unapplyName}[S0, A, F, B] {
+	def fromFunction[S0[_], $aname, F, B](x: A ⇒ F ⇒ B) = new ${unapplyName}[S0, A, F, B] {
     def apply(a: A)(f: F): B = x(a)(f)
   }
 }"""
