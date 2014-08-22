@@ -55,16 +55,21 @@ object TransfigureToMacro {
       def apply(a: $aname)(f: $fname): $bname = x(a)(f)
   }
 }"""
-      (currentName, companions) = ((baseCompanionName, List(baseCompanion)) /: sublistPairs(contextIds).zipWithIndex) {
-        case ((lastName, lastCompanions), ((leftContexts, rightContexts), i)) ⇒
-          val currentName = name(i + 1)
-          val currentCompanion = q"""trait $currentName extends $lastName {
-}"""
-          (currentName, lastCompanions :+ currentCompanion)
-      }
+//      (currentName, companions) = ((baseCompanionName, List(baseCompanion)) /: sublistPairs(contextIds).zipWithIndex) {
+//        case ((lastName, lastCompanions), ((leftContexts, rightContexts), i)) ⇒
+//          val currentName = name(i + 1)
+//          val methodName = TermName(s"generated$i")
+////          val currentCompanion = null
+//          val currentCompanion = q"""trait $currentName extends $lastName {
+//	implicit def $methodName()[..${contextNames :+ aname :+ bname}](implicit ts: Transfigure[S0, S0, Id]): ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] =
+//		fromFunction(ts.transfigure)
+//}"""
+//          (currentName, lastCompanions :+ currentCompanion)
+//      }
+//      _ = println(companions)
 
       i2Name = name(1)
-      i2 = q"""trait $i2Name extends $i0Name {
+      i2 = q"""trait $i2Name extends $baseCompanionName {
 implicit def map[S0[_], A, B](implicit ts: Transfigure[S0, S0, Id]): ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] =
       fromFunction(ts.transfigure)
 }"""
@@ -77,7 +82,7 @@ implicit def map[S0[_], A, B](implicit ts: Transfigure[S0, S0, Id]): ${unapplyNa
 
       companionName: TermName = unapplyName.toTermName
       companionObject = q"""object $companionName extends $i3Name"""
-      traitOrCompanion ← List(i0, i2, i3, companionObject)
+      traitOrCompanion ← List(baseCompanion, i2, i3, companionObject)
     } yield traitOrCompanion
 
     //splice the new traits into the object
