@@ -58,7 +58,9 @@ object TransfigureToMacro {
       (currentName, companions) = ((baseCompanionName, List(baseCompanion)) /: sublistPairs(contextIds).zipWithIndex) {
         case ((lastName, lastCompanions), ((leftContexts, rightContexts), i)) ⇒
           val currentName = name(i + 1)
-          val currentCompanion = q""""""
+          val currentCompanion = q"""trait $currentName extends $lastName {
+}"""
+          (currentName, lastCompanions :+ currentCompanion)
       }
 
       i2Name = name(1)
