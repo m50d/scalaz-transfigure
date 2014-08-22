@@ -39,11 +39,15 @@ object TransfigureToMacro {
 //      typeParameters = List(TypeDef(newTypeParameter(TypeName("S0")), List(innerTypeParameter)),
 //          TypeDef(newTypeParameter(TypeName("A"))), TypeDef(newTypeParameter(TypeName("F"))), TypeDef(newTypeParameter(TypeName("B"))))
 
+//      s0tree = tq"S0[_]"
+//      s0name = Ident(s0tree)
+      s0tree = TypeDef(Modifiers(Flag.PARAM), TypeName("S0"), List(TypeDef(Modifiers(Flag.PARAM), typeNames.WILDCARD, List(),
+          TypeBoundsTree(TypeTree(), TypeTree()))), TypeBoundsTree(TypeTree(), TypeTree()))
       ai = tq"A"
       Ident(aname: TypeName) = ai
       
       i0 = q"""trait $i0Name {
-	def fromFunction[S0[_], $aname, F, B](x: $ai ⇒ F ⇒ B) = new ${unapplyName}[S0, $ai, F, B] {
+	def fromFunction[$s0tree, $aname, F, B](x: $ai ⇒ F ⇒ B) = new ${unapplyName}[S0, $ai, F, B] {
     def apply(a: $ai)(f: F): B = x(a)(f)
   }
 }"""
