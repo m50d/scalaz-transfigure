@@ -22,15 +22,15 @@ object TransfigureToMacro {
     val unapplyTrait = q"""trait UnapplyS0[S0[_], A, F, B] {
     def apply(a: A)(f: F): B
 }"""
-    val ClassDef(_, _, tparams, _) = unapplyTrait
+    val ClassDef(_, unapplyTraitName, tparams, _) = unapplyTrait
 
     val List(a, f, b) = tparams.takeRight(3)
 
     val i0Name = TypeName("UnapplyS0I0")
 
     val i0 = q"""trait $i0Name {
-	def fromFunction[${tparams: _*}](x: $a ⇒ $f ⇒ $b) = new ${unapplyTrait} {
-    def apply(a: $a)(f: $f): $b = x(a)(f)
+	def fromFunction[S0[_], A, F, B](x: A ⇒ F ⇒ B) = new ${unapplyTraitName} {
+    def apply(a: A)(f: F): B = x(a)(f)
   }
 }"""
 
