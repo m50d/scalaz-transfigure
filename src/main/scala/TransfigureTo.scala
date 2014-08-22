@@ -28,7 +28,6 @@ class TransfigureToS2[A, S0[_], S1[_], S2[_]](a: A) {
 object TransfigureTo {
   val syntax = new TransfigureToSyntax {}
 
-  @TransfigureToMacro
   @implicitNotFound(
     """S0
   It's not possible to go from ${A} to ${S0} using ${F}.
@@ -104,3 +103,6 @@ object TransfigureTo {
     def apply(a: A)(f: F): B
   }
 }
+
+@TransfigureToMacro
+object TransfigureTo1{}

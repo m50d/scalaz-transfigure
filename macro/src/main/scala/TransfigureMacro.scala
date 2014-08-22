@@ -15,26 +15,33 @@ object TransfigureToMacro {
     //    }
     //    println((annottee, expandees))
     //    val outputs = expandees
-    val ClassDef(mods, name, tparams, impl) = input
-    val relevantTparams = tparams.dropRight(3)
-    val List(s0) = relevantTparams
-    val baseName = name.decodedName.toString
-    val i0 = newTypeName(baseName + "I0")
+    //    val ClassDef(mods, name, tparams, impl) = input
+    //    val relevantTparams = tparams.dropRight(3)
+    //    val List(s0) = relevantTparams
+    //    val baseName = name.decodedName.toString
+    val unapplyTrait = q"""trait UnapplyS0[S0[_], A, F, B]{
+    def apply(a: A)(f: F): B
+}"""
+    val ClassDef(_, _, tparams, _) = unapplyTrait
+    val i0Name = TypeName("UnapplyS0I0")
 
     val fromFunctionBody = q"new ${input} {def apply(a: A)(f: F): B = x(a)(f) }"
 
-    //    val fromFunctionDef = 
-
-    //    val t = ClassDef(Modifiers(TRAIT), i0, List())
-
-    val r = q"""trait $i0 {
-	def fromFunction[${tparams: _*}] = new ${input} {
+    val i0 = q"""trait $i0Name {
+	def fromFunction[${tparams: _*}] = new ${unapplyTrait} {
     def apply(a: A)(f: F): B = x(a)(f)
   }
 }"""
-    //    throw new RuntimeException(s"In macro; size=${tparams.size}")
-    println(r)
-    c.Expr[Any](r)
+
+    //splice the new traits into the object
+    val ModuleDef(modifiers, termName, template) = input
+    val Template(parents, self, body) = template
+    val splicedBody = body :+ unapplyTrait :+ i0
+    val splicedTemplate = Template(parents, self, splicedBody)
+    val output = ModuleDef(modifiers, termName, splicedTemplate)
+
+    println(output)
+    c.Expr[Any](output)
   }
 }
 
