@@ -22,11 +22,17 @@ object TransfigureToMacro {
     def apply(a: A)(f: F): B = x(a)(f)
   }
 }"""
+    val i1Name = TypeName("UnapplyS0I1")
+    val i1 = q""" trait $i1Name extends $i0Name {
+  implicit def join[S0[_], A, B](implicit ts: Transfigure[({type L[Z] = S0[S0[Z]]})#L, S0, Id]): ${unapplyTraitName}[S0, S0[S0[A]], A ⇒ B, S0[B]] =
+      fromFunction(ts.transfigure)
+}
+"""
 
     //splice the new traits into the object
     val ModuleDef(modifiers, termName, template) = input
     val Template(parents, self, body) = template
-    val splicedBody = body :+ unapplyTrait :+ i0
+    val splicedBody = body :+ unapplyTrait :+ i0 :+ i1
     val splicedTemplate = Template(parents, self, splicedBody)
     val output = ModuleDef(modifiers, termName, splicedTemplate)
 
