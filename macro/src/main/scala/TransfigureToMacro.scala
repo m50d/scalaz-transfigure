@@ -29,12 +29,12 @@ object TransfigureToMacro {
       unapply ← body.collect { case cd: ClassDef ⇒ cd }
       ClassDef(_, unapplyName, tparams, _) = unapply
       (contexts, List(a, f, b)) = tparams.splitAt(tparams.size - 3)
-      name: (Int ⇒ TypeName) = { x: Int ⇒ TypeName(s"${unapplyName.decodedName.toString}I$x") }
+      name = { x: Int ⇒ TypeName(s"${unapplyName.decodedName.toString}I$x") }
 
       _ = contexts.toSet.subsets
 
       functionName = TermName("fromFunction")
-      contextIds = 0 until contexts.size
+      contextIds = (0 until contexts.size).toList
       contextNames = contextIds map { x ⇒ TypeName(s"S$x") }
       contextTrees = contextNames map {
         cn ⇒
@@ -54,18 +54,19 @@ object TransfigureToMacro {
     new ${unapplyName}[..${contextNames :+ aname :+ fname :+ bname}] {
       def apply(a: $aname)(f: $fname): $bname = x(a)(f)
   }
-}"""
-//      (currentName, companions) = ((baseCompanionName, List(baseCompanion)) /: sublistPairs(contextIds).zipWithIndex) {
-//        case ((lastName, lastCompanions), ((leftContexts, rightContexts), i)) ⇒
-//          val currentName = name(i + 1)
-//          val methodName = TermName(s"generated$i")
-////          val currentCompanion = null
+}""";
+      
+      (currentName, companions) = ((baseCompanionName, List(baseCompanion)) /: sublistPairs(contextIds).zipWithIndex) {
+        case ((lastName, lastCompanions), ((leftContexts, rightContexts), i)) ⇒
+          val currentName = name(i + 1)
+          val methodName = TermName(s"generated$i")
+          val currentCompanion = null
 //          val currentCompanion = q"""trait $currentName extends $lastName {
 //	implicit def $methodName()[..${contextNames :+ aname :+ bname}](implicit ts: Transfigure[S0, S0, Id]): ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] =
 //		fromFunction(ts.transfigure)
 //}"""
-//          (currentName, lastCompanions :+ currentCompanion)
-//      }
+          (currentName, lastCompanions :+ currentCompanion)
+      }
 //      _ = println(companions)
 
       i2Name = name(1)
