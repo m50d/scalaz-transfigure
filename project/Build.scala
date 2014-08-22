@@ -13,7 +13,8 @@ object Transfigure extends Build {
     base = file("macro"),
     settings = sharedSettings
   ) settings (
-    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _)
+    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
   )
 
   lazy val root = Project(
@@ -24,6 +25,7 @@ object Transfigure extends Build {
     libraryDependencies ++= Seq(
       "org.scalaz" %% "scalaz-core" % "7.1.0",
       "org.specs2" %% "specs2" % "2.3.12" % "test"
-    )
+    ),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
   ) dependsOn(macro)
 }
