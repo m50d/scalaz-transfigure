@@ -23,20 +23,21 @@ object TransfigureToMacro {
     def apply(a: A)(f: F): B
 }"""
     val ClassDef(_, _, tparams, _) = unapplyTrait
+
+    val List(a, f, b) = tparams.takeRight(3)
+
     val i0Name = TypeName("UnapplyS0I0")
 
-    val fromFunctionBody = q"new ${input} {def apply(a: A)(f: F): B = x(a)(f) }"
-
     val i0 = q"""trait $i0Name {
-	def fromFunction[${tparams: _*}] = new ${unapplyTrait} {
-    def apply(a: A)(f: F): B = x(a)(f)
+	def fromFunction[${tparams: _*}](x: $a ⇒ $f ⇒ $b) = new ${unapplyTrait} {
+    def apply(a: $a)(f: $f): $b = x(a)(f)
   }
 }"""
 
     //splice the new traits into the object
     val ModuleDef(modifiers, termName, template) = input
     val Template(parents, self, body) = template
-    val splicedBody = body :+ unapplyTrait //:+ i0
+    val splicedBody = body :+ unapplyTrait :+ i0
     val splicedTemplate = Template(parents, self, splicedBody)
     val output = ModuleDef(modifiers, termName, splicedTemplate)
 
