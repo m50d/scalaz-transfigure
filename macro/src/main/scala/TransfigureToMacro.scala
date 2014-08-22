@@ -58,13 +58,13 @@ object TransfigureToMacro {
 }"""
       i2Name = name(1)
       i2 = q"""trait $i2Name extends $i0Name {
-implicit def map[S0[_], A, B](implicit ts: Transfigure[S0, S0, Id]): ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] =
+implicit def map[$s0tree, A, B](implicit ts: Transfigure[S0, S0, Id]): ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] =
       fromFunction(ts.transfigure)
 }"""
 
       i3Name = name(2)
       i3 = q"""trait $i3Name extends $i2Name {
-    implicit def flatMap[S0[_], A, B](implicit ts: Transfigure[S0, S0, S0]): ${unapplyName}[S0, S0[A], A ⇒ S0[B], S0[B]] =
+    implicit def flatMap[$s0tree, A, B](implicit ts: Transfigure[S0, S0, S0]): ${unapplyName}[S0, S0[A], A ⇒ S0[B], S0[B]] =
       fromFunction(ts.transfigure)
 }"""
 
