@@ -13,10 +13,10 @@ object TransfigureToMacro {
     val traitsAndCompanions = for {
       unapply ← body.collect { case cd: ClassDef ⇒ cd }
       ClassDef(_, unapplyName, tparams, _) = unapply
-      (_, List(a, f, b)) = tparams.splitAt(tparams.size - 3)
+      (contexts, List(a, f, b)) = tparams.splitAt(tparams.size - 3)
       name = { x: Int ⇒ TypeName(s"${unapplyName.decodedName.toString}I$x") }
     
-
+      _ = contexts.toSet.subsets
       i0Name = name(0)
 
       i0 = q"""trait $i0Name {

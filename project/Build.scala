@@ -14,6 +14,7 @@ object Transfigure extends Build {
     settings = sharedSettings
   ) settings (
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
+    libraryDependencies += "org.specs2" %% "specs2" % "2.4.1" % "test",
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
   )
 
