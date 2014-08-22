@@ -55,14 +55,15 @@ object TransfigureToMacro {
       def apply(a: $aname)(f: $fname): $bname = x(a)(f)
   }
 }""";
-      
+
       (currentName, companions) = ((baseCompanionName, List(baseCompanion)) /: sublistPairs(contextIds).zipWithIndex) {
         case ((lastName, lastCompanions), ((leftContexts, rightContexts), i)) ⇒
           val currentName = name(i + 1)
           val methodName = TermName(s"generated$i")
-          val currentCompanion = null
-//          val currentCompanion = q"""trait $currentName extends $lastName {
-//	implicit def $methodName()[..${contextNames :+ aname :+ bname}](implicit ts: Transfigure[S0, S0, Id]): ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] =
+          val currentCompanion = q"""trait $currentName extends $lastName {}"""
+//	implicit def methodNameTODO()[..${contextNames :+ aname :+ bname}](implicit ts: Transfigure[S0, S0, Id]) 
+
+//: ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] =
 //		fromFunction(ts.transfigure)
 //}"""
           (currentName, lastCompanions :+ currentCompanion)
