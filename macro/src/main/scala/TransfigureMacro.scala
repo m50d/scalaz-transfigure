@@ -8,9 +8,6 @@ object TransfigureToMacro {
   def impl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     val input = annottees.map(_.tree).toList.head
-    //    val unapplyTrait = q"""trait UnapplyS0[S0[_], A, F, B] {
-    //    def apply(a: A)(f: F): B
-    //}"""
     val ModuleDef(modifiers, termName, template) = input
     val Template(parents, self, body) = template
     val List(ClassDef(_, unapplyName, tparams, _)) = body.collect { case cd: ClassDef ⇒ cd }
