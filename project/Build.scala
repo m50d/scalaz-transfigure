@@ -28,5 +28,5 @@ object Transfigure extends Build {
       "org.specs2" %% "specs2" % "2.4.1" % "test"
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
-  ) dependsOn(macro)
+  ) dependsOn(macro) aggregate(macro)
 }
