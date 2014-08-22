@@ -45,11 +45,12 @@ object TransfigureToMacro {
       s0tree = TypeDef(Modifiers(Flag.PARAM), s0name, List(TypeDef(Modifiers(Flag.PARAM), typeNames.WILDCARD, List(),
         TypeBoundsTree(TypeTree(), TypeTree()))), TypeBoundsTree(TypeTree(), TypeTree()))
       aname = TypeName("A")
+      atree = TypeDef(Modifiers(Flag.PARAM), aname, List(), TypeBoundsTree(TypeTree(), TypeTree()))
       fname = TypeName("F")
       bname = TypeName("B")
 
       i0 = q"""trait $i0Name {
-	def fromFunction[$s0tree, $aname, $fname, $bname](x: ${Ident(aname)} ⇒ ${Ident(fname)} ⇒ ${Ident(bname)}) = new ${unapplyName}[..${List(s0name, aname, fname, bname)}] {
+	def fromFunction[$s0tree, $atree, $fname, $bname](x: ${Ident(aname)} ⇒ ${Ident(fname)} ⇒ ${Ident(bname)}) = new ${unapplyName}[..${List(s0name, aname, fname, bname)}] {
     def apply(a: $aname)(f: $fname): $bname = x(a)(f)
   }
 }"""
