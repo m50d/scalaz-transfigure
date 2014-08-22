@@ -28,11 +28,22 @@ object TransfigureToMacro {
       fromFunction(ts.transfigure)
 }
 """
+    val i2Name = TypeName("UnapplyS0I2")
+    val i2 = q"""trait $i2Name extends $i1Name {
+implicit def map[S0[_], A, B](implicit ts: Transfigure[S0, S0, Id]): ${unapplyTraitName}[S0, S0[A], A ⇒ B, S0[B]] =
+      fromFunction(ts.transfigure)
+}"""
+
+    val i3Name = TypeName("UnapplyS0I3")
+    val i3 = q"""trait $i3Name extends $i2Name {
+    implicit def flatMap[S0[_], A, B](implicit ts: Transfigure[S0, S0, S0]): ${unapplyTraitName}[S0, S0[A], A ⇒ S0[B], S0[B]] =
+      fromFunction(ts.transfigure)
+}"""
 
     //splice the new traits into the object
     val ModuleDef(modifiers, termName, template) = input
     val Template(parents, self, body) = template
-    val splicedBody = body :+ unapplyTrait :+ i0 :+ i1
+    val splicedBody = body :+ unapplyTrait :+ i0 :+ i1 :+ i2 :+ i3
     val splicedTemplate = Template(parents, self, splicedBody)
     val output = ModuleDef(modifiers, termName, splicedTemplate)
 
