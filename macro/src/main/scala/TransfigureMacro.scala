@@ -8,10 +8,12 @@ object TransfigureToMacro {
   def impl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     val input = annottees.map(_.tree).toList.head
-    val unapplyTrait = q"""trait UnapplyS0[S0[_], A, F, B] {
-    def apply(a: A)(f: F): B
-}"""
-    val ClassDef(_, unapplyName, tparams, _) = unapplyTrait
+    //    val unapplyTrait = q"""trait UnapplyS0[S0[_], A, F, B] {
+    //    def apply(a: A)(f: F): B
+    //}"""
+    val ModuleDef(modifiers, termName, template) = input
+    val Template(parents, self, body) = template
+    val List(ClassDef(_, unapplyName, tparams, _)) = body.collect { case cd: ClassDef ⇒ cd }
 
     val List(a, f, b) = tparams.takeRight(3)
 
@@ -39,15 +41,13 @@ implicit def map[S0[_], A, B](implicit ts: Transfigure[S0, S0, Id]): ${unapplyNa
     implicit def flatMap[S0[_], A, B](implicit ts: Transfigure[S0, S0, S0]): ${unapplyName}[S0, S0[A], A ⇒ S0[B], S0[B]] =
       fromFunction(ts.transfigure)
 }"""
-    
+
     val companionName = unapplyName.toTermName
     val unapplyObject = q"""object $companionName extends $i3Name
 """
 
     //splice the new traits into the object
-    val ModuleDef(modifiers, termName, template) = input
-    val Template(parents, self, body) = template
-    val splicedBody = body :+ unapplyTrait :+ i0 :+ i1 :+ i2 :+ i3 :+ unapplyObject
+    val splicedBody = body :+ i0 :+ i1 :+ i2 :+ i3 :+ unapplyObject
     val splicedTemplate = Template(parents, self, splicedBody)
     val output = ModuleDef(modifiers, termName, splicedTemplate)
 

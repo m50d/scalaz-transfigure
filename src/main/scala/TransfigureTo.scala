@@ -101,7 +101,11 @@ object TransfigureTo {
 }
 
 @TransfigureToMacro
-object TransfigureTo1 {}
+object TransfigureTo1 {
+  trait UnapplyS0[S0[_], A, F, B] {
+    def apply(a: A)(f: F): B
+  }
+}
 
 class TransfigureToS0[A, S0[_]](a: A) {
   //  def apply[F, B](f: F)(implicit U: TransfigureTo1.UnapplyS0[S0, A, F, B]): B = U(a)(f)
