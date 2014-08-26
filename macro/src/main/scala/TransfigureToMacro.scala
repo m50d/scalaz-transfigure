@@ -90,7 +90,6 @@ implicit def ${methodName}[..${contextTrees :+ atree :+ btree}]
     val splicedTemplate = Template(parents, self, splicedBody)
     val output = ModuleDef(modifiers, termName, splicedTemplate)
 
-    println(output)
     c.Expr[Any](output)
   }
 }
