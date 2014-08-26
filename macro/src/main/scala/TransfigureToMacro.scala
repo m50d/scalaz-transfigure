@@ -41,6 +41,8 @@ object TransfigureToMacro {
           TypeDef(Modifiers(Flag.PARAM), cn, List(TypeDef(Modifiers(Flag.PARAM), typeNames.WILDCARD, List(),
             TypeBoundsTree(TypeTree(), TypeTree()))), TypeBoundsTree(TypeTree(), TypeTree()))
       }
+      //Converts a list of contexts into the type for this stack of contexts
+      //e.g. List(0, 2) => ({type L[A] = S0[S2[A]]})#L
       contextsType: PartialFunction[List[Int], TypeName] = {
         case Nil ⇒ TypeName("Id")
         case List(s0) ⇒ contextNames(s0)
@@ -64,6 +66,8 @@ object TransfigureToMacro {
         case ((lastName, lastCompanions), ((leftContexts, rightContexts), i)) ⇒
           val currentName = name(i + 1)
           val methodName = TermName(s"generated$i")
+          val lhsType = tq"${contextsType(leftContexts)}[${aname}]"
+          val rhsType = tq"${contextsType(rightContexts)}[${bname}]"
           val currentCompanion = q"""trait $currentName extends $lastName {
 implicit def ${methodName}[..${contextTrees :+ atree :+ btree}]
 (implicit ts: Transfigure[${contextsType(leftContexts)}, ${contextsType(contextIds)}, ${contextsType(rightContexts)}])
