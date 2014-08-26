@@ -81,13 +81,13 @@ class TransfigureSpec extends mutable.Specification {
       fa.transfigureTo[List, Option](f) ==== List(Some("32"))
     }
 
-    "map.map.map" in {
-      import scalaz.std.either._
-      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
-      val f: Int ⇒ Int = x ⇒ x + 2
-
-      fa.transfigureTo[EitherR, List, Option](f) ==== Right(List(Some(4)))
-    }
+//    "map.map.map" in {
+//      import scalaz.std.either._
+//      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+//      val f: Int ⇒ Int = x ⇒ x + 2
+//
+//      fa.transfigureTo[EitherR, List, Option](f) ==== Right(List(Some(4)))
+//    }
   }
 }
 
