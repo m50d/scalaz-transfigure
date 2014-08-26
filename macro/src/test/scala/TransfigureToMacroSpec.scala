@@ -2,7 +2,7 @@ package scalaz
 
 import org.specs2._
 
-class TransfigureSpec extends mutable.Specification {
+class TransfigureToMacroSpec extends mutable.Specification {
   "TransfigureMacro" should {
     "sublists of size" in {
       TransfigureToMacro.sublistsOfSize(1)(List(1)) === List(List(1))
