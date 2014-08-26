@@ -60,10 +60,10 @@ object TransfigureToMacro {
         case ((lastName, lastCompanions), ((leftContexts, rightContexts), i)) ⇒
           val currentName = name(i + 1)
           val methodName = TermName(s"generated$i")
-          val currentCompanion = null
-//          val currentCompanion = q"""trait $currentName extends $lastName {
-//implicit def methodNameTODO[..${contextNames :+ aname :+ bname}](implicit ts: Transfigure[${contextNames(0)}, ${contextNames(0)}, Id])
-//}"""
+//          val currentCompanion = null
+          val currentCompanion = q"""trait $currentName extends $lastName {
+implicit def methodNameTODO[..${contextTrees :+ atree :+ btree}](implicit ts: Transfigure[${contextNames(0)}, ${contextNames(0)}, Id])
+}"""
 //	implicit def methodNameTODO[..${contextNames :+ aname :+ bname}](implicit ts: Transfigure[S0, S0, Id]) 
 
 //: ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] =
