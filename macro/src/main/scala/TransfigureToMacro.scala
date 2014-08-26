@@ -55,10 +55,13 @@ object TransfigureToMacro {
       btree = TypeDef(Modifiers(Flag.PARAM), bname, List(), TypeBoundsTree(TypeTree(), TypeTree()))
 
       baseCompanionName = name(0)
-      baseCompanion = q"""trait $baseCompanionName {
-	def fromFunction[SO[_], A, F, B](x:A ⇒ F ⇒ B) =
-		null
-}""";
+      baseCompanion = q"""trait $baseCompanionName {}""";
+      
+//	def fromFunction[SO[_], A, F, B](x:A ⇒ F ⇒ B) =
+//		null
+
+      
+      
 //    new ${unapplyName}[..${contextNames :+ aname :+ fname :+ bname}] {
    //   def apply(a: $aname)(f: $fname): $bname = x(a)(f)
   //}
