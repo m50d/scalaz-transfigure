@@ -62,7 +62,7 @@ object TransfigureToMacro {
   }
 }""";
 
-      (currentName, companions) = ((baseCompanionName, List(baseCompanion)) /: sublistPairs(contextIds).zipWithIndex) {
+      (currentName, companions) = ((baseCompanionName, List(baseCompanion)) /: List[(List[Int], List[Int])]() /*sublistPairs(contextIds) */.zipWithIndex) {
         case ((lastName, lastCompanions), ((leftContexts, rightContexts), i)) ⇒
           val currentName = name(i + 1)
           val methodName = TermName(s"generated$i")
