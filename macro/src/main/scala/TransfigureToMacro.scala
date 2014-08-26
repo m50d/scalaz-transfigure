@@ -47,7 +47,7 @@ object TransfigureToMacro {
         ss match {
           case Nil ⇒ tq"Id"
           case List(s0) ⇒ tq"${contextNames(s0)}"
-          case _ ⇒ ss map { s ⇒ tq"${contextNames(s)}" } reduce { case (s0, s1) ⇒ tq"({type L[A] = $s0[$s1[A]]})#L" }
+          case _ ⇒ ss map { s ⇒ tq"${contextNames(s)}" } reduce[Tree] { case (s0, s1) ⇒ tq"({type L[A] = $s0[$s1[A]]})#L" }
         }
       }
       aname = TypeName("A")
