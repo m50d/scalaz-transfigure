@@ -65,7 +65,8 @@ object TransfigureToMacro {
           val currentName = name(i + 1)
           val methodName = TermName(s"generated$i")
           val currentCompanion = q"""trait $currentName extends $lastName {
-implicit def ${methodName}[..${contextTrees :+ atree :+ btree}](implicit ts: Transfigure[${contextNames(0)}, ${contextNames(0)}, Id])
+implicit def ${methodName}[..${contextTrees :+ atree :+ btree}]
+(implicit ts: Transfigure[${contextsType(leftContexts)}, ${contextsType(contextIds)}, ${contextsType(rightContexts)}])
   : ${unapplyName}[S0, S0[A], A ⇒ B, S0[B]] = fromFunction(ts.transfigure)  
 }"""
           (currentName, lastCompanions :+ currentCompanion)
