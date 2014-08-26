@@ -75,17 +75,10 @@ implicit def ${methodName}[..${contextTrees :+ atree :+ btree}]
 }"""
           (currentName, lastCompanions :+ currentCompanion)
       }
-      _ = println(companions)
-
-      //      i3Name: TypeName = name(2)
-      //      i3 = q"""trait $i3Name extends $i2Name {
-      //    implicit def flatMap[S0[_], A, B](implicit ts: Transfigure[S0, S0, S0]): ${unapplyName}[S0, S0[A], A ⇒ S0[B], S0[B]] =
-      //      fromFunction(ts.transfigure)
-      //}"""
 
       companionName: TermName = unapplyName.toTermName
       companionObject = q"""object $companionName extends $baseCompanion"""
-      traitOrCompanion ← List(baseCompanion, companionObject)
+      traitOrCompanion ← companions :+ companionObject
     } yield traitOrCompanion
 
     //splice the new traits into the object
