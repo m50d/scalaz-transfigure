@@ -57,10 +57,11 @@ object TransfigureToMacro {
       baseCompanionName = name(0)
       baseCompanion = q"""trait $baseCompanionName {
 	def fromFunction[..${contextTrees :+ atree :+ ftree :+ btree}](x: ${Ident(aname)} ⇒ ${Ident(fname)} ⇒ ${Ident(bname)}) =
-    new ${unapplyName}[..${contextNames :+ aname :+ fname :+ bname}] {
-      def apply(a: $aname)(f: $fname): $bname = x(a)(f)
-  }
+		null
 }""";
+//    new ${unapplyName}[..${contextNames :+ aname :+ fname :+ bname}] {
+   //   def apply(a: $aname)(f: $fname): $bname = x(a)(f)
+  //}
 
       (currentName, companions) = ((baseCompanionName, List(baseCompanion)) /: List[(List[Int], List[Int])]() /*sublistPairs(contextIds) */.zipWithIndex) {
         case ((lastName, lastCompanions), ((leftContexts, rightContexts), i)) ⇒
