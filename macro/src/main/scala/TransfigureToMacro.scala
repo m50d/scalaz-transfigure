@@ -12,6 +12,7 @@ object TransfigureToMacro {
       val hd :: tl = l
       sublistsOfSize(n)(tl) ::: (sublistsOfSize(n - 1)(tl) map { hd :: _ })
     }
+
   private[scalaz] def sublistPairs[A](l: List[A]) = (for {
     totalSize ← 0 to (l.size * 2)
     rightSize ← 0 to totalSize
@@ -40,6 +41,10 @@ object TransfigureToMacro {
           TypeDef(Modifiers(Flag.PARAM), cn, List(TypeDef(Modifiers(Flag.PARAM), typeNames.WILDCARD, List(),
             TypeBoundsTree(TypeTree(), TypeTree()))), TypeBoundsTree(TypeTree(), TypeTree()))
       }
+      contextsType: PartialFunction[List[Int], TypeName] = {
+        case Nil ⇒ TypeName("Id")
+        case List(s0) ⇒ contextNames(s0)
+      }
       aname = TypeName("A")
       atree = TypeDef(Modifiers(Flag.PARAM), aname, List(), TypeBoundsTree(TypeTree(), TypeTree()))
       fname = TypeName("F")
@@ -67,11 +72,11 @@ implicit def ${methodName}[..${contextTrees :+ atree :+ btree}](implicit ts: Tra
       }
       _ = println(companions)
 
-//      i3Name: TypeName = name(2)
-//      i3 = q"""trait $i3Name extends $i2Name {
-//    implicit def flatMap[S0[_], A, B](implicit ts: Transfigure[S0, S0, S0]): ${unapplyName}[S0, S0[A], A ⇒ S0[B], S0[B]] =
-//      fromFunction(ts.transfigure)
-//}"""
+      //      i3Name: TypeName = name(2)
+      //      i3 = q"""trait $i3Name extends $i2Name {
+      //    implicit def flatMap[S0[_], A, B](implicit ts: Transfigure[S0, S0, S0]): ${unapplyName}[S0, S0[A], A ⇒ S0[B], S0[B]] =
+      //      fromFunction(ts.transfigure)
+      //}"""
 
       companionName: TermName = unapplyName.toTermName
       companionObject = q"""object $companionName extends $baseCompanion"""
