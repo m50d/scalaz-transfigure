@@ -82,7 +82,11 @@ class TransfigureSpec extends mutable.Specification {
     }
 
     "map.map.map" in {
-      val fa: List[IntReader[Option[Int]]] = List(Kleisli { i ⇒ Some(i) })
+      val fa: List[IntReader[Option[Int]]] = List(Reader { i: Int ⇒ Some(i) })
+      val f: Int ⇒ Int = x ⇒ x + 2
+
+      val ga = fa.transfigureTo[List, IntReader, Option](f)
+      ga.head.run(1) === Some(3)
     }
   }
 }
