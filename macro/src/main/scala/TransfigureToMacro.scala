@@ -33,7 +33,6 @@ object TransfigureToMacro {
 
       _ = contexts.toSet.subsets
 
-      functionName = TermName("fromFunction")
       contextIds = (0 until contexts.size).toList
       contextNames = contextIds map { x ⇒ TypeName(s"S$x") }
       contextTrees = contextNames map {
