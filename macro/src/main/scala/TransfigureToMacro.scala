@@ -56,7 +56,7 @@ object TransfigureToMacro {
 
       baseCompanionName = name(0)
       baseCompanion = q"""trait $baseCompanionName {
-	def fromFunction[..${contextTrees :+ atree :+ ftree :+ btree}](x:A ⇒ F ⇒ B) =
+	def fromFunction[SO[_], A, F, B](x:A ⇒ F ⇒ B) =
 		null
 }""";
 //    new ${unapplyName}[..${contextNames :+ aname :+ fname :+ bname}] {
