@@ -25,8 +25,10 @@ object Transfigure extends Build {
   ) settings (
     libraryDependencies ++= Seq(
       "org.scalaz" %% "scalaz-core" % "7.1.0",
+      "com.chuusai" %% "shapeless" % "2.0.0",
       "org.specs2" %% "specs2" % "2.4.1" % "test"
-    ),
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
-  ) dependsOn(macro) aggregate(macro)
+    ) //,
+//    addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
+  )
+  //dependsOn(macro) aggregate(macro)
 }
