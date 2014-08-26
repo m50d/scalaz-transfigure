@@ -81,7 +81,7 @@ implicit def ${methodName}[..${contextTrees :+ atree :+ btree}]
       }
 
       companionName: TermName = unapplyName.toTermName
-      companionObject = q"""object $companionName extends $baseCompanion"""
+      companionObject = q"""object $companionName extends $currentName"""
       traitOrCompanion ← companions :+ companionObject
     } yield traitOrCompanion
 
