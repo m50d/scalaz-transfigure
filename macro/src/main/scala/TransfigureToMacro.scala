@@ -43,9 +43,12 @@ object TransfigureToMacro {
       }
       //Converts a list of contexts into the type for this stack of contexts
       //e.g. List(0, 2) => ({type L[A] = S0[S2[A]]})#L
-      contextsType: PartialFunction[List[Int], TypeName] = {
-        case Nil ⇒ TypeName("Id")
-        case List(s0) ⇒ contextNames(s0)
+      contextsType = { ss: List[Int] ⇒
+        ss match {
+          case Nil ⇒ tq"Id"
+          case List(s0) ⇒ tq"${contextNames(s0)}"
+          case _ ⇒ ss map { s ⇒ tq"${contextNames(s)}" } reduce { case (s0, s1) ⇒ tq"({type L[A] = $s0[$s1[A]]})#L" }
+        }
       }
       aname = TypeName("A")
       atree = TypeDef(Modifiers(Flag.PARAM), aname, List(), TypeBoundsTree(TypeTree(), TypeTree()))
@@ -72,7 +75,7 @@ object TransfigureToMacro {
           val currentCompanion = q"""trait $currentName extends $lastName {
 implicit def ${methodName}[..${contextTrees :+ atree :+ btree}]
 (implicit ts: Transfigure[${contextsType(leftContexts)}, ${contextsType(contextIds)}, ${contextsType(rightContexts)}])
-  : ${unapplyName}[..${{contextNames map {Ident(_)}} :+ lhsType :+ rhsType :+ resultType}] = fromFunction(ts.transfigure)  
+  : ${unapplyName}[..${{ contextNames map { Ident(_) } } :+ lhsType :+ rhsType :+ resultType}] = fromFunction(ts.transfigure)  
 }"""
           (currentName, lastCompanions :+ currentCompanion)
       }
