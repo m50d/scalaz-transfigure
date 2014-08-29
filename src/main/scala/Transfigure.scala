@@ -35,7 +35,7 @@ object IndexOf extends LowPriorityIndexOf {
 trait LTEqIndexed[Idx <: HList, A, B]
 object LTEqIndexed {
   implicit def ltEqIndexed[Idx <: HList, A, B](
-    implicit i1: IndexOf[Idx, A], i2: IndexOf[Idx, B], ltEq: LTEq[i1.Out, i2.Out]) =
+    i1: IndexOf[Idx, A], i2: IndexOf[Idx, B])(ltEq: LTEq[i1.Out, i2.Out]) =
     new LTEqIndexed[Idx, A, B] {}
 }
 
