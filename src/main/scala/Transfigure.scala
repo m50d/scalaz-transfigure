@@ -26,7 +26,7 @@ trait LowPriorityIndexOf {
   }
 }
 
-object IndexOf {
+object IndexOf extends LowPriorityIndexOf {
   implicit def head[A, Remainder <: HList](implicit length: Length[Remainder]) = new IndexOf[A :: Remainder, A] {
     type Out = length.Out
   }
