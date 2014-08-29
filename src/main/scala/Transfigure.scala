@@ -21,7 +21,8 @@ trait IndexOf[Idx <: HList, A] {
 }
 
 trait LowPriorityIndexOf {
-  implicit def cons[A, B, Remainder <: HList](implicit i: IndexOf[Remainder, A]) = new IndexOf[B :: Remainder, A] {
+  type Aux[Idx <: HList, A, N <: Nat] = IndexOf[Idx, A] { type Out = N }
+  implicit def cons[A, B, Remainder <: HList](implicit i: IndexOf[Remainder, A]): Aux[B :: Remainder, A, Succ[i.Out]] = new IndexOf[B :: Remainder, A] {
     type Out = Succ[i.Out]
   }
 }
@@ -31,7 +32,6 @@ object IndexOf extends LowPriorityIndexOf {
     type Out = length.Out
   }
 
-  type Aux[Idx <: HList, A, N <: Nat] = IndexOf[Idx, A] { type Out = N }
   def apply[Idx <: HList, A](implicit io: IndexOf[Idx, A]): Aux[Idx, A, io.Out] = io
 }
 
