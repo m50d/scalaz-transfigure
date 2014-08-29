@@ -32,12 +32,12 @@ object IndexOf extends LowPriorityIndexOf {
   }
 }
 
-//trait LTEqIndexed[Idx <: HList, A, B]
-//object LTEqIndexed {
-//  implicit def ltEqIndexed[Idx <: HList, N, M, A, B](
-//    implicit ltEq: LTEq[N, M], at1: At[Idx, M], at2: At[Idx, N], w1: at1.Out =:= A, w2: at2.Out =:= B) =
-//    new LTEqIndexed[Idx, A, B] {}
-//}
+trait LTEqIndexed[Idx <: HList, A, B]
+object LTEqIndexed {
+  implicit def ltEqIndexed[Idx <: HList, A, B](
+    implicit i1: IndexOf[Idx, A], i2: IndexOf[Idx, B], ltEq: LTEq[i1.Out, i2.Out]) =
+    new LTEqIndexed[Idx, A, B] {}
+}
 
 //  trait NonDecreasing[L <: HList]
 //  implicit def hnilNonDecreasing = new NonDecreasing[HNil] {}
