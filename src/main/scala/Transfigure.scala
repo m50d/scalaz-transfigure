@@ -21,9 +21,8 @@ trait IndexOf[Idx <: HList, A] {
 }
 
 trait LowPriorityIndexOf {
-  type Aux[Idx <: HList, A, N <: Nat] = IndexOf[Idx, A] { type Out = N }
-  implicit def cons[A, B, Remainder <: HList](implicit i: IndexOf[Remainder, A]): Aux[B :: Remainder, A, Succ[i.Out]] = new IndexOf[B :: Remainder, A] {
-    type Out = Succ[i.Out]
+  implicit def cons[A, B, Remainder <: HList](implicit i: IndexOf[Remainder, A]) = new IndexOf[B :: Remainder, A] {
+    type Out = i.Out
   }
 }
 
@@ -32,17 +31,26 @@ object IndexOf extends LowPriorityIndexOf {
     type Out = length.Out
   }
 
+  type Aux[Idx <: HList, A, N <: Nat] = IndexOf[Idx, A] { type Out = N }
   def apply[Idx <: HList, A](implicit io: IndexOf[Idx, A]): Aux[Idx, A, io.Out] = io
 }
 
 trait IdxAndLtEq[Idx <: HList, A, B] {
-  //  type 
+  type Out <: LTEq[_ <: Nat, _ <: Nat]
+}
+
+object IdxAndLtEq {
+  implicit def byIndex[Idx <: HList, A, B](
+    implicit i1: IndexOf[Idx, A], i2: IndexOf[Idx, B]) = new IdxAndLtEq[Idx, A, B] {
+    type Out = LTEq[i1.Out, i2.Out]
+  }
+  type Aux[Idx <: HList, A, B, O <: LTEq[_ <: Nat, _ <: Nat]] = IdxAndLtEq[Idx, A, B] { type Out = O }
+  def apply[Idx <: HList, A, B](implicit ile: IdxAndLtEq[Idx, A, B]): Aux[Idx, A, B, ile.Out] = ile
 }
 
 trait LTEqIndexed[Idx <: HList, A, B]
 object LTEqIndexed {
-  implicit def ltEqIndexed[Idx <: HList, A, B](
-    i1: IndexOf[Idx, A], i2: IndexOf[Idx, B])(ltEq: LTEq[i1.Out, i2.Out]) =
+  implicit def ltEqIndexed[Idx <: HList, A, B](implicit i: IdxAndLtEq[Idx, A, B], l: i.Out) =
     new LTEqIndexed[Idx, A, B] {}
 }
 
