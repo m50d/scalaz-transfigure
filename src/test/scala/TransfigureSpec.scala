@@ -1,24 +1,30 @@
-package scalaz
+package scalaz.transfigure
 
 import org.specs2._
 
-import scalaz.Id._
-import scalaz.Transfigure._
-import scalaz.TransfigureTo.syntax._
+//import scalaz.Id._
+//import scalaz.Transfigure._
+//import scalaz.TransfigureTo.syntax.
 
+import shapeless._
 import scalaz.std.option._
 import scalaz.std.list._
+import nat._
 
-class LTEqIndexedSpec extends mutable.Specification {
-  implicitly[LTEqIndexed[Int :: String :: HNil, Int, String]]
+class IndexOfSpec extends mutable.Specification {
+  implicitly[IndexOf[String :: Int :: Long :: HNil, Int]#Out =:= _2]
 }
+
+//class LTEqIndexedSpec extends mutable.Specification {
+//  implicitly[LTEqIndexed[Int :: String :: HNil, Int, String]]
+//}
 
 class TransfigureSpec extends mutable.Specification {
 
   "Transfigure" should {
 
     type EitherR[A] = Either[Unit, A]
-    type IntReader[A] = Reader[Int, A]
+    type IntReader[A] = scalaz.Reader[Int, A]
 
     //    "map" in {
     //      val fa: Option[Int] = Some(42)

@@ -1,7 +1,7 @@
-package scalaz
+package scalaz.transfigure
 
 import shapeless._
-import ops.hlist.At
+import ops.hlist.Length
 
 trait LTEq[A <: Nat, B <: Nat]
 
@@ -16,12 +16,28 @@ object LTEq {
     new <=[Succ[A], Succ[B]] {}
 }
 
-trait LTEqIndexed[Idx <: HList, A, B]
-object LTEqIndexed {
-  implicit def ltEqIndexed[Idx <: HList, N, M, A, B](
-    implicit ltEq: LTEq[N, M], at1: At[Idx, M], at2: At[Idx, N], w1: at1.Out =:= A, w2: at2.Out =:= B) =
-    new LTEqIndexed[Idx, A, B]{}
+trait IndexOf[Idx <: HList, A] {
+  type Out <: Nat
 }
+
+trait LowPriorityIndexOf {
+  implicit def cons[A, B, Remainder <: HList](implicit i: IndexOf[Remainder, A]) = new IndexOf[B :: Remainder, A] {
+    type Out = Succ[i.Out]
+  }
+}
+
+object IndexOf {
+  implicit def head[A, Remainder <: HList](implicit length: Length[Remainder]) = new IndexOf[A :: Remainder, A] {
+    type Out = length.Out
+  }
+}
+
+//trait LTEqIndexed[Idx <: HList, A, B]
+//object LTEqIndexed {
+//  implicit def ltEqIndexed[Idx <: HList, N, M, A, B](
+//    implicit ltEq: LTEq[N, M], at1: At[Idx, M], at2: At[Idx, N], w1: at1.Out =:= A, w2: at2.Out =:= B) =
+//    new LTEqIndexed[Idx, A, B] {}
+//}
 
 //  trait NonDecreasing[L <: HList]
 //  implicit def hnilNonDecreasing = new NonDecreasing[HNil] {}
@@ -34,21 +50,21 @@ trait Transfigure[F[_], G[_], Z[_]] {
 }
 
 trait TransfigureInstances {
-//  implicit object ZERO extends Transfigure[Id, Id, Id] {
-//    def transfigure[A, B](fa: A)(f: A ⇒ B): B = f(fa)
-//  }
+  //  implicit object ZERO extends Transfigure[Id, Id, Id] {
+  //    def transfigure[A, B](fa: A)(f: A ⇒ B): B = f(fa)
+  //  }
 
   //  implicit def point[X[_], F[_], G[_], Z[_]](implicit X: Applicative[X], tf: Transfigure[F, G, Z]) = new Transfigure[F, λ[α ⇒ X[G[α]]], Z] {
   //    def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): X[G[B]] = X.point(tf.transfigure(fa)(f))
   //  }
 
-//  implicit def bottomMapR[X[_], F[_], G[_], Z[_]](implicit tf: Transfigure[F, G, Z]) = new Transfigure[F, λ[α ⇒ G[X[α]]], λ[α ⇒ Z[X[α]]]] {
-//    def transfigure[A, B](fa: F[A])(f: A ⇒ Z[X[B]]): G[X[B]] = tf.transfigure(fa)(f)
-//  }
-//
-//  implicit def topMapL[X[_], F[_], G[_], Z[_]](implicit X: Functor[X], tf: Transfigure[F, G, Z]) = new Transfigure[λ[α ⇒ X[F[α]]], λ[α ⇒ X[G[α]]], Z] {
-//    def transfigure[A, B](fa: X[F[A]])(f: A ⇒ Z[B]): X[G[B]] = fa map { tf.transfigure(_)(f) }
-//  }
+  //  implicit def bottomMapR[X[_], F[_], G[_], Z[_]](implicit tf: Transfigure[F, G, Z]) = new Transfigure[F, λ[α ⇒ G[X[α]]], λ[α ⇒ Z[X[α]]]] {
+  //    def transfigure[A, B](fa: F[A])(f: A ⇒ Z[X[B]]): G[X[B]] = tf.transfigure(fa)(f)
+  //  }
+  //
+  //  implicit def topMapL[X[_], F[_], G[_], Z[_]](implicit X: Functor[X], tf: Transfigure[F, G, Z]) = new Transfigure[λ[α ⇒ X[F[α]]], λ[α ⇒ X[G[α]]], Z] {
+  //    def transfigure[A, B](fa: X[F[A]])(f: A ⇒ Z[B]): X[G[B]] = fa map { tf.transfigure(_)(f) }
+  //  }
 
   //  implicit def bindL[X[_], F[_], G[_], Z[_]]
 
