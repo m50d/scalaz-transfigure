@@ -10,23 +10,11 @@ import test._
 class IndexOfSpec {
   val p = IndexOf[String :: Int :: Long :: HNil, Int]
   implicitly[p.Out =:= _1]
-
-  //      typed[_1](l())
-  //      typed[_1](implicitly[Length[Int :: HNil]]())
-  //      implicitly[c =:= _0]
-  //      typed[_1](Length[Int :: HNil])
-  //      {}
-  //      count === 0
-  //    }
-  //  }
-  //  implicitly[Length[HNil]#Out =:= _0]
-  //  implicitly[IndexOf[Int :: HNil, Int] =:= _0]
-  //  implicitly[IndexOf[String :: Int :: Long :: HNil, Int]#Out =:= _2]
 }
 
-//class LTEqIndexedSpec extends mutable.Specification {
-//  implicitly[LTEqIndexed[Int :: String :: HNil, Int, String]]
-//}
+class LTEqIndexedSpec extends mutable.Specification {
+  implicitly[LTEqIndexed[Int :: String :: HNil, String, Int]]
+}
 
 class TransfigureSpec extends mutable.Specification {
 

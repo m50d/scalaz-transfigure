@@ -50,7 +50,7 @@ object IdxAndLtEq {
 
 trait LTEqIndexed[Idx <: HList, A, B]
 object LTEqIndexed {
-  implicit def ltEqIndexed[Idx <: HList, A, B](implicit i: IdxAndLtEq[Idx, A, B], l: i.Out) =
+  implicit def ltEqIndexed[Idx <: HList, A, B, O <: LTEq[_ <: Nat, _ <: Nat]](implicit i: IdxAndLtEq.Aux[Idx, A, B, O], l: O) =
     new LTEqIndexed[Idx, A, B] {}
 }
 
