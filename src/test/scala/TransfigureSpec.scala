@@ -8,24 +8,25 @@ import ops.hlist._
 import test._
 
 class IndexOfSpec {
-//  "IndexOf" should {
-//    "count" in {
-      typed[_1]((1 :: HNil).length)
-      
-      val l = implicitly[Length[Int :: HNil]]
-      val m = implicitly[IndexOf[Int :: HNil, Int]]
-      val n = implicitly[IndexOf[Int :: Long :: HNil, Int]]
-      val o = IndexOf.cons[Int, String, Int :: Long :: HNil](n)
-      val p = implicitly[IndexOf[String :: Int :: Long :: HNil, Int]]
-      
-//      typed[_1](l())
-//      typed[_1](implicitly[Length[Int :: HNil]]())
-//      implicitly[c =:= _0]
-//      typed[_1](Length[Int :: HNil])
-//      {}
-//      count === 0
-//    }
-//  }
+  val lenHNil = Length[HNil]
+  val m = IndexOf[Int :: HNil, Int]
+  val n = IndexOf[Int :: Long :: HNil, Int]
+//  val o = IndexOf.cons[Int, String, Int :: Long :: HNil](n)
+  val p = IndexOf[String :: Int :: Long :: HNil, Int]
+
+  implicitly[lenHNil.Out =:= _0]
+  implicitly[m.Out =:= _0]
+  implicitly[n.Out =:= _1]
+  implicitly[p.Out =:= _1]
+
+  //      typed[_1](l())
+  //      typed[_1](implicitly[Length[Int :: HNil]]())
+  //      implicitly[c =:= _0]
+  //      typed[_1](Length[Int :: HNil])
+  //      {}
+  //      count === 0
+  //    }
+  //  }
   //  implicitly[Length[HNil]#Out =:= _0]
   //  implicitly[IndexOf[Int :: HNil, Int] =:= _0]
   //  implicitly[IndexOf[String :: Int :: Long :: HNil, Int]#Out =:= _2]

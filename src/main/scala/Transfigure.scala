@@ -30,6 +30,13 @@ object IndexOf extends LowPriorityIndexOf {
   implicit def head[A, Remainder <: HList](implicit length: Length[Remainder]) = new IndexOf[A :: Remainder, A] {
     type Out = length.Out
   }
+
+  type Aux[Idx <: HList, A, N <: Nat] = IndexOf[Idx, A] { type Out = N }
+  def apply[Idx <: HList, A](implicit io: IndexOf[Idx, A]): Aux[Idx, A, io.Out] = io
+}
+
+trait IdxAndLtEq[Idx <: HList, A, B] {
+  //  type 
 }
 
 trait LTEqIndexed[Idx <: HList, A, B]
