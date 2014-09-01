@@ -2,7 +2,8 @@ package scalaz.transfigure
 
 import shapeless._
 import ops.hlist.Length
-import scalaz.NaturalTransformation
+import scalaz._
+import scalaz.Scalaz._
 import Nat._0
 
 trait LTEq[A <: Nat, B <: Nat]
@@ -64,12 +65,19 @@ object IdxAndGt {
     implicit i1: IndexOf[Idx, A], i2: IndexOf[Idx, B]) = new IdxAndGt[Idx, A, B] {
     type Out = GT[i1.Out, i2.Out]
   }
+  type Aux[Idx <: HList, A, B, O <: GT[_ <: Nat, _ <: Nat]] = IdxAndGt[Idx, A, B] { type Out = O }
 }
 
 trait LTEqIndexed[Idx <: HList, A, B]
 object LTEqIndexed {
   implicit def ltEqIndexed[Idx <: HList, A, B, O <: LTEq[_ <: Nat, _ <: Nat]](implicit i: IdxAndLtEq.Aux[Idx, A, B, O], l: O) =
     new LTEqIndexed[Idx, A, B] {}
+}
+
+trait GTIndexed[Idx <: HList, A, B]
+object GTIndexed {
+  implicit def gtIndexed[Idx <: HList, A, B, O <: GT[_ <: Nat, _ <: Nat]](implicit i: IdxAndGt.Aux[Idx, A, B, O], l: O) =
+    new GTIndexed[Idx, A, B] {}
 }
 
 trait NonDecreasingIndexed[Idx <: HList, L <: HList]
@@ -107,14 +115,20 @@ object ContextStack {
 
 trait SelectLeast[Idx <: HList, L <: HList, M <: Context, Rem <: HList, ICS <: ContextStack[L], OCS <: ContextStack[M :: Rem]] extends NaturalTransformation[ICS#Out, OCS#Out]
 
-trait LowPrioritySelectLeast {
-  implicit def hlistSelectLeast1[Idx <: HList, H <: Context, T <: HList](implicit cs: ContextStack[H :: T]) = new SelectLeast[Idx, H :: T, H, T, cs.type, cs.type] {
+object SelectLeast {
+  implicit def selectLeast1[Idx <: HList, C <: Context](implicit cs: ContextStack[C :: HNil]) = new SelectLeast[Idx, C :: HNil, C, HNil, cs.type, cs.type] {
     def apply[A](fa: cs.Out[A]) = fa
   }
-}
 
-object SelectLeast extends LowPrioritySelectLeast {
-
+  implicit def selectLeastLt[Idx <: HList, C <: Context, D <: Context, RemI <: HList, RemO <: HList, RemIcs <: ContextStack[RemI], RemOcs <: ContextStack[C :: RemO]](
+    implicit lt: LTEqIndexed[Idx, C, D], tl: SelectLeast[Idx, RemI, C, RemO, RemIcs, RemOcs],
+    ics: ContextStack[D :: RemI], ocs: ContextStack[C :: D :: RemO]) =
+    new SelectLeast[Idx, D :: RemI, C, D :: RemO, ics.type, ocs.type] {
+      def apply[A](fa: ics.Out[A]) = {
+        val ffa: D#C[RemIcs#Out[A]] = fa.asInstanceOf[D#C[RemIcs#Out[A]]]
+        ffa.traverse[C#C, RemOcs#Out[A]](tl.apply(_))
+      }
+    }
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
