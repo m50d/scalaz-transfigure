@@ -45,14 +45,14 @@ class SelectLeastSpec extends mutable.Specification {
   type RemI = ListContext :: HNil
   type RemO = HNil
   implicitly[LTIndexed[Idx, C, D]]
-  implicitly[SelectLeast[Idx, RemI, C, RemO]]
+  implicitly[SelectLeast[Idx, RemI]]
   implicitly[Traverse[D#C]]
   implicitly[Applicative[C#C]]
 
-  val x: SelectLeast[Idx, D :: RemI, C, D :: RemO] =
+  val x: SelectLeast[Idx, D :: RemI] =
     SelectLeast.selectLeastLtEq[Idx, C, D, RemI, RemO]
-  implicitly[SelectLeast[Idx, D :: RemI, C, D :: RemO]]
-  val sl2 = SelectLeast.selectLeast[Idx, D :: RemI, C, D :: RemO](idx, l1)
+//  implicitly[SelectLeast[Idx, D :: RemI]]
+//  val sl2 = SelectLeast.selectLeast[Idx, D :: RemI](idx, l1)
 }
 
 class TransfigureSpec extends mutable.Specification {

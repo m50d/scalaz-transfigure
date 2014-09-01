@@ -101,7 +101,9 @@ trait ContextStack[L <: HList] {
   type Out[_]
 }
 
-trait SelectLeast[Idx <: HList, L <: HList, C <: Context, R <: HList] {
+trait SelectLeast[Idx <: HList, L <: HList] {
+  type C <: Context
+  type R <: HList
   type LCS <: ContextStack[L]
   type RCS <: ContextStack[R]
   type CRCS[A] = C#C[RCS#Out[A]]
@@ -110,7 +112,9 @@ trait SelectLeast[Idx <: HList, L <: HList, C <: Context, R <: HList] {
 }
 
 object SelectLeast {
-  implicit def selectLeast1[Idx <: HList, C <: Context] = new SelectLeast[Idx, C :: HNil, C, HNil] {
+  implicit def selectLeast1[Idx <: HList, C1 <: Context] = new SelectLeast[Idx, C1 :: HNil] {
+    type C = C1
+    type R = HNil
     type LCS = ContextStack[C :: HNil] {
       type Out[A] = C#C[A]
     }
@@ -123,9 +127,14 @@ object SelectLeast {
     }
   }
 
-  implicit def selectLeastLtEq[Idx <: HList, C <: Context, D <: Context, RemI <: HList, RemO <: HList](
-    implicit lteq: LTIndexed[Idx, C, D], tl: SelectLeast[Idx, RemI, C, RemO], traverse: Traverse[D#C], ap: Applicative[C#C]) =
-    new SelectLeast[Idx, D :: RemI, C, D :: RemO] {
+  implicit def selectLeastLtEq[Idx <: HList, C1 <: Context, D <: Context, RemI <: HList, RemO <: HList](
+    implicit lteq: LTIndexed[Idx, C1, D], tl: SelectLeast[Idx, RemI] {
+      type C = C1
+      type R = RemO
+    }, traverse: Traverse[D#C], ap: Applicative[C1#C]) =
+    new SelectLeast[Idx, D :: RemI] {
+      type C = C1
+      type R = D :: RemO
       type LCS = ContextStack[D :: RemI] {
         type Out[A] = D#C[tl.LCS#Out[A]]
       }
@@ -142,9 +151,11 @@ object SelectLeast {
       }
     }
 
-  implicit def selectLeastGt[Idx <: HList, C <: Context, D <: Context, RemI <: HList, RemO <: HList](
-    implicit gt: GTIndexed[Idx, C, D], tl: SelectLeast[Idx, RemI, C, RemO], func: Functor[D#C]) =
-    new SelectLeast[Idx, D :: RemI, D, C :: RemO] {
+  implicit def selectLeastGt[Idx <: HList, C1 <: Context, D <: Context, RemI <: HList, RemO <: HList](
+    implicit gt: GTIndexed[Idx, C1, D], tl: SelectLeast[Idx, RemI] { type C = C1; type R = RemO }, func: Functor[D#C]) =
+    new SelectLeast[Idx, D :: RemI] {
+      type C = D
+      type R = C :: RemO
       type LCS = ContextStack[D :: RemI] {
         type Out[A] = D#C[tl.LCS#Out[A]]
       }
@@ -154,7 +165,7 @@ object SelectLeast {
 
       val trans = new NaturalTransformation[LCS#Out, CRCS] {
         def apply[A](ffa: D#C[tl.LCS#Out[A]]): D#C[C#C[tl.RCS#Out[A]]] =
-          ffa.map {
+          ffa.map[RCS#Out[A]] {
             fa: tl.LCS#Out[A] ⇒
               tl.trans.apply(fa)
           }
@@ -162,7 +173,7 @@ object SelectLeast {
 
     }
 
-  def selectLeast[Idx <: HList, L <: HList, C <: Context, R <: HList](idx: Idx, l: L)(implicit sl: SelectLeast[Idx, L, C, R]): NaturalTransformation[sl.LCS#Out, sl.CRCS] =
+  def selectLeast[Idx <: HList, L <: HList](idx: Idx, l: L)(implicit sl: SelectLeast[Idx, L]): NaturalTransformation[sl.LCS#Out, sl.CRCS] =
     sl.trans
 }
 
