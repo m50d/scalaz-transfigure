@@ -63,6 +63,8 @@ object NonDecreasingIndexed {
     new NonDecreasingIndexed[Idx, H1 :: H2 :: T] {}
 }
 
+case class Context[C[_]]()
+
 trait ContextStack[L <: HList] {
   type Out[_]
 }
@@ -72,7 +74,7 @@ object ContextStack {
     type Out[A] = A
   }
 
-  implicit def cons[C[_], L <: HList](implicit tl: ContextStack[L]) = new ContextStack[C :: L] {
+  implicit def cons[C[_], L <: HList](implicit tl: ContextStack[L]) = new ContextStack[Context[C] :: L] {
     type Out[A] = C[tl.Out[A]]
   }
 }
