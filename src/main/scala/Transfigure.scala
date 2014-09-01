@@ -122,7 +122,7 @@ object SelectLeast {
 
   implicit def selectLeastLt[Idx <: HList, C <: Context, D <: Context, RemI <: HList, RemO <: HList, RemIcs <: ContextStack[RemI], RemOcs <: ContextStack[C :: RemO]](
     implicit lt: LTEqIndexed[Idx, C, D], tl: SelectLeast[Idx, RemI, C, RemO, RemIcs, RemOcs],
-    ics: ContextStack[D :: RemI], ocs: ContextStack[C :: D :: RemO]) =
+    ics: ContextStack[D :: RemI], ocs: ContextStack[C :: D :: RemO], tr: Traverse[D#C], ap: Applicative[C#C]) =
     new SelectLeast[Idx, D :: RemI, C, D :: RemO, ics.type, ocs.type] {
       def apply[A](fa: ics.Out[A]) = {
         val ffa: D#C[RemIcs#Out[A]] = fa.asInstanceOf[D#C[RemIcs#Out[A]]]
