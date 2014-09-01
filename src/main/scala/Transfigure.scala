@@ -101,6 +101,21 @@ trait ContextStack[L <: HList] {
   type Out[_]
 }
 
+trait SelectLeastHelper[Idx <: HList, L <: HList] {
+  type C <: Context
+  type D <: Context
+  type R <: HList
+}
+
+object SelectLeastHelper {
+  implicit def nil[Idx <: HList, C1 <: Context, D1 <: Context](implicit lt: LTIndexed[Idx, C1, D1]) =
+    new SelectLeastHelper[Idx, C1 :: D1 :: HNil] {
+      type C = C1
+      type D = D1
+      type R = HNil
+    }
+}
+
 trait SelectLeast[Idx <: HList, L <: HList] {
   type C <: Context
   type R <: HList
@@ -116,7 +131,7 @@ object SelectLeast {
     type C = C1
     type R = R1
   }
-  
+
   implicit def selectLeast1[Idx <: HList, C1 <: Context] = new SelectLeast[Idx, C1 :: HNil] {
     type C = C1
     type R = HNil
