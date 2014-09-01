@@ -103,10 +103,6 @@ trait ContextStack[L <: HList] {
   type Out[_]
 }
 
-case object CSNil extends ContextStack[HNil]
-
-case class CSCons[C <: Context, L <: HList](tl: ContextStack[L]) extends ContextStack[C :: L]
-
 trait SelectLeast[Idx <: HList, L <: HList, C <: Context, R <: HList] {
   type LCS <: ContextStack[L]
   type RCS <: ContextStack[R]
