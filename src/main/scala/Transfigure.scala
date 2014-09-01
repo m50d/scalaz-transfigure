@@ -6,14 +6,12 @@ import scalaz._
 import scalaz.Scalaz._
 import Nat._0
 
-trait LTEq[A <: Nat, B <: Nat]
+trait LT[A <: Nat, B <: Nat]
 
-object LTEq {
-
-  implicit def ltEq1 = new LTEq[_0, _0] {}
-  implicit def ltEq2[B <: Nat] = new LTEq[_0, Succ[B]] {}
-  implicit def ltEq3[A <: Nat, B <: Nat](implicit lt: LTEq[A, B]) =
-    new LTEq[Succ[A], Succ[B]] {}
+object LT {
+  implicit def lt1[B <: Nat] = new LT[_0, Succ[B]] {}
+  implicit def lt2[A <: Nat, B <: Nat](implicit lt: LT[A, B]) =
+    new LT[Succ[A], Succ[B]] {}
 }
 
 trait GT[A <: Nat, B <: Nat]
@@ -44,15 +42,15 @@ object IndexOf extends LowPriorityIndexOf {
 }
 
 trait IdxAndLtEq[Idx <: HList, A, B] {
-  type Out <: LTEq[_ <: Nat, _ <: Nat]
+  type Out <: LT[_ <: Nat, _ <: Nat]
 }
 
 object IdxAndLtEq {
   implicit def byIndex[Idx <: HList, A, B](
     implicit i1: IndexOf[Idx, A], i2: IndexOf[Idx, B]) = new IdxAndLtEq[Idx, A, B] {
-    type Out = LTEq[i1.Out, i2.Out]
+    type Out = LT[i1.Out, i2.Out]
   }
-  type Aux[Idx <: HList, A, B, O <: LTEq[_ <: Nat, _ <: Nat]] = IdxAndLtEq[Idx, A, B] { type Out = O }
+  type Aux[Idx <: HList, A, B, O <: LT[_ <: Nat, _ <: Nat]] = IdxAndLtEq[Idx, A, B] { type Out = O }
   def apply[Idx <: HList, A, B](implicit ile: IdxAndLtEq[Idx, A, B]): Aux[Idx, A, B, ile.Out] = ile
 }
 
@@ -68,10 +66,10 @@ object IdxAndGt {
   type Aux[Idx <: HList, A, B, O <: GT[_ <: Nat, _ <: Nat]] = IdxAndGt[Idx, A, B] { type Out = O }
 }
 
-trait LTEqIndexed[Idx <: HList, A, B]
-object LTEqIndexed {
-  implicit def ltEqIndexed[Idx <: HList, A, B, O <: LTEq[_ <: Nat, _ <: Nat]](implicit i: IdxAndLtEq.Aux[Idx, A, B, O], l: O) =
-    new LTEqIndexed[Idx, A, B] {}
+trait LTIndexed[Idx <: HList, A, B]
+object LTIndexed {
+  implicit def ltEqIndexed[Idx <: HList, A, B, O <: LT[_ <: Nat, _ <: Nat]](implicit i: IdxAndLtEq.Aux[Idx, A, B, O], l: O) =
+    new LTIndexed[Idx, A, B] {}
 }
 
 trait GTIndexed[Idx <: HList, A, B]
@@ -85,7 +83,7 @@ trait NonDecreasingIndexed[Idx <: HList, L <: HList]
 object NonDecreasingIndexed {
   implicit def hnilNonDecreasing[Idx <: HList] = new NonDecreasingIndexed[Idx, HNil] {}
   implicit def hlistNonDecreasing1[Idx <: HList, H] = new NonDecreasingIndexed[Idx, H :: HNil] {}
-  implicit def hlistNonDecreasing2[Idx <: HList, H1, H2, T <: HList](implicit ltEq: LTEqIndexed[Idx, H1, H2], ndt: NonDecreasingIndexed[Idx, H2 :: T]) =
+  implicit def hlistNonDecreasing2[Idx <: HList, H1, H2, T <: HList](implicit ltEq: LTIndexed[Idx, H1, H2], ndt: NonDecreasingIndexed[Idx, H2 :: T]) =
     new NonDecreasingIndexed[Idx, H1 :: H2 :: T] {}
 }
 
@@ -126,7 +124,7 @@ object SelectLeast {
   }
 
   implicit def selectLeastLtEq[Idx <: HList, C <: Context, D <: Context, RemI <: HList, RemO <: HList](
-    implicit lteq: LTEqIndexed[Idx, C, D], tl: SelectLeast[Idx, RemI, C, RemO], traverse: Traverse[D#C], ap: Applicative[C#C]) =
+    implicit lteq: LTIndexed[Idx, C, D], tl: SelectLeast[Idx, RemI, C, RemO], traverse: Traverse[D#C], ap: Applicative[C#C]) =
     new SelectLeast[Idx, D :: RemI, C, D :: RemO] {
       type LCS = ContextStack[D :: RemI] {
         type Out[A] = D#C[tl.LCS#Out[A]]
