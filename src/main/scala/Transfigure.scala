@@ -130,7 +130,7 @@ object SelectLeast {
   }
 
   implicit def selectLeastLtEq[Idx <: HList, C <: Context, D <: Context, RemI <: HList, RemO <: HList](
-    implicit tl: SelectLeast[Idx, RemI, C, RemO], traverse: Traverse[D#C], ap: Applicative[C#C]) =
+    implicit lteq: LTEqIndexed[Idx, C, D], tl: SelectLeast[Idx, RemI, C, RemO], traverse: Traverse[D#C], ap: Applicative[C#C]) =
     new SelectLeast[Idx, D :: RemI, C, D :: RemO] {
       type LCS = ContextStack[D :: RemI] {
         type Out[A] = D#C[tl.LCS#Out[A]]
@@ -146,9 +146,28 @@ object SelectLeast {
               tl.trans.apply(fa)
           }
       }
+    }
+
+  implicit def selectLeastGt[Idx <: HList, C <: Context, D <: Context, RemI <: HList, RemO <: HList](
+    implicit gt: GTIndexed[Idx, C, D], tl: SelectLeast[Idx, RemI, C, RemO], func: Functor[D#C]) =
+    new SelectLeast[Idx, D :: RemI, D, C :: RemO] {
+      type LCS = ContextStack[D :: RemI] {
+        type Out[A] = D#C[tl.LCS#Out[A]]
+      }
+      type RCS = ContextStack[C :: RemO] {
+        type Out[A] = C#C[tl.RCS#Out[A]]
+      }
+
+      val trans = new NaturalTransformation[LCS#Out, CRCS] {
+        def apply[A](ffa: D#C[tl.LCS#Out[A]]): D#C[C#C[tl.RCS#Out[A]]] =
+          ffa.map {
+            fa: tl.LCS#Out[A] ⇒
+              tl.trans.apply(fa)
+          }
+      }
 
     }
-  
+
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
