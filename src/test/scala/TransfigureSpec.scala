@@ -39,7 +39,6 @@ class SelectLeastSpec extends mutable.Specification {
     }
   }
 
-  
   type Idx = OptionContext :: ListContext :: HNil
   type C = ListContext
   type D = OptionContext
@@ -52,8 +51,8 @@ class SelectLeastSpec extends mutable.Specification {
 
   val x: SelectLeast[Idx, D :: RemI, C, D :: RemO] =
     SelectLeast.selectLeastLtEq[Idx, C, D, RemI, RemO]
-//  implicitly[SelectLeast[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil, OptionContext, ListContext :: HNil]]
-  //  val sl2 = SelectLeast.selectLeast(idx, l1)
+  implicitly[SelectLeast[Idx, D :: RemI, C, D :: RemO]]
+  val sl2 = SelectLeast.selectLeast[Idx, D :: RemI, C, D :: RemO](idx, l1)
 }
 
 class TransfigureSpec extends mutable.Specification {
