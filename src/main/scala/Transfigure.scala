@@ -90,6 +90,16 @@ object ContextStack {
 
 trait SelectLeast[Idx <: HList, L <: HList, M <: Context, Rem <: HList, ICS <: ContextStack[L], OCS <: ContextStack[M :: Rem]] extends NaturalTransformation[ICS#Out, OCS#Out]
 
+trait LowPrioritySelectLeast {
+  implicit def hlistSelectLeast1[Idx <: HList, H <: Context, T <: HList](implicit cs: ContextStack[H :: T]) = new SelectLeast[Idx, H :: T, H, T, cs.type, cs.type] {
+    def apply[A](fa: cs.Out[A]) = fa
+  }
+}
+
+object SelectLeast extends LowPrioritySelectLeast {
+
+}
+
 trait Transfigure[F[_], G[_], Z[_]] {
   def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): G[B]
 }
