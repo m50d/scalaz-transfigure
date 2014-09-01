@@ -155,17 +155,17 @@ object SelectLeast {
     implicit gt: GTIndexed[Idx, C1, D], tl: SelectLeast[Idx, RemI] { type C = C1; type R = RemO }, func: Functor[D#C]) =
     new SelectLeast[Idx, D :: RemI] {
       type C = D
-      type R = C :: RemO
+      type R = C1 :: RemO
       type LCS = ContextStack[D :: RemI] {
         type Out[A] = D#C[tl.LCS#Out[A]]
       }
-      type RCS = ContextStack[C :: RemO] {
-        type Out[A] = C#C[tl.RCS#Out[A]]
+      type RCS = ContextStack[C1 :: RemO] {
+        type Out[A] = C1#C[tl.RCS#Out[A]]
       }
 
       val trans = new NaturalTransformation[LCS#Out, CRCS] {
-        def apply[A](ffa: D#C[tl.LCS#Out[A]]): D#C[C#C[tl.RCS#Out[A]]] =
-          ffa.map[RCS#Out[A]] {
+        def apply[A](ffa: D#C[tl.LCS#Out[A]]): D#C[C1#C[tl.RCS#Out[A]]] =
+          ffa.map {
             fa: tl.LCS#Out[A] ⇒
               tl.trans.apply(fa)
           }
