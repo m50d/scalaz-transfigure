@@ -39,14 +39,20 @@ class SelectLeastSpec extends mutable.Specification {
     }
   }
 
-  implicitly[LTIndexed[OptionContext :: ListContext :: HNil, ListContext, OptionContext]]
-  implicitly[SelectLeast[OptionContext :: ListContext :: HNil, ListContext :: HNil, ListContext, HNil]]
-  implicitly[Traverse[OptionContext#C]]
-  implicitly[Applicative[ListContext#C]]
+  
+  type Idx = OptionContext :: ListContext :: HNil
+  type C = ListContext
+  type D = OptionContext
+  type RemI = ListContext :: HNil
+  type RemO = HNil
+  implicitly[LTIndexed[Idx, C, D]]
+  implicitly[SelectLeast[Idx, RemI, C, RemO]]
+  implicitly[Traverse[D#C]]
+  implicitly[Applicative[C#C]]
 
-  val x: SelectLeast[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil, OptionContext, ListContext :: HNil] =
-    SelectLeast.selectLeastLtEq[OptionContext :: ListContext :: HNil, ListContext, OptionContext, ListContext :: HNil, HNil]
-  implicitly[SelectLeast[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil, OptionContext, ListContext :: HNil]]
+  val x: SelectLeast[Idx, D :: RemI, C, D :: RemO] =
+    SelectLeast.selectLeastLtEq[Idx, C, D, RemI, RemO]
+//  implicitly[SelectLeast[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil, OptionContext, ListContext :: HNil]]
   //  val sl2 = SelectLeast.selectLeast(idx, l1)
 }
 
