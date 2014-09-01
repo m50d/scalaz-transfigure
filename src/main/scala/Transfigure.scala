@@ -2,6 +2,7 @@ package scalaz.transfigure
 
 import shapeless._
 import ops.hlist.Length
+import scalaz.NaturalTransformation
 
 trait LTEq[A <: Nat, B <: Nat]
 
@@ -63,7 +64,15 @@ object NonDecreasingIndexed {
     new NonDecreasingIndexed[Idx, H1 :: H2 :: T] {}
 }
 
-case class Context[C[_]]()
+trait Context {
+  type C[_]
+}
+
+object Context {
+  type Aux[N[_]] = Context {
+    type C[A] = N[A]
+  }
+}
 
 trait ContextStack[L <: HList] {
   type Out[_]
@@ -74,14 +83,12 @@ object ContextStack {
     type Out[A] = A
   }
 
-  implicit def cons[C[_], L <: HList](implicit tl: ContextStack[L]) = new ContextStack[Context[C] :: L] {
+  implicit def cons[C[_], L <: HList](implicit tl: ContextStack[L]) = new ContextStack[Context.Aux[C] :: L] {
     type Out[A] = C[tl.Out[A]]
   }
 }
 
-//trait SelectLeast[Idx <: HList, L <: HList, M[_], Rem <: HList] {
-//  def apply(l : L): (M, Rem)
-//}
+trait SelectLeast[Idx <: HList, L <: HList, M <: Context, Rem <: HList, ICS <: ContextStack[L], OCS <: ContextStack[M :: Rem]] extends NaturalTransformation[ICS#Out, OCS#Out]
 
 trait Transfigure[F[_], G[_], Z[_]] {
   def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): G[B]
