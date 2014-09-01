@@ -51,7 +51,7 @@ class SelectLeastSpec extends mutable.Specification {
 
   val x: SelectLeast[Idx, D :: RemI] =
     SelectLeast.selectLeastLtEq[Idx, D, RemI, C, RemO]
-  implicitly[SelectLeast[Idx, D :: RemI]]
+//  implicitly[SelectLeast[Idx, D :: RemI]]
 //  val sl2 = SelectLeast.selectLeast[Idx, D :: RemI](idx, l1)
 }
 

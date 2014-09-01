@@ -112,6 +112,11 @@ trait SelectLeast[Idx <: HList, L <: HList] {
 }
 
 object SelectLeast {
+  type Aux[Idx <: HList, L <: HList, C1 <: Context, R1 <: HList] = SelectLeast[Idx, L] {
+    type C = C1
+    type R = R1
+  }
+  
   implicit def selectLeast1[Idx <: HList, C1 <: Context] = new SelectLeast[Idx, C1 :: HNil] {
     type C = C1
     type R = HNil
@@ -128,10 +133,7 @@ object SelectLeast {
   }
 
   implicit def selectLeastLtEq[Idx <: HList, D <: Context, RemI <: HList, C1 <: Context, RemO <: HList](
-    implicit lteq: LTIndexed[Idx, C1, D], tl: SelectLeast[Idx, RemI] {
-      type C = C1
-      type R = RemO
-    }, traverse: Traverse[D#C], ap: Applicative[C1#C]) =
+    implicit lteq: LTIndexed[Idx, C1, D], tl: Aux[Idx, RemI, C1, RemO], traverse: Traverse[D#C], ap: Applicative[C1#C]) =
     new SelectLeast[Idx, D :: RemI] {
       type C = C1
       type R = D :: RemO
@@ -152,7 +154,7 @@ object SelectLeast {
     }
 
   implicit def selectLeastGt[Idx <: HList, C1 <: Context, D <: Context, RemI <: HList, RemO <: HList](
-    implicit gt: GTIndexed[Idx, C1, D], tl: SelectLeast[Idx, RemI] { type C = C1; type R = RemO }, func: Functor[D#C]) =
+    implicit gt: GTIndexed[Idx, C1, D], tl: Aux[Idx, RemI, C1, RemO], func: Functor[D#C]) =
     new SelectLeast[Idx, D :: RemI] {
       type C = D
       type R = C1 :: RemO
