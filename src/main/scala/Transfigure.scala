@@ -3,18 +3,24 @@ package scalaz.transfigure
 import shapeless._
 import ops.hlist.Length
 import scalaz.NaturalTransformation
+import Nat._0
 
 trait LTEq[A <: Nat, B <: Nat]
 
 object LTEq {
-  import Nat._0
 
-  type <=[A <: Nat, B <: Nat] = LTEq[A, B]
+  implicit def ltEq1 = new LTEq[_0, _0] {}
+  implicit def ltEq2[B <: Nat] = new LTEq[_0, Succ[B]] {}
+  implicit def ltEq3[A <: Nat, B <: Nat](implicit lt: LTEq[A, B]) =
+    new LTEq[Succ[A], Succ[B]] {}
+}
 
-  implicit def ltEq1 = new <=[_0, _0] {}
-  implicit def ltEq2[B <: Nat] = new <=[_0, Succ[B]] {}
-  implicit def ltEq3[A <: Nat, B <: Nat](implicit lt: A <= B) =
-    new <=[Succ[A], Succ[B]] {}
+trait GT[A <: Nat, B <: Nat]
+
+object GT {
+  implicit def gt1[B <: Nat] = new GT[Succ[B], _0] {}
+  implicit def gt2[A <: Nat, B <: Nat](implicit gt: GT[A, B]) =
+    new GT[Succ[A], Succ[B]] {}
 }
 
 trait IndexOf[Idx <: HList, A] {
@@ -47,6 +53,17 @@ object IdxAndLtEq {
   }
   type Aux[Idx <: HList, A, B, O <: LTEq[_ <: Nat, _ <: Nat]] = IdxAndLtEq[Idx, A, B] { type Out = O }
   def apply[Idx <: HList, A, B](implicit ile: IdxAndLtEq[Idx, A, B]): Aux[Idx, A, B, ile.Out] = ile
+}
+
+trait IdxAndGt[Idx <: HList, A, B] {
+  type Out <: GT[_ <: Nat, _ <: Nat]
+}
+
+object IdxAndGt {
+  implicit def byIndex[Idx <: HList, A, B](
+    implicit i1: IndexOf[Idx, A], i2: IndexOf[Idx, B]) = new IdxAndGt[Idx, A, B] {
+    type Out = GT[i1.Out, i2.Out]
+  }
 }
 
 trait LTEqIndexed[Idx <: HList, A, B]
