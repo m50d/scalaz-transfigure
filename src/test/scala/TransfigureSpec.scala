@@ -6,6 +6,7 @@ import nat._
 import ops.nat._
 import ops.hlist._
 import test._
+import scalaz.NaturalTransformation
 
 class IndexOfSpec {
   val p = IndexOf[String :: Int :: Long :: HNil, Int]
@@ -16,20 +17,28 @@ class LTEqIndexedSpec {
   implicitly[LTEqIndexed[Int :: String :: HNil, String, Int]]
 }
 
-class SelectLeastSpec {
+class SelectLeastSpec extends mutable.Specification {
   object ListContext extends Context {
     type C[A] = List[A]
   }
-  
+
   object OptionContext extends Context {
     type C[A] = Option[A]
   }
-  
+
   val idx = OptionContext :: ListContext :: HNil
   val l1 = OptionContext :: ListContext :: HNil
-//  val sl1 = SelectLeast.selectLeast(idx, l1)
-}
+  val t1 = ListContext :: HNil
 
+  val sl1 = SelectLeast.selectLeast(idx, t1)
+
+  "SelectLeast" should {
+    "List" in {
+      sl1.apply(List(5)) ==== List(5)
+    }
+  }
+  //  val sl1 = SelectLeast.selectLeast(idx, l1)
+}
 
 class TransfigureSpec extends mutable.Specification {
 
