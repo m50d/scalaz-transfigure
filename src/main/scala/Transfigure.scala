@@ -63,6 +63,24 @@ object NonDecreasingIndexed {
     new NonDecreasingIndexed[Idx, H1 :: H2 :: T] {}
 }
 
+trait ContextStack[L <: HList] {
+  type Out[_]
+}
+
+object ContextStack {
+  implicit val nil = new ContextStack[HNil] {
+    type Out[A] = A
+  }
+
+  implicit def cons[C[_], L <: HList](implicit tl: ContextStack[L]) = new ContextStack[C :: L] {
+    type Out[A] = C[tl.Out[A]]
+  }
+}
+
+//trait SelectLeast[Idx <: HList, L <: HList, M[_], Rem <: HList] {
+//  def apply(l : L): (M, Rem)
+//}
+
 trait Transfigure[F[_], G[_], Z[_]] {
   def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): G[B]
 }
