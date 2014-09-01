@@ -168,6 +168,8 @@ object SelectLeast {
 
     }
 
+  def selectLeast[Idx <: HList, L <: HList, C <: Context, R <: HList](idx: Idx, l: L)(implicit sl: SelectLeast[Idx, L, C, R]): NaturalTransformation[sl.LCS#Out, sl.CRCS] =
+    sl.trans
 }
 
 trait SelectionSort[Idx <: HList, I <: HList, O <: HList] {

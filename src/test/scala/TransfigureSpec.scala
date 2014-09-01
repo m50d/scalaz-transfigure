@@ -12,10 +12,23 @@ class IndexOfSpec {
   implicitly[p.Out =:= _1]
 }
 
-class LTEqIndexedSpec extends mutable.Specification {
+class LTEqIndexedSpec {
   implicitly[LTEqIndexed[Int :: String :: HNil, String, Int]]
 }
 
+class SelectLeastSpec {
+  object ListContext extends Context {
+    type C[A] = List[A]
+  }
+  
+  object OptionContext extends Context {
+    type C[A] = Option[A]
+  }
+  
+  val idx = OptionContext :: ListContext :: HNil
+  val l1 = OptionContext :: ListContext :: HNil
+//  val sl1 = SelectLeast.selectLeast(idx, l1)
+}
 
 
 class TransfigureSpec extends mutable.Specification {
