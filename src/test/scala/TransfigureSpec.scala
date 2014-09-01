@@ -3,7 +3,7 @@ package scalaz.transfigure
 import org.specs2._
 import shapeless._
 import nat._
-//import ops.nat._
+import ops.nat._
 import ops.hlist._
 import test._
 
