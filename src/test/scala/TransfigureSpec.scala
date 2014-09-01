@@ -1,27 +1,93 @@
 package scalaz.transfigure
 
 import org.specs2._
-import shapeless._
+import shapeless.{ Id ⇒ _, _ }
 import nat._
-//import ops.nat._
+import ops.nat._
 import ops.hlist._
 import test._
+import scalaz._
+import scalaz.Scalaz._
+
+object Aliases {
+  type EitherR[A] = Either[Unit, A]
+  type IntReader[A] = scalaz.Reader[Int, A]
+  type OptionContext = Context.Aux[Option]
+  type ListContext = Context.Aux[List]
+  type EitherRContext = Context.Aux[EitherR]
+  type IntReaderContext = Context.Aux[IntReader]
+  type Idx = OptionContext :: ListContext :: EitherRContext :: HNil
+}
+
+import Aliases._
 
 class IndexOfSpec {
   val p = IndexOf[String :: Int :: Long :: HNil, Int]
   implicitly[p.Out =:= _1]
 }
 
-class LTEqIndexedSpec extends mutable.Specification {
-  implicitly[LTEqIndexed[Int :: String :: HNil, String, Int]]
+class LTEqIndexedSpec {
+  implicitly[LTIndexed[Int :: String :: HNil, String, Int]]
+}
+
+class SelectionStepSpec extends mutable.Specification {
+
+  "SelectionStep" should {
+    "option.list" in {
+      SelectionStep[Idx, OptionContext, ListContext].trans(Some(List(5))) ====
+        Some(List(5))
+    }
+    "list.option" in {
+      SelectionStep[Idx, ListContext, OptionContext].trans(List(Some(5))) ====
+        Some(List(5))
+    }
+  }
+}
+
+class SelectLeastSpec extends mutable.Specification {
+  "SelectLeast" should {
+    "list" in {
+      val sl = SelectLeast.selectLeast[ListContext :: HNil, ListContext :: HNil]
+      sl.apply(List(5)) ==== List(5)
+    }
+    "list.option" in {
+      val sl = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
+      sl.apply(List(Some(5))) ==== Some(List(5))
+    }
+    "option.list" in {
+      val sl = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil]
+      sl.apply(Some(List(5))) ==== Some(List(5))
+    }
+    "list.either.option" in {
+      val sl = SelectLeast.selectLeast[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
+      sl.apply(List(Some(Right(5)))) ==== Some(List(Right(5)))
+    }
+  }
+}
+
+class SelectionSortSpec extends mutable.Specification {
+  implicitly[SelectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]]
+  SelectionSort.cons[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil, OptionContext, HNil, Context.Aux[Id], Context.Aux[Id]]
+
+  "SelectionSort" should {
+    "nil" in {
+      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]
+      ss.apply(5) ==== 5
+    }
+    "option" in {
+      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil]
+      ss.apply(Some(5)) ==== Some(5)
+    }
+    "list.either.option" in {
+      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
+      ss.apply(List(Some(Right(5)))) ==== Some(Right(List(5)))
+    }
+  }
 }
 
 class TransfigureSpec extends mutable.Specification {
 
   "Transfigure" should {
-
-    type EitherR[A] = Either[Unit, A]
-    type IntReader[A] = scalaz.Reader[Int, A]
 
     //    "map" in {
     //      val fa: Option[Int] = Some(42)

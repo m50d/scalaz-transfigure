@@ -1,22 +1,28 @@
 package scalaz.transfigure
 
-import shapeless._
+import shapeless.{ Id ⇒ _, _ }
 import ops.hlist.Length
+import scalaz._
+import scalaz.Scalaz._
+import Nat._0
 
-trait LTEq[A <: Nat, B <: Nat]
+sealed trait LT[A <: Nat, B <: Nat]
 
-object LTEq {
-  import Nat._0
-
-  type <=[A <: Nat, B <: Nat] = LTEq[A, B]
-
-  implicit def ltEq1 = new <=[_0, _0] {}
-  implicit def ltEq2[B <: Nat] = new <=[_0, Succ[B]] {}
-  implicit def ltEq3[A <: Nat, B <: Nat](implicit lt: A <= B) =
-    new <=[Succ[A], Succ[B]] {}
+object LT {
+  implicit def lt1[B <: Nat] = new LT[_0, Succ[B]] {}
+  implicit def lt2[A <: Nat, B <: Nat](implicit lt: LT[A, B]) =
+    new LT[Succ[A], Succ[B]] {}
 }
 
-trait IndexOf[Idx <: HList, A] {
+sealed trait GT[A <: Nat, B <: Nat]
+
+object GT {
+  implicit def gt1[B <: Nat] = new GT[Succ[B], _0] {}
+  implicit def gt2[A <: Nat, B <: Nat](implicit gt: GT[A, B]) =
+    new GT[Succ[A], Succ[B]] {}
+}
+
+sealed trait IndexOf[Idx <: HList, A] {
   type Out <: Nat
 }
 
@@ -35,30 +41,215 @@ object IndexOf extends LowPriorityIndexOf {
   def apply[Idx <: HList, A](implicit io: IndexOf[Idx, A]): Aux[Idx, A, io.Out] = io
 }
 
-trait IdxAndLtEq[Idx <: HList, A, B] {
-  type Out <: LTEq[_ <: Nat, _ <: Nat]
+sealed trait IdxAndLtEq[Idx <: HList, A, B] {
+  type Out <: LT[_ <: Nat, _ <: Nat]
 }
 
 object IdxAndLtEq {
   implicit def byIndex[Idx <: HList, A, B](
     implicit i1: IndexOf[Idx, A], i2: IndexOf[Idx, B]) = new IdxAndLtEq[Idx, A, B] {
-    type Out = LTEq[i1.Out, i2.Out]
+    type Out = LT[i1.Out, i2.Out]
   }
-  type Aux[Idx <: HList, A, B, O <: LTEq[_ <: Nat, _ <: Nat]] = IdxAndLtEq[Idx, A, B] { type Out = O }
+  type Aux[Idx <: HList, A, B, O <: LT[_ <: Nat, _ <: Nat]] = IdxAndLtEq[Idx, A, B] { type Out = O }
   def apply[Idx <: HList, A, B](implicit ile: IdxAndLtEq[Idx, A, B]): Aux[Idx, A, B, ile.Out] = ile
 }
 
-trait LTEqIndexed[Idx <: HList, A, B]
-object LTEqIndexed {
-  implicit def ltEqIndexed[Idx <: HList, A, B, O <: LTEq[_ <: Nat, _ <: Nat]](implicit i: IdxAndLtEq.Aux[Idx, A, B, O], l: O) =
-    new LTEqIndexed[Idx, A, B] {}
+sealed trait IdxAndGt[Idx <: HList, A, B] {
+  type Out <: GT[_ <: Nat, _ <: Nat]
 }
 
-//  trait NonDecreasing[L <: HList]
-//  implicit def hnilNonDecreasing = new NonDecreasing[HNil] {}
-//  implicit def hlistNonDecreasing1[H] = new NonDecreasing[H :: HNil] {}
-//  implicit def hlistNonDecreasing2[H1 <: Nat, H2 <: Nat, T <: HList]
-//    (implicit ltEq : H1 <= H2, ndt : NonDecreasing[H2 :: T]) = new NonDecreasing[H1 :: H2 :: T] {}
+object IdxAndGt {
+  implicit def byIndex[Idx <: HList, A, B](
+    implicit i1: IndexOf[Idx, A], i2: IndexOf[Idx, B]) = new IdxAndGt[Idx, A, B] {
+    type Out = GT[i1.Out, i2.Out]
+  }
+  type Aux[Idx <: HList, A, B, O <: GT[_ <: Nat, _ <: Nat]] = IdxAndGt[Idx, A, B] { type Out = O }
+}
+
+sealed trait LTIndexed[Idx <: HList, A, B]
+object LTIndexed {
+  implicit def ltEqIndexed[Idx <: HList, A, B, O <: LT[_ <: Nat, _ <: Nat]](implicit i: IdxAndLtEq.Aux[Idx, A, B, O], l: O) =
+    new LTIndexed[Idx, A, B] {}
+}
+
+sealed trait GTIndexed[Idx <: HList, A, B]
+object GTIndexed {
+  implicit def gtIndexed[Idx <: HList, A, B, O <: GT[_ <: Nat, _ <: Nat]](implicit i: IdxAndGt.Aux[Idx, A, B, O], l: O) =
+    new GTIndexed[Idx, A, B] {}
+}
+
+sealed trait NonDecreasingIndexed[Idx <: HList, L <: HList]
+
+object NonDecreasingIndexed {
+  implicit def hnilNonDecreasing[Idx <: HList] = new NonDecreasingIndexed[Idx, HNil] {}
+  implicit def hlistNonDecreasing1[Idx <: HList, H] = new NonDecreasingIndexed[Idx, H :: HNil] {}
+  implicit def hlistNonDecreasing2[Idx <: HList, H1, H2, T <: HList](implicit ltEq: LTIndexed[Idx, H1, H2], ndt: NonDecreasingIndexed[Idx, H2 :: T]) =
+    new NonDecreasingIndexed[Idx, H1 :: H2 :: T] {}
+}
+
+trait Context {
+  type C[_]
+}
+
+object Context {
+  type Aux[N[_]] = Context {
+    type C[A] = N[A]
+  }
+}
+
+sealed trait SelectionStep[Idx <: HList, C1 <: Context, D <: Context] {
+  type X <: Context
+  type Y <: Context
+
+  type I = Context {
+    type C[A] = C1#C[D#C[A]]
+  }
+  type O = Context {
+    type C[A] = X#C[Y#C[A]]
+  }
+
+  val trans: NaturalTransformation[I#C, O#C]
+}
+
+object SelectionStep {
+  implicit def gt[Idx <: HList, C <: Context, D <: Context](implicit gt: GTIndexed[Idx, C, D]) = new SelectionStep[Idx, C, D] {
+    type X = C
+    type Y = D
+    val trans = new NaturalTransformation[I#C, O#C] {
+      def apply[A](fa: C#C[D#C[A]]) = fa
+    }
+  }
+
+  implicit def lt[Idx <: HList, C <: Context, D <: Context](implicit lt: LTIndexed[Idx, C, D], traverse: Traverse[C#C], ap: Applicative[D#C]) = new SelectionStep[Idx, C, D] {
+    type X = D
+    type Y = C
+    val trans = new NaturalTransformation[I#C, O#C] {
+      def apply[A](fa: C#C[D#C[A]]) = fa.sequence
+    }
+  }
+
+  type Aux[Idx <: HList, C <: Context, D <: Context, X1 <: Context, Y1 <: Context] = SelectionStep[Idx, C, D] {
+    type X = X1
+    type Y = Y1
+  }
+  def apply[Idx <: HList, C <: Context, D <: Context](implicit ss: SelectionStep[Idx, C, D]): Aux[Idx, C, D, ss.X, ss.Y] =
+    ss
+}
+
+sealed trait SelectLeast[Idx <: HList, L <: HList] {
+  type X <: Context
+  type R <: HList
+
+  type LCS <: Context
+  type RCS <: Context
+
+  val trans: NaturalTransformation[LCS#C, ({ type CRCS[A] = X#C[RCS#C[A]] })#CRCS]
+}
+
+object SelectLeast {
+  type Aux[Idx <: HList, L <: HList, C <: Context, R1 <: HList] = SelectLeast[Idx, L] {
+    type X = C
+    type R = R1
+  }
+
+  implicit def selectLeast1[Idx <: HList, C <: Context] = new SelectLeast[Idx, C :: HNil] {
+    type X = C
+    type R = HNil
+    type LCS = C
+    type RCS = Context.Aux[Id]
+    val trans = new NaturalTransformation[LCS#C, ({ type CRCS[A] = X#C[RCS#C[A]] })#CRCS] {
+      def apply[A](fa: C#C[A]) = fa
+    }
+  }
+
+  implicit def selectLeastCons[Idx <: HList, L <: HList, C1 <: Context, D <: Context](
+    implicit tl: SelectLeast[Idx, L] {
+      type X = D
+    }, step: SelectionStep[Idx, C1, D], f: Functor[C1#C]) =
+    new SelectLeast[Idx, C1 :: L] {
+      type X = step.X
+      type R = step.Y :: tl.R
+
+      type LCS = Context {
+        type C[A] = C1#C[tl.LCS#C[A]]
+      }
+      type RCS = Context {
+        type C[A] = step.Y#C[tl.RCS#C[A]]
+      }
+
+      val trans = new NaturalTransformation[LCS#C, ({ type CRCS[A] = X#C[RCS#C[A]] })#CRCS] {
+        def apply[A](fa: C1#C[tl.LCS#C[A]]) = {
+          val ga: C1#C[tl.X#C[tl.RCS#C[A]]] = fa map {
+            tl.trans.apply(_)
+          }
+          step.trans(ga)
+        }
+      }
+    }
+
+  def selectLeast[Idx <: HList, L <: HList](implicit sl: SelectLeast[Idx, L]): NaturalTransformation[sl.LCS#C, ({ type CRCS[A] = sl.X#C[sl.RCS#C[A]] })#CRCS] =
+    sl.trans
+}
+
+sealed trait Leib1[C <: Context, D <: Context] {
+  def subst[F[_[_]]](fc: F[C#C]): F[D#C]
+}
+
+object Leib1 {
+  implicit def refl[C <: Context] = new Leib1[C, C] {
+    def subst[F[_[_]]](fa: F[C#C]) = fa
+  }
+
+//  def lift[F[_[_], _], C <: Context, D <: Context](ab: Leib1[C, D]) =
+//    ab.subst[({ type L[X[_]] = Leib1[({ type K[A] = F[C#C, A] })#K, ({ type J[A] = F[X, A] })#J] })#L](refl[Context.Aux[({ type I[A] = F[C#C, A] })#I]])
+}
+
+sealed trait SelectionSort[Idx <: HList, L <: HList] {
+  type ICS <: Context
+  type OCS <: Context
+
+  val trans: NaturalTransformation[ICS#C, OCS#C]
+}
+
+object SelectionSort {
+  implicit def nil[Idx <: HList] = new SelectionSort[Idx, HNil] {
+    type ICS = Context.Aux[Id]
+    type OCS = Context.Aux[Id]
+
+    val trans = new NaturalTransformation[ICS#C, OCS#C] {
+      def apply[A](fa: A) = fa
+    }
+  }
+
+  implicit def cons[Idx <: HList, L <: HList, C1 <: Context, R <: HList, SLR <: Context, TLI <: Context](implicit sl: SelectLeast.Aux[Idx, L, C1, R] {
+    type RCS = SLR
+  },
+    tl: SelectionSort[Idx, R] {
+      type ICS = TLI
+    }, f: Functor[C1#C], w: Leib1[SLR, TLI]) =
+    new SelectionSort[Idx, L] {
+      type ICS = sl.LCS
+      type OCS = Context {
+        type C[A] = C1#C[tl.OCS#C[A]]
+      }
+      val trans = new NaturalTransformation[ICS#C, OCS#C] {
+        def apply[A](ffa: ICS#C[A]) =
+          {
+            val stepped = sl.trans.apply(ffa)
+            stepped.map {
+              fa: sl.RCS#C[A] ⇒
+                val ga: SLR#C[A] = fa
+                val ha: TLI#C[A] = w.subst[({ type L[B[_]] = B[A] })#L](ga)
+                val ia: tl.ICS#C[A] = ha
+                tl.trans.apply(ia)
+            }
+          }
+      }
+    }
+
+  def selectionSort[Idx <: HList, L <: HList](implicit ss: SelectionSort[Idx, L]): NaturalTransformation[ss.ICS#C, ss.OCS#C] =
+    ss.trans
+}
 
 trait Transfigure[F[_], G[_], Z[_]] {
   def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): G[B]
