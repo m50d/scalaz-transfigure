@@ -40,7 +40,12 @@ class SelectLeastSpec extends mutable.Specification {
   }
 
   implicitly[LTIndexed[OptionContext :: ListContext :: HNil, ListContext, OptionContext]]
-  val sl2 = SelectLeast.selectLeast(idx, l1)
+  implicitly[SelectLeast[OptionContext :: ListContext :: HNil, ListContext :: HNil, ListContext, HNil]]
+  implicitly[Traverse[OptionContext#C]]
+  implicitly[Applicative[ListContext#C]]
+  
+  SelectLeast.selectLeastLtEq[OptionContext :: ListContext :: HNil, ListContext, OptionContext, ListContext :: HNil, HNil]
+//  val sl2 = SelectLeast.selectLeast(idx, l1)
 }
 
 class TransfigureSpec extends mutable.Specification {
