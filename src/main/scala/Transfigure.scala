@@ -107,11 +107,11 @@ case object CSNil extends ContextStack[HNil]
 
 case class CSCons[C <: Context, L <: HList](tl: ContextStack[L]) extends ContextStack[C :: L]
 
-trait SelectLeast[Idx <: HList, L <: HList, C <: Context, R <: HList]{
+trait SelectLeast[Idx <: HList, L <: HList, C <: Context, R <: HList] {
   type LCS <: ContextStack[L]
   type RCS <: ContextStack[R]
   type CRCS[A] = C#C[RCS#Out[A]]
-  
+
   val trans: NaturalTransformation[LCS#Out, CRCS]
 }
 
@@ -123,37 +123,32 @@ object SelectLeast {
     type RCS = ContextStack[HNil] {
       type Out[A] = A
     }
-    
+
     val trans = new NaturalTransformation[C#C, C#C] {
       def apply[A](fa: C#C[A]) = fa
     }
   }
 
   implicit def selectLeastLtEq[Idx <: HList, C <: Context, D <: Context, RemI <: HList, RemO <: HList](
-      implicit tl: SelectLeast[Idx, RemI, C, RemO], traverse: Traverse[D#C], ap: Applicative[C#C]) =
-        new SelectLeast[Idx, D :: RemI, C, D :: RemO] {
-    type LCS = ContextStack[D :: RemI] {
-      type Out[A] = D#C[tl.LCS#Out[A]]
+    implicit tl: SelectLeast[Idx, RemI, C, RemO], traverse: Traverse[D#C], ap: Applicative[C#C]) =
+    new SelectLeast[Idx, D :: RemI, C, D :: RemO] {
+      type LCS = ContextStack[D :: RemI] {
+        type Out[A] = D#C[tl.LCS#Out[A]]
+      }
+      type RCS = ContextStack[D :: RemO] {
+        type Out[A] = D#C[tl.RCS#Out[A]]
+      }
+
+      val trans = new NaturalTransformation[LCS#Out, CRCS] {
+        def apply[A](ffa: D#C[tl.LCS#Out[A]]): C#C[D#C[tl.RCS#Out[A]]] =
+          ffa.traverse[C#C, tl.RCS#Out[A]] {
+            fa: tl.LCS#Out[A] ⇒
+              tl.trans.apply(fa)
+          }
+      }
+
     }
-    type RCS = ContextStack[D :: RemO] {
-      type Out[A] = D#C[tl.RCS#Out[A]]
-    }
-    
-    val trans = new NaturalTransformation[LCS#Out, CRCS] {
-      def apply[A](fa: D#C[tl.LCS#Out[A]]): C#C[D#C[tl.RCS#Out[A]]]  =
-        fa.traverse[C#C, tl.RCS#Out[A]](tl.trans.apply)
-    }
-    
-  }
-//  implicit def selectLeastLt[Idx <: HList, C <: Context, D <: Context, RemI <: HList, RemO <: HList, RemIcs <: ContextStack[RemI], RemOcs <: ContextStack[C :: RemO]](
-//    implicit lt: LTEqIndexed[Idx, C, D], tl: SelectLeast[Idx, RemI, C, RemO, RemIcs, RemOcs],
-//    ics: ContextStack[D :: RemI], ocs: ContextStack[C :: D :: RemO], tr: Traverse[D#C], ap: Applicative[C#C]) =
-//    new SelectLeast[Idx, D :: RemI, C, D :: RemO, ics.type, ocs.type] {
-//      def apply[A](fa: ics.Out[A]) = {
-//        val ffa: D#C[RemIcs#Out[A]] = fa.asInstanceOf[D#C[RemIcs#Out[A]]]
-//        ffa.traverse[C#C, RemOcs#Out[A]](tl.apply(_))
-//      }
-//    }
+  
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
