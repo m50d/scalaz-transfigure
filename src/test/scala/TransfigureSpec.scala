@@ -16,6 +16,8 @@ class LTEqIndexedSpec extends mutable.Specification {
   implicitly[LTEqIndexed[Int :: String :: HNil, String, Int]]
 }
 
+
+
 class TransfigureSpec extends mutable.Specification {
 
   "Transfigure" should {

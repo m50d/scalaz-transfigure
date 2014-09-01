@@ -170,6 +170,19 @@ object SelectLeast {
 
 }
 
+trait SelectionSort[Idx <: HList, I <: HList, O <: HList] {
+  type ICS <: ContextStack[I]
+  type OCS <: ContextStack[O]
+
+  val trans: NaturalTransformation[ICS#Out, OCS#Out]
+}
+
+trait LowPrioritySelectionSort {}
+
+object SelectionSort extends LowPrioritySelectionSort {
+
+}
+
 trait Transfigure[F[_], G[_], Z[_]] {
   def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): G[B]
 }
