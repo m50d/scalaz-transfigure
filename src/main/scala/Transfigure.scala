@@ -127,7 +127,7 @@ object SelectLeast {
     }
   }
 
-  implicit def selectLeastLtEq[Idx <: HList, C1 <: Context, D <: Context, RemI <: HList, RemO <: HList](
+  implicit def selectLeastLtEq[Idx <: HList, D <: Context, RemI <: HList, C1 <: Context, RemO <: HList](
     implicit lteq: LTIndexed[Idx, C1, D], tl: SelectLeast[Idx, RemI] {
       type C = C1
       type R = RemO
