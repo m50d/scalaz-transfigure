@@ -54,11 +54,14 @@ object LTEqIndexed {
     new LTEqIndexed[Idx, A, B] {}
 }
 
-//  trait NonDecreasing[L <: HList]
-//  implicit def hnilNonDecreasing = new NonDecreasing[HNil] {}
-//  implicit def hlistNonDecreasing1[H] = new NonDecreasing[H :: HNil] {}
-//  implicit def hlistNonDecreasing2[H1 <: Nat, H2 <: Nat, T <: HList]
-//    (implicit ltEq : H1 <= H2, ndt : NonDecreasing[H2 :: T]) = new NonDecreasing[H1 :: H2 :: T] {}
+trait NonDecreasingIndexed[Idx <: HList, L <: HList]
+
+object NonDecreasingIndexed {
+  implicit def hnilNonDecreasing[Idx <: HList] = new NonDecreasingIndexed[Idx, HNil] {}
+  implicit def hlistNonDecreasing1[Idx <: HList, H] = new NonDecreasingIndexed[Idx, H :: HNil] {}
+  implicit def hlistNonDecreasing2[Idx <: HList, H1, H2, T <: HList](implicit ltEq: LTEqIndexed[Idx, H1, H2], ndt: NonDecreasingIndexed[Idx, H2 :: T]) =
+    new NonDecreasingIndexed[Idx, H1 :: H2 :: T] {}
+}
 
 trait Transfigure[F[_], G[_], Z[_]] {
   def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): G[B]
