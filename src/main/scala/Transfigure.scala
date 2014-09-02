@@ -114,6 +114,18 @@ object SelectLeastHelper {
       type D = D1
       type R = HNil
     }
+  implicit def consLt[Idx <: HList, C1 <: Context, D1 <: Context, R1 <: HList](implicit lt: LTIndexed[Idx, C1, D1]) =
+    new SelectLeastHelper[Idx, C1 :: D1 :: R1] {
+      type C = C1
+      type D = D1
+      type R = R1
+    }
+  implicit def consGt[Idx <: HList, C1 <: Context, D1 <: Context, R1 <: HList](implicit gt: GTIndexed[Idx, C1, D1]) =
+    new SelectLeastHelper[Idx, D1 :: C1 :: R1] {
+      type C = D1
+      type D = C1
+      type R = R1
+    }
 }
 
 trait SelectLeast[Idx <: HList, L <: HList] {
