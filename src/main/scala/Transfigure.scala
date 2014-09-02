@@ -163,9 +163,11 @@ object SelectLeast {
     }
   }
 
-  implicit def selectLeastCons[Idx <: HList, C <: Context, D <: Context, R1 <: HList](
-    implicit step: SelectionStep[Idx, C, D], tl: SelectLeast[Idx, D :: R1], f: Functor[C#C]) =
-    new SelectLeast[Idx, C :: D :: R1] {
+  implicit def selectLeastCons[Idx <: HList, L <: HList, C <: Context, D <: Context](
+    implicit tl: SelectLeast[Idx, L] {
+      type X = D
+    }, step: SelectionStep[Idx, C, D], f: Functor[C#C]) =
+    new SelectLeast[Idx, C :: L] {
       type X = step.X
       type R = step.Y :: tl.R
 
