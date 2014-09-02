@@ -22,7 +22,7 @@ class SelectionStepSpec extends mutable.Specification {
   type OptionContext = Context.Aux[Option]
   type ListContext = Context.Aux[List]
   type Idx = OptionContext :: ListContext :: HNil
-  
+
   "SelectionStep" should {
     "option.list" in {
       SelectionStep[Idx, OptionContext, ListContext].trans(Some(List(5))) ====
@@ -44,17 +44,11 @@ class SelectLeastSpec extends mutable.Specification {
     type C[A] = Option[A]
   }
 
-  var idx: OptionContext :: ListContext :: HNil = _
-  var l1: OptionContext :: ListContext :: HNil = _
-  var t1: ListContext :: HNil = _
-
-//  val sl1 = SelectLeast.selectLeast(idx, t1)
-
-//  "SelectLeast" should {
-//    "List" in {
-//      sl1.apply(List(5)) ==== List(5)
-//    }
-//  }
+  //  var idx: OptionContext :: ListContext :: HNil = _
+  //  var l1: OptionContext :: ListContext :: HNil = _
+  //  var t1: ListContext :: HNil = _
+  //
+  //  val sl1 = SelectLeast.selectLeast(idx, t1)
 
   type Idx = OptionContext :: ListContext :: HNil
   type C = ListContext
@@ -66,10 +60,22 @@ class SelectLeastSpec extends mutable.Specification {
   implicitly[Traverse[D#C]]
   implicitly[Applicative[C#C]]
 
-//  val x: SelectLeast[Idx, D :: RemI] =
-//    SelectLeast.selectLeastLtEq[Idx, D, RemI, C, RemO]
-//  implicitly[SelectLeast[Idx, D :: RemI]]
-//  val sl2 = SelectLeast.selectLeast[Idx, D :: RemI](idx, l1)
+  //  val sl2 = SelectLeast.selectLeast[Idx, D :: RemI](idx, l1)
+
+  "SelectLeast" should {
+    "list" in {
+      val sl1 = SelectLeast.selectLeast[ListContext :: HNil, ListContext :: HNil]
+      sl1.apply(List(5)) ==== List(5)
+    }
+    "list.option" in {
+      val sl3 = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
+      sl3.apply(List(Some(5))) ==== List(Some(5))
+    }
+    "option.list" in {
+      val sl3 = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil]
+      sl3.apply(Some(List(5))) ==== List(Some(5))
+    }
+  }
 }
 
 class TransfigureSpec extends mutable.Specification {
