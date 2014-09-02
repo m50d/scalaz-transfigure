@@ -31,13 +31,13 @@ class SelectLeastSpec extends mutable.Specification {
   var l1: OptionContext :: ListContext :: HNil = _
   var t1: ListContext :: HNil = _
 
-  val sl1 = SelectLeast.selectLeast(idx, t1)
+//  val sl1 = SelectLeast.selectLeast(idx, t1)
 
-  "SelectLeast" should {
-    "List" in {
-      sl1.apply(List(5)) ==== List(5)
-    }
-  }
+//  "SelectLeast" should {
+//    "List" in {
+//      sl1.apply(List(5)) ==== List(5)
+//    }
+//  }
 
   type Idx = OptionContext :: ListContext :: HNil
   type C = ListContext
@@ -49,8 +49,8 @@ class SelectLeastSpec extends mutable.Specification {
   implicitly[Traverse[D#C]]
   implicitly[Applicative[C#C]]
 
-  val x: SelectLeast[Idx, D :: RemI] =
-    SelectLeast.selectLeastLtEq[Idx, D, RemI, C, RemO]
+//  val x: SelectLeast[Idx, D :: RemI] =
+//    SelectLeast.selectLeastLtEq[Idx, D, RemI, C, RemO]
 //  implicitly[SelectLeast[Idx, D :: RemI]]
 //  val sl2 = SelectLeast.selectLeast[Idx, D :: RemI](idx, l1)
 }

@@ -101,41 +101,47 @@ trait ContextStack[L <: HList] {
   type Out[_]
 }
 
-trait SelectLeastHelper[Idx <: HList, L <: HList] {
-  type C <: Context
-  type D <: Context
-  type R <: HList
+trait SelectionStep[Idx <: HList, C <: Context, D <: Context] {
+  type X <: Context
+  type Y <: Context
+
+  type I[A] = C#C[D#C[A]]
+  type O[A] = X#C[Y#C[A]]
+
+  val trans: NaturalTransformation[I, O]
 }
 
-object SelectLeastHelper {
-  implicit def nil[Idx <: HList, C1 <: Context, D1 <: Context](implicit lt: LTIndexed[Idx, C1, D1]) =
-    new SelectLeastHelper[Idx, C1 :: D1 :: HNil] {
-      type C = C1
-      type D = D1
-      type R = HNil
+object SelectionStep {
+  implicit def lt[Idx <: HList, C <: Context, D <: Context](implicit lt: LTIndexed[Idx, C, D]) = new SelectionStep[Idx, C, D] {
+    type X = C
+    type Y = D
+    val trans = new NaturalTransformation[I, O] {
+      def apply[A](fa: C#C[D#C[A]]) = fa
     }
-  implicit def consLt[Idx <: HList, C1 <: Context, D1 <: Context, R1 <: HList](implicit lt: LTIndexed[Idx, C1, D1]) =
-    new SelectLeastHelper[Idx, C1 :: D1 :: R1] {
-      type C = C1
-      type D = D1
-      type R = R1
+  }
+
+  implicit def gt[Idx <: HList, C <: Context, D <: Context](implicit gt: GTIndexed[Idx, C, D], traverse: Traverse[C#C], ap: Applicative[D#C]) = new SelectionStep[Idx, C, D] {
+    type X = D
+    type Y = C
+    val trans = new NaturalTransformation[I, O] {
+      def apply[A](fa: C#C[D#C[A]]) = fa.sequence
     }
-  implicit def consGt[Idx <: HList, C1 <: Context, D1 <: Context, R1 <: HList](implicit gt: GTIndexed[Idx, C1, D1]) =
-    new SelectLeastHelper[Idx, D1 :: C1 :: R1] {
-      type C = D1
-      type D = C1
-      type R = R1
-    }
+  }
+
+  type Aux[Idx <: HList, C <: Context, D <: Context, X1 <: Context, Y1 <: Context] = SelectionStep[Idx, C, D] {
+    type X = X1
+    type Y = Y1
+  }
 }
 
 trait SelectLeast[Idx <: HList, L <: HList] {
   type C <: Context
   type R <: HList
-  type LCS <: ContextStack[L]
-  type RCS <: ContextStack[R]
-  type CRCS[A] = C#C[RCS#Out[A]]
-
-  val trans: NaturalTransformation[LCS#Out, CRCS]
+  //  type LCS <: ContextStack[L]
+  //  type RCS <: ContextStack[R]
+  //  type CRCS[A] = C#C[RCS#Out[A]]
+  //
+  //  val trans: NaturalTransformation[LCS#Out, CRCS]
 }
 
 object SelectLeast {
@@ -147,63 +153,27 @@ object SelectLeast {
   implicit def selectLeast1[Idx <: HList, C1 <: Context] = new SelectLeast[Idx, C1 :: HNil] {
     type C = C1
     type R = HNil
-    type LCS = ContextStack[C :: HNil] {
-      type Out[A] = C#C[A]
-    }
-    type RCS = ContextStack[HNil] {
-      type Out[A] = A
-    }
-
-    val trans = new NaturalTransformation[C#C, C#C] {
-      def apply[A](fa: C#C[A]) = fa
-    }
+    //    type LCS = ContextStack[C :: HNil] {
+    //      type Out[A] = C#C[A]
+    //    }
+    //    type RCS = ContextStack[HNil] {
+    //      type Out[A] = A
+    //    }
+    //
+    //    val trans = new NaturalTransformation[C#C, C#C] {
+    //      def apply[A](fa: C#C[A]) = fa
+    //    }
   }
 
-  implicit def selectLeastLtEq[Idx <: HList, D <: Context, RemI <: HList, C1 <: Context, RemO <: HList](
-    implicit lteq: LTIndexed[Idx, C1, D], tl: Aux[Idx, RemI, C1, RemO], traverse: Traverse[D#C], ap: Applicative[C1#C]) =
-    new SelectLeast[Idx, D :: RemI] {
-      type C = C1
-      type R = D :: RemO
-      type LCS = ContextStack[D :: RemI] {
-        type Out[A] = D#C[tl.LCS#Out[A]]
-      }
-      type RCS = ContextStack[D :: RemO] {
-        type Out[A] = D#C[tl.RCS#Out[A]]
-      }
-
-      val trans = new NaturalTransformation[LCS#Out, CRCS] {
-        def apply[A](ffa: D#C[tl.LCS#Out[A]]): C#C[D#C[tl.RCS#Out[A]]] =
-          ffa.traverse[C#C, tl.RCS#Out[A]] {
-            fa: tl.LCS#Out[A] ⇒
-              tl.trans.apply(fa)
-          }
-      }
+  implicit def selectLeastCons[Idx <: HList, C <: Context, D <: Context, R1 <: HList](
+    implicit step: SelectionStep[Idx, C, D], tl: SelectLeast[Idx, D :: R1]) =
+    new SelectLeast[Idx, C :: D :: R1] {
+      type C = step.X
+      type R = step.Y :: tl.R
     }
 
-  implicit def selectLeastGt[Idx <: HList, C1 <: Context, D <: Context, RemI <: HList, RemO <: HList](
-    implicit gt: GTIndexed[Idx, C1, D], tl: Aux[Idx, RemI, C1, RemO], func: Functor[D#C]) =
-    new SelectLeast[Idx, D :: RemI] {
-      type C = D
-      type R = C1 :: RemO
-      type LCS = ContextStack[D :: RemI] {
-        type Out[A] = D#C[tl.LCS#Out[A]]
-      }
-      type RCS = ContextStack[C1 :: RemO] {
-        type Out[A] = C1#C[tl.RCS#Out[A]]
-      }
-
-      val trans = new NaturalTransformation[LCS#Out, CRCS] {
-        def apply[A](ffa: D#C[tl.LCS#Out[A]]): D#C[C1#C[tl.RCS#Out[A]]] =
-          ffa.map {
-            fa: tl.LCS#Out[A] ⇒
-              tl.trans.apply(fa)
-          }
-      }
-
-    }
-
-  def selectLeast[Idx <: HList, L <: HList](idx: Idx, l: L)(implicit sl: SelectLeast[Idx, L]): NaturalTransformation[sl.LCS#Out, sl.CRCS] =
-    sl.trans
+  //  def selectLeast[Idx <: HList, L <: HList](idx: Idx, l: L)(implicit sl: SelectLeast[Idx, L]): NaturalTransformation[sl.LCS#Out, sl.CRCS] =
+  //    sl.trans
 }
 
 trait SelectionSort[Idx <: HList, I <: HList, O <: HList] {
