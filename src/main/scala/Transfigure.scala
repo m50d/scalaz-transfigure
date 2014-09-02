@@ -132,6 +132,8 @@ object SelectionStep {
     type X = X1
     type Y = Y1
   }
+  def apply[Idx <: HList, C <: Context, D <: Context](implicit ss: SelectionStep[Idx, C, D]): Aux[Idx, C, D, ss.X, ss.Y] =
+    ss
 }
 
 trait SelectLeast[Idx <: HList, L <: HList] {

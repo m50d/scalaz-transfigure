@@ -18,6 +18,23 @@ class LTEqIndexedSpec {
   implicitly[LTIndexed[Int :: String :: HNil, String, Int]]
 }
 
+class SelectionStepSpec extends mutable.Specification {
+  type OptionContext = Context.Aux[Option]
+  type ListContext = Context.Aux[List]
+  type Idx = OptionContext :: ListContext :: HNil
+  
+  "SelectionStep" should {
+    "option.list" in {
+      SelectionStep[Idx, OptionContext, ListContext].trans(Some(List(5))) ====
+        List(Some(5))
+    }
+    "list.option" in {
+      SelectionStep[Idx, ListContext, OptionContext].trans(List(Some(5))) ====
+        List(Some(5))
+    }
+  }
+}
+
 class SelectLeastSpec extends mutable.Specification {
   type ListContext = Context {
     type C[A] = List[A]
