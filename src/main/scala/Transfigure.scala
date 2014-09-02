@@ -137,41 +137,49 @@ object SelectionStep {
 }
 
 trait SelectLeast[Idx <: HList, L <: HList] {
-  type C <: Context
+  type X <: Context
   type R <: HList
-  //  type LCS <: ContextStack[L]
-  //  type RCS <: ContextStack[R]
-  //  type CRCS[A] = C#C[RCS#Out[A]]
-  //
-  //  val trans: NaturalTransformation[LCS#Out, CRCS]
+
+  type LCS[A]
+  type RCS[A]
+  type CRCS[A] = X#C[RCS[A]]
+
+  val trans: NaturalTransformation[LCS, CRCS]
 }
 
 object SelectLeast {
-  type Aux[Idx <: HList, L <: HList, C1 <: Context, R1 <: HList] = SelectLeast[Idx, L] {
-    type C = C1
+  type Aux[Idx <: HList, L <: HList, C <: Context, R1 <: HList] = SelectLeast[Idx, L] {
+    type X = C
     type R = R1
   }
 
-  implicit def selectLeast1[Idx <: HList, C1 <: Context] = new SelectLeast[Idx, C1 :: HNil] {
-    type C = C1
+  implicit def selectLeast1[Idx <: HList, C <: Context] = new SelectLeast[Idx, C :: HNil] {
+    type X = C
     type R = HNil
-    //    type LCS = ContextStack[C :: HNil] {
-    //      type Out[A] = C#C[A]
-    //    }
-    //    type RCS = ContextStack[HNil] {
-    //      type Out[A] = A
-    //    }
-    //
-    //    val trans = new NaturalTransformation[C#C, C#C] {
-    //      def apply[A](fa: C#C[A]) = fa
-    //    }
+    type LCS[A] = C#C[A]
+    type RCS[A] = A
+    val trans = new NaturalTransformation[LCS, CRCS] {
+      def apply[A](fa: C#C[A]) = fa
+    }
   }
 
   implicit def selectLeastCons[Idx <: HList, C <: Context, D <: Context, R1 <: HList](
-    implicit step: SelectionStep[Idx, C, D], tl: SelectLeast[Idx, D :: R1]) =
+    implicit step: SelectionStep[Idx, C, D], tl: SelectLeast[Idx, D :: R1], f: Functor[C#C]) =
     new SelectLeast[Idx, C :: D :: R1] {
-      type C = step.X
+      type X = step.X
       type R = step.Y :: tl.R
+
+      type LCS[A] = C#C[tl.LCS[A]]
+      type RCS[A] = step.Y#C[tl.RCS[A]]
+
+      val trans = new NaturalTransformation[LCS, CRCS] {
+        def apply[A](fa: C#C[tl.LCS[A]]) = {
+          val ga: C#C[tl.CRCS[A]] = fa map {
+            tl.trans.apply(_)
+          }
+          step.trans(ga)
+        }
+      }
     }
 
   //  def selectLeast[Idx <: HList, L <: HList](idx: Idx, l: L)(implicit sl: SelectLeast[Idx, L]): NaturalTransformation[sl.LCS#Out, sl.CRCS] =
