@@ -9,6 +9,18 @@ import test._
 import scalaz._
 import scalaz.Scalaz._
 
+object Aliases {
+  type EitherR[A] = Either[Unit, A]
+  type IntReader[A] = scalaz.Reader[Int, A]
+  type OptionContext = Context.Aux[Option]
+  type ListContext = Context.Aux[List]
+  type EitherRContext = Context.Aux[EitherR]
+  type IntReaderContext = Context.Aux[IntReader]
+  type Idx = OptionContext :: ListContext :: EitherRContext :: HNil
+}
+
+import Aliases._
+
 class IndexOfSpec {
   val p = IndexOf[String :: Int :: Long :: HNil, Int]
   implicitly[p.Out =:= _1]
@@ -19,9 +31,6 @@ class LTEqIndexedSpec {
 }
 
 class SelectionStepSpec extends mutable.Specification {
-  type OptionContext = Context.Aux[Option]
-  type ListContext = Context.Aux[List]
-  type Idx = OptionContext :: ListContext :: HNil
 
   "SelectionStep" should {
     "option.list" in {
@@ -36,32 +45,6 @@ class SelectionStepSpec extends mutable.Specification {
 }
 
 class SelectLeastSpec extends mutable.Specification {
-  type ListContext = Context {
-    type C[A] = List[A]
-  }
-
-  type OptionContext = Context {
-    type C[A] = Option[A]
-  }
-
-  //  var idx: OptionContext :: ListContext :: HNil = _
-  //  var l1: OptionContext :: ListContext :: HNil = _
-  //  var t1: ListContext :: HNil = _
-  //
-  //  val sl1 = SelectLeast.selectLeast(idx, t1)
-
-  type Idx = OptionContext :: ListContext :: HNil
-  type C = ListContext
-  type D = OptionContext
-  type RemI = ListContext :: HNil
-  type RemO = HNil
-  implicitly[LTIndexed[Idx, C, D]]
-  implicitly[SelectLeast[Idx, RemI]]
-  implicitly[Traverse[D#C]]
-  implicitly[Applicative[C#C]]
-
-  //  val sl2 = SelectLeast.selectLeast[Idx, D :: RemI](idx, l1)
-
   "SelectLeast" should {
     "list" in {
       val sl1 = SelectLeast.selectLeast[ListContext :: HNil, ListContext :: HNil]
@@ -81,9 +64,6 @@ class SelectLeastSpec extends mutable.Specification {
 class TransfigureSpec extends mutable.Specification {
 
   "Transfigure" should {
-
-    type EitherR[A] = Either[Unit, A]
-    type IntReader[A] = scalaz.Reader[Int, A]
 
     //    "map" in {
     //      val fa: Option[Int] = Some(42)
