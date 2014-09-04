@@ -249,6 +249,9 @@ object SelectionSort {
 
       }
     }
+  
+  def selectionSort[Idx <: HList, L <: HList](implicit ss: SelectionSort[Idx, L]): NaturalTransformation[ss.ICS#C, ss.OCS#C] =
+    ss.trans
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
