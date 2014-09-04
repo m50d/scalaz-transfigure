@@ -246,10 +246,9 @@ object SelectionSort {
                 tl.trans.apply(ia)
             }
           }
-
       }
     }
-  
+
   def selectionSort[Idx <: HList, L <: HList](implicit ss: SelectionSort[Idx, L]): NaturalTransformation[ss.ICS#C, ss.OCS#C] =
     ss.trans
 }
