@@ -6,7 +6,7 @@ import scalaz._
 import scalaz.Scalaz._
 import Nat._0
 
-trait LT[A <: Nat, B <: Nat]
+sealed trait LT[A <: Nat, B <: Nat]
 
 object LT {
   implicit def lt1[B <: Nat] = new LT[_0, Succ[B]] {}
@@ -14,7 +14,7 @@ object LT {
     new LT[Succ[A], Succ[B]] {}
 }
 
-trait GT[A <: Nat, B <: Nat]
+sealed trait GT[A <: Nat, B <: Nat]
 
 object GT {
   implicit def gt1[B <: Nat] = new GT[Succ[B], _0] {}
@@ -22,7 +22,7 @@ object GT {
     new GT[Succ[A], Succ[B]] {}
 }
 
-trait IndexOf[Idx <: HList, A] {
+sealed trait IndexOf[Idx <: HList, A] {
   type Out <: Nat
 }
 
@@ -41,7 +41,7 @@ object IndexOf extends LowPriorityIndexOf {
   def apply[Idx <: HList, A](implicit io: IndexOf[Idx, A]): Aux[Idx, A, io.Out] = io
 }
 
-trait IdxAndLtEq[Idx <: HList, A, B] {
+sealed trait IdxAndLtEq[Idx <: HList, A, B] {
   type Out <: LT[_ <: Nat, _ <: Nat]
 }
 
@@ -54,7 +54,7 @@ object IdxAndLtEq {
   def apply[Idx <: HList, A, B](implicit ile: IdxAndLtEq[Idx, A, B]): Aux[Idx, A, B, ile.Out] = ile
 }
 
-trait IdxAndGt[Idx <: HList, A, B] {
+sealed trait IdxAndGt[Idx <: HList, A, B] {
   type Out <: GT[_ <: Nat, _ <: Nat]
 }
 
@@ -66,19 +66,19 @@ object IdxAndGt {
   type Aux[Idx <: HList, A, B, O <: GT[_ <: Nat, _ <: Nat]] = IdxAndGt[Idx, A, B] { type Out = O }
 }
 
-trait LTIndexed[Idx <: HList, A, B]
+sealed trait LTIndexed[Idx <: HList, A, B]
 object LTIndexed {
   implicit def ltEqIndexed[Idx <: HList, A, B, O <: LT[_ <: Nat, _ <: Nat]](implicit i: IdxAndLtEq.Aux[Idx, A, B, O], l: O) =
     new LTIndexed[Idx, A, B] {}
 }
 
-trait GTIndexed[Idx <: HList, A, B]
+sealed trait GTIndexed[Idx <: HList, A, B]
 object GTIndexed {
   implicit def gtIndexed[Idx <: HList, A, B, O <: GT[_ <: Nat, _ <: Nat]](implicit i: IdxAndGt.Aux[Idx, A, B, O], l: O) =
     new GTIndexed[Idx, A, B] {}
 }
 
-trait NonDecreasingIndexed[Idx <: HList, L <: HList]
+sealed trait NonDecreasingIndexed[Idx <: HList, L <: HList]
 
 object NonDecreasingIndexed {
   implicit def hnilNonDecreasing[Idx <: HList] = new NonDecreasingIndexed[Idx, HNil] {}
@@ -97,11 +97,7 @@ object Context {
   }
 }
 
-trait ContextStack[L <: HList] {
-  type Out[_]
-}
-
-trait SelectionStep[Idx <: HList, C1 <: Context, D <: Context] {
+sealed trait SelectionStep[Idx <: HList, C1 <: Context, D <: Context] {
   type X <: Context
   type Y <: Context
 
@@ -140,7 +136,7 @@ object SelectionStep {
     ss
 }
 
-trait SelectLeast[Idx <: HList, L <: HList] {
+sealed trait SelectLeast[Idx <: HList, L <: HList] {
   type X <: Context
   type R <: HList
 
@@ -192,7 +188,7 @@ object SelectLeast {
     sl.trans
 }
 
-trait SelectionSort[Idx <: HList, L <: HList] {
+sealed trait SelectionSort[Idx <: HList, L <: HList] {
   type ICS[A]
   type OCS[A]
 
@@ -209,28 +205,28 @@ object SelectionSort {
     }
   }
 
-  implicit def cons[Idx <: HList, L <: HList, C <: Context, R <: HList, SLR <: Context, TLI <: Context](implicit sl: SelectLeast.Aux[Idx, L, C, R] {
-    type RCS = SLR
-  },
-    tl: SelectionSort[Idx, R] {
-      type ICS = TLI
-    }, f: Functor[C#C], w: Leibniz.===[SLR, TLI]) =
-    new SelectionSort[Idx, L] {
-      type ICS[A] = sl.LCS[A]
-      type OCS[A] = C#C[tl.OCS[A]]
-      val trans = new NaturalTransformation[ICS, OCS] {
-        def apply[A](ffa: ICS[A]) =
-          {
-            val stepped = sl.trans.apply(ffa)
-            stepped.map {
-              fa: sl.RCS#C[A] ⇒
-                val ga: SLR#C[A] = fa
-                tl.trans.apply(fa)
-            }
-          }
-
-      }
-    }
+//  implicit def cons[Idx <: HList, L <: HList, C <: Context, R <: HList, SLR <: Context, TLI <: Context](implicit sl: SelectLeast.Aux[Idx, L, C, R] {
+//    type RCS = SLR
+//  },
+//    tl: SelectionSort[Idx, R] {
+//      type ICS = TLI
+//    }, f: Functor[C#C], w: Leibniz.===[SLR, TLI]) =
+//    new SelectionSort[Idx, L] {
+//      type ICS[A] = sl.LCS[A]
+//      type OCS[A] = C#C[tl.OCS[A]]
+//      val trans = new NaturalTransformation[ICS, OCS] {
+//        def apply[A](ffa: ICS[A]) =
+//          {
+//            val stepped = sl.trans.apply(ffa)
+//            stepped.map {
+//              fa: sl.RCS#C[A] ⇒
+//                val ga: SLR#C[A] = fa
+//                tl.trans.apply(fa)
+//            }
+//          }
+//
+//      }
+//    }
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
