@@ -35,11 +35,11 @@ class SelectionStepSpec extends mutable.Specification {
   "SelectionStep" should {
     "option.list" in {
       SelectionStep[Idx, OptionContext, ListContext].trans(Some(List(5))) ====
-        List(Some(5))
+        Some(List(5))
     }
     "list.option" in {
       SelectionStep[Idx, ListContext, OptionContext].trans(List(Some(5))) ====
-        List(Some(5))
+        Some(List(5))
     }
   }
 }
@@ -52,11 +52,11 @@ class SelectLeastSpec extends mutable.Specification {
     }
     "list.option" in {
       val sl3 = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
-      sl3.apply(List(Some(5))) ==== List(Some(5))
+      sl3.apply(List(Some(5))) ==== Some(List(5))
     }
     "option.list" in {
       val sl3 = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil]
-      sl3.apply(Some(List(5))) ==== List(Some(5))
+      sl3.apply(Some(List(5))) ==== Some(List(5))
     }
   }
 }

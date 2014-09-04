@@ -112,7 +112,7 @@ trait SelectionStep[Idx <: HList, C <: Context, D <: Context] {
 }
 
 object SelectionStep {
-  implicit def lt[Idx <: HList, C <: Context, D <: Context](implicit lt: LTIndexed[Idx, C, D]) = new SelectionStep[Idx, C, D] {
+  implicit def gt[Idx <: HList, C <: Context, D <: Context](implicit gt: GTIndexed[Idx, C, D]) = new SelectionStep[Idx, C, D] {
     type X = C
     type Y = D
     val trans = new NaturalTransformation[I, O] {
@@ -120,7 +120,7 @@ object SelectionStep {
     }
   }
 
-  implicit def gt[Idx <: HList, C <: Context, D <: Context](implicit gt: GTIndexed[Idx, C, D], traverse: Traverse[C#C], ap: Applicative[D#C]) = new SelectionStep[Idx, C, D] {
+  implicit def lt[Idx <: HList, C <: Context, D <: Context](implicit lt: LTIndexed[Idx, C, D], traverse: Traverse[C#C], ap: Applicative[D#C]) = new SelectionStep[Idx, C, D] {
     type X = D
     type Y = C
     val trans = new NaturalTransformation[I, O] {
