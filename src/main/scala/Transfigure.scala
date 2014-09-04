@@ -188,6 +188,19 @@ object SelectLeast {
     sl.trans
 }
 
+sealed trait Leib1[A[_], B[_]] {
+  def subst[F[_[_]]](fa: F[A]): F[B]
+}
+
+object Leib1 {
+  implicit def refl[A[_]] = new Leib1[A, A] {
+    def subst[F[_[_]]](fa: F[A]) = fa
+  }
+  
+  def lift[F[_[_], _], A[_], B[_]](ab: Leib1[A, B]) =
+    ab.subst[({type L[X[_]] = Leib1[({type K[C] = F[A, C]})#K, ({type J[C] = F[X, C]})#J]})#L](refl[({type I[C] = F[A, C]})#I])
+}
+
 sealed trait SelectionSort[Idx <: HList, L <: HList] {
   type ICS[A]
   type OCS[A]
