@@ -1,6 +1,6 @@
 package scalaz.transfigure
 
-import shapeless._
+import shapeless.{ Id ⇒ _, _ }
 import ops.hlist.Length
 import scalaz._
 import scalaz.Scalaz._
@@ -140,11 +140,10 @@ sealed trait SelectLeast[Idx <: HList, L <: HList] {
   type X <: Context
   type R <: HList
 
-  type LCS[A]
-  type RCS[A]
-  //  type CRCS[A] = X#C[RCS[A]]
+  type LCS <: Context
+  type RCS <: Context
 
-  val trans: NaturalTransformation[LCS, ({ type CRCS[A] = X#C[RCS[A]] })#CRCS]
+  val trans: NaturalTransformation[LCS#C, ({ type CRCS[A] = X#C[RCS#C[A]] })#CRCS]
 }
 
 object SelectLeast {
@@ -156,27 +155,31 @@ object SelectLeast {
   implicit def selectLeast1[Idx <: HList, C <: Context] = new SelectLeast[Idx, C :: HNil] {
     type X = C
     type R = HNil
-    type LCS[A] = C#C[A]
-    type RCS[A] = A
-    val trans = new NaturalTransformation[LCS, ({ type CRCS[A] = X#C[RCS[A]] })#CRCS] {
+    type LCS = C
+    type RCS = Context.Aux[Id]
+    val trans = new NaturalTransformation[LCS#C, ({ type CRCS[A] = X#C[RCS#C[A]] })#CRCS] {
       def apply[A](fa: C#C[A]) = fa
     }
   }
 
-  implicit def selectLeastCons[Idx <: HList, L <: HList, C <: Context, D <: Context](
+  implicit def selectLeastCons[Idx <: HList, L <: HList, C1 <: Context, D <: Context](
     implicit tl: SelectLeast[Idx, L] {
       type X = D
-    }, step: SelectionStep[Idx, C, D], f: Functor[C#C]) =
-    new SelectLeast[Idx, C :: L] {
+    }, step: SelectionStep[Idx, C1, D], f: Functor[C1#C]) =
+    new SelectLeast[Idx, C1 :: L] {
       type X = step.X
       type R = step.Y :: tl.R
 
-      type LCS[A] = C#C[tl.LCS[A]]
-      type RCS[A] = step.Y#C[tl.RCS[A]]
+      type LCS = Context {
+        type C[A] = C1#C[tl.LCS#C[A]]
+      }
+      type RCS = Context {
+        type C[A] = step.Y#C[tl.RCS#C[A]]
+      }
 
-      val trans = new NaturalTransformation[LCS, ({ type CRCS[A] = X#C[RCS[A]] })#CRCS] {
-        def apply[A](fa: C#C[tl.LCS[A]]) = {
-          val ga: C#C[tl.X#C[tl.RCS[A]]] = fa map {
+      val trans = new NaturalTransformation[LCS#C, ({ type CRCS[A] = X#C[RCS#C[A]] })#CRCS] {
+        def apply[A](fa: C1#C[tl.LCS#C[A]]) = {
+          val ga: C1#C[tl.X#C[tl.RCS#C[A]]] = fa map {
             tl.trans.apply(_)
           }
           step.trans(ga)
@@ -184,7 +187,7 @@ object SelectLeast {
       }
     }
 
-  def selectLeast[Idx <: HList, L <: HList](implicit sl: SelectLeast[Idx, L]): NaturalTransformation[sl.LCS, ({ type CRCS[A] = sl.X#C[sl.RCS[A]] })#CRCS] =
+  def selectLeast[Idx <: HList, L <: HList](implicit sl: SelectLeast[Idx, L]): NaturalTransformation[sl.LCS#C, ({ type CRCS[A] = sl.X#C[sl.RCS#C[A]] })#CRCS] =
     sl.trans
 }
 
@@ -193,53 +196,59 @@ sealed trait Leib1[A[_], B[_]] {
 }
 
 object Leib1 {
+  type Id[A[_], X] = A[X]
+
   implicit def refl[A[_]] = new Leib1[A, A] {
     def subst[F[_[_]]](fa: F[A]) = fa
   }
-  
+
   def lift[F[_[_], _], A[_], B[_]](ab: Leib1[A, B]) =
-    ab.subst[({type L[X[_]] = Leib1[({type K[C] = F[A, C]})#K, ({type J[C] = F[X, C]})#J]})#L](refl[({type I[C] = F[A, C]})#I])
+    ab.subst[({ type L[X[_]] = Leib1[({ type K[C] = F[A, C] })#K, ({ type J[C] = F[X, C] })#J] })#L](refl[({ type I[C] = F[A, C] })#I])
 }
 
 sealed trait SelectionSort[Idx <: HList, L <: HList] {
-  type ICS[A]
-  type OCS[A]
+  type ICS <: Context
+  type OCS <: Context
 
-  val trans: NaturalTransformation[ICS, OCS]
+  val trans: NaturalTransformation[ICS#C, OCS#C]
 }
 
 object SelectionSort {
   implicit def nil[Idx <: HList] = new SelectionSort[Idx, HNil] {
-    type ICS[A] = A
-    type OCS[A] = A
+    type ICS = Context.Aux[Id]
+    type OCS = Context.Aux[Id]
 
-    val trans = new NaturalTransformation[ICS, OCS] {
+    val trans = new NaturalTransformation[ICS#C, OCS#C] {
       def apply[A](fa: A) = fa
     }
   }
 
-//  implicit def cons[Idx <: HList, L <: HList, C <: Context, R <: HList, SLR <: Context, TLI <: Context](implicit sl: SelectLeast.Aux[Idx, L, C, R] {
-//    type RCS = SLR
-//  },
-//    tl: SelectionSort[Idx, R] {
-//      type ICS = TLI
-//    }, f: Functor[C#C], w: Leibniz.===[SLR, TLI]) =
-//    new SelectionSort[Idx, L] {
-//      type ICS[A] = sl.LCS[A]
-//      type OCS[A] = C#C[tl.OCS[A]]
-//      val trans = new NaturalTransformation[ICS, OCS] {
-//        def apply[A](ffa: ICS[A]) =
-//          {
-//            val stepped = sl.trans.apply(ffa)
-//            stepped.map {
-//              fa: sl.RCS#C[A] ⇒
-//                val ga: SLR#C[A] = fa
-//                tl.trans.apply(fa)
-//            }
-//          }
-//
-//      }
-//    }
+  implicit def cons[Idx <: HList, L <: HList, C1 <: Context, R <: HList, SLR[_], TLI[_]](implicit sl: SelectLeast.Aux[Idx, L, C1, R] {
+    type RCS = Context.Aux[SLR]
+  },
+    tl: SelectionSort[Idx, R] {
+      type ICS = Context.Aux[TLI]
+    }, f: Functor[C1#C], w: Leib1[SLR, TLI]) =
+    new SelectionSort[Idx, L] {
+      type ICS = sl.LCS
+      type OCS = Context {
+        type C[A] = C1#C[tl.OCS#C[A]]
+      }
+      val trans = new NaturalTransformation[ICS#C, OCS#C] {
+        def apply[A](ffa: ICS#C[A]) =
+          {
+            val stepped = sl.trans.apply(ffa)
+            stepped.map {
+              fa: sl.RCS#C[A] ⇒
+                val ga: SLR[A] = fa
+                val ha: TLI[A] = w.subst[({ type L[B[_]] = B[A] })#L](ga)
+                val ia: tl.ICS#C[A] = ha
+                tl.trans.apply(ia)
+            }
+          }
+
+      }
+    }
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
