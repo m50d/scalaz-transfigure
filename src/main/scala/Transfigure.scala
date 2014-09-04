@@ -205,11 +205,16 @@ object SelectionSort {
     }
   }
 
-//  implicit def cons[Idx <: HList, L <: HList, C <: Context, R <: HList](implicit sl: SelectLeast.Aux[Idx, L, C, R],
-//    tl: SelectionSort[Idx, R]) =
-//    new SelectionSort[Idx, L] {
-//
-//    }
+  implicit def cons[Idx <: HList, L <: HList, C <: Context, R <: HList](implicit sl: SelectLeast.Aux[Idx, L, C, R],
+    tl: SelectionSort[Idx, R], f: Functor[C#C]) =
+    new SelectionSort[Idx, L] {
+      type ICS[A] = sl.LCS[A]
+      type OCS[A] = C#C[tl.OCS[A]]
+      val trans = new NaturalTransformation[ICS, OCS] {
+        def apply[A](fa: ICS[A]) =
+          sl.trans.apply(fa).map(tl.trans.apply(_))
+      }
+    }
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
