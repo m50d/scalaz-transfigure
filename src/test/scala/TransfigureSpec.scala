@@ -66,11 +66,17 @@ class SelectLeastSpec extends mutable.Specification {
 }
 
 class SelectionSortSpec extends mutable.Specification {
+  implicitly[SelectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]]
+  
   "SelectionSort" should {
-    "list.either.option" in {
-      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
-      sl.apply(List(Some(Right(5)))) ==== Some(Right(List(5)))
+    "nil" in {
+      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]
+      ss.apply(5) ==== 5
     }
+//    "list.either.option" in {
+//      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
+//      sl.apply(List(Some(Right(5)))) ==== Some(Right(List(5)))
+//    }
   }
 }
 
