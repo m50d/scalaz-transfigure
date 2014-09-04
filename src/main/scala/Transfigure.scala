@@ -212,7 +212,11 @@ object SelectionSort {
       type OCS[A] = C#C[tl.OCS[A]]
       val trans = new NaturalTransformation[ICS, OCS] {
         def apply[A](fa: ICS[A]) =
-          sl.trans.apply(fa).map(tl.trans.apply(_))
+        {
+          val stepped: C#C[sl.RCS[A]] = sl.trans.apply(fa)
+          stepped.map(tl.trans.apply(_))
+        }
+          
       }
     }
 }
