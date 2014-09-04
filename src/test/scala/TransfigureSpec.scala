@@ -47,18 +47,26 @@ class SelectionStepSpec extends mutable.Specification {
 class SelectLeastSpec extends mutable.Specification {
   "SelectLeast" should {
     "list" in {
-      val sl1 = SelectLeast.selectLeast[ListContext :: HNil, ListContext :: HNil]
-      sl1.apply(List(5)) ==== List(5)
+      val sl = SelectLeast.selectLeast[ListContext :: HNil, ListContext :: HNil]
+      sl.apply(List(5)) ==== List(5)
     }
     "list.option" in {
-      val sl3 = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
-      sl3.apply(List(Some(5))) ==== Some(List(5))
+      val sl = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
+      sl.apply(List(Some(5))) ==== Some(List(5))
     }
     "option.list" in {
-      val sl3 = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil]
-      sl3.apply(Some(List(5))) ==== Some(List(5))
+      val sl = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil]
+      sl.apply(Some(List(5))) ==== Some(List(5))
+    }
+    "list.either.option" in {
+      val sl = SelectLeast.selectLeast[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
+      sl.apply(List(Some(Right(5)))) ==== Some(List(Right(5)))
     }
   }
+}
+
+class SelectionSortSpec extends mutable.Specification {
+  
 }
 
 class TransfigureSpec extends mutable.Specification {
