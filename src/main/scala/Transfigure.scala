@@ -188,17 +188,28 @@ object SelectLeast {
     sl.trans
 }
 
-trait SelectionSort[Idx <: HList, I <: HList, O <: HList] {
-  type ICS <: ContextStack[I]
-  type OCS <: ContextStack[O]
+trait SelectionSort[Idx <: HList, L <: HList] {
+  type ICS[A]
+  type OCS[A]
 
-  val trans: NaturalTransformation[ICS#Out, OCS#Out]
+  val trans: NaturalTransformation[ICS, OCS]
 }
 
-trait LowPrioritySelectionSort {}
+object SelectionSort {
+  implicit def nil[Idx <: HList] = new SelectionSort[Idx, HNil] {
+    type ICS[A] = A
+    type OCS[A] = A
 
-object SelectionSort extends LowPrioritySelectionSort {
+    val trans = new NaturalTransformation[ICS, OCS] {
+      def apply[A](fa: A) = fa
+    }
+  }
 
+//  implicit def cons[Idx <: HList, L <: HList, C <: Context, R <: HList](implicit sl: SelectLeast.Aux[Idx, L, C, R],
+//    tl: SelectionSort[Idx, R]) =
+//    new SelectionSort[Idx, L] {
+//
+//    }
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
