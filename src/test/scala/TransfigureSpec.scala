@@ -66,7 +66,12 @@ class SelectLeastSpec extends mutable.Specification {
 }
 
 class SelectionSortSpec extends mutable.Specification {
-  
+  "SelectionSort" should {
+    "list.either.option" in {
+      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
+      sl.apply(List(Some(Right(5)))) ==== Some(Right(List(5)))
+    }
+  }
 }
 
 class TransfigureSpec extends mutable.Specification {
