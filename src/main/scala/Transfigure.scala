@@ -214,7 +214,7 @@ object SelectionSort {
   },
     tl: SelectionSort[Idx, R] {
       type ICS = TLI
-    }, f: Functor[C#C], w: SLR =:= TLI) =
+    }, f: Functor[C#C], w: Leibniz.===[SLR, TLI]) =
     new SelectionSort[Idx, L] {
       type ICS[A] = sl.LCS[A]
       type OCS[A] = C#C[tl.OCS[A]]
