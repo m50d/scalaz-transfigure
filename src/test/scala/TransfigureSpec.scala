@@ -74,14 +74,14 @@ class SelectionSortSpec extends mutable.Specification {
       val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]
       ss.apply(5) ==== 5
     }
-    //    "option" in {
-    //      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil]
-    //      ss.apply(Some(5)) ==== Some(5)
-    //    }
-    //    "list.either.option" in {
-    //      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
-    //      sl.apply(List(Some(Right(5)))) ==== Some(Right(List(5)))
-    //    }
+    "option" in {
+      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil]
+      ss.apply(Some(5)) ==== Some(5)
+    }
+    "list.either.option" in {
+      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
+      ss.apply(List(Some(Right(5)))) ==== Some(Right(List(5)))
+    }
   }
 }
 
