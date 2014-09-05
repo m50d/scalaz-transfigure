@@ -200,8 +200,8 @@ object Leib1 {
     def subst[F[_[_]]](fa: F[C#C]) = fa
   }
 
-//  def lift[F[_[_], _], C <: Context, D <: Context](ab: Leib1[C, D]) =
-//    ab.subst[({ type L[X[_]] = Leib1[({ type K[A] = F[C#C, A] })#K, ({ type J[A] = F[X, A] })#J] })#L](refl[Context.Aux[({ type I[A] = F[C#C, A] })#I]])
+  //  def lift[F[_[_], _], C <: Context, D <: Context](ab: Leib1[C, D]) =
+  //    ab.subst[({ type L[X[_]] = Leib1[({ type K[A] = F[C#C, A] })#K, ({ type J[A] = F[X, A] })#J] })#L](refl[Context.Aux[({ type I[A] = F[C#C, A] })#I]])
 }
 
 sealed trait SelectionSort[Idx <: HList, L <: HList] {
@@ -249,6 +249,63 @@ object SelectionSort {
 
   def selectionSort[Idx <: HList, L <: HList](implicit ss: SelectionSort[Idx, L]): NaturalTransformation[ss.ICS#C, ss.OCS#C] =
     ss.trans
+}
+
+trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
+  self ⇒
+  def apply[A, B](fa: F[A])(f: A ⇒ G[B]): H[B]
+
+  //  def compose[E[_]](f: E ~> F): E ~> G = new (E ~> G) {
+  //    def apply[A](ea: E[A]) = self(f(ea))
+  //  }
+}
+
+trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
+  type LCS <: Context
+  type RCS <: Context
+  type OCS <: Context
+
+  val trans: SuperNaturalTransformation[LCS#C, RCS#C, OCS#C]
+}
+
+trait ApplyBind3 {}
+trait ApplyBind2 extends ApplyBind3 {}
+object ApplyBind extends ApplyBind2 {
+  implicit def nil = new ApplyBind[HNil, HNil, HNil] {
+    type LCS = Context.Aux[Id]
+    type RCS = Context.Aux[Id]
+    type OCS = Context.Aux[Id]
+
+    val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
+      def apply[A](a: A)(f: A ⇒ A) = f(a)
+    }
+  }
+
+  implicit def bind[C1 <: Context, RIdx <: HList, RL <: HList, RR <: HList, RRCS <: Context](implicit tl: ApplyBind[RIdx, RL, RR] {
+    type RCS = RRCS
+  },
+    m: Monad[C1#C], tr: Traverse[RRCS#C]) =
+    new ApplyBind[C1 :: RIdx, C1 :: RL, C1 :: RR] {
+      type LCS = Context {
+        type C[A] = C1#C[tl.LCS#C[A]]
+      }
+      type RCS = Context {
+        type C[A] = C1#C[tl.RCS#C[A]]
+      }
+      type OCS = Context {
+        type C[A] = C1#C[tl.OCS#C[A]]
+      }
+
+      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
+        def apply[A, B](ffa: C1#C[tl.LCS#C[A]])(ff: A ⇒ tl.RCS#C[C1#C[B]]) =
+          ffa >>= { fa: tl.LCS#C[A] ⇒
+            tl.trans.apply(fa) {
+              a ⇒
+                ff(a).sequence
+            }
+          }
+      }
+    }
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
