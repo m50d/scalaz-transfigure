@@ -253,7 +253,7 @@ object SelectionSort {
 
 trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
   self ⇒
-  def apply[A, B](fa: F[A])(f: A ⇒ G[B]): H[B]
+  def apply[A, O[_], B](fa: F[A])(f: A ⇒ O[G[B]])(implicit t: Traverse[O]): O[H[B]]
 
   //  def compose[E[_]](f: E ~> F): E ~> G = new (E ~> G) {
   //    def apply[A](ea: E[A]) = self(f(ea))
@@ -282,10 +282,10 @@ trait ApplyBind2 extends ApplyBind3 {
         type C[A] = C1#C[tl.OCS#C[A]]
       }
 
-      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
-        def apply[A, B](ffa: C1#C[tl.LCS#C[A]])(ff: A ⇒ tl.RCS#C[B]) =
-          ffa map { fa: tl.LCS#C[A] ⇒ tl.trans.apply(fa)(ff) }
-      }
+//      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
+//        def apply[A, B](ffa: C1#C[tl.LCS#C[A]])(ff: A ⇒ tl.RCS#C[B]) =
+//          ffa map { fa: tl.LCS#C[A] ⇒ tl.trans.apply(fa)(ff) }
+//      }
     }
 }
 
@@ -304,7 +304,7 @@ object ApplyBind extends ApplyBind2 {
     type RCS = RRCS
     type OCS = ROCS
   },
-    m: Monad[C1#C], ap: Applicative[RRCS#C], tr1: Traverse[C1#C], tr2: Traverse[ROCS#C]) =
+    m: Monad[C1#C], ct: Traverse[C1#C]) =
     new ApplyBind[C1 :: RIdx, C1 :: RL, C1 :: RR] {
       type LCS = Context {
         type C[A] = C1#C[tl.LCS#C[A]]
@@ -317,15 +317,11 @@ object ApplyBind extends ApplyBind2 {
       }
 
       val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
-        def apply[A, B](ffa: C1#C[tl.LCS#C[A]])(ff: A ⇒ C1#C[tl.RCS#C[B]]) =
-          (ffa >>= { fa: tl.LCS#C[A] ⇒
-            tl.trans.apply[A, C1#C[B]](fa)({
-              a: A ⇒
-                val fgb: C1#C[tl.RCS#C[B]] = ff(a)
-                val gfb: tl.RCS#C[C1#C[B]] = fgb.sequence[tl.RCS#C, B]
-                gfb
-            }).sequence
-          })
+        def apply[A, O[_], B](ffa: C1#C[tl.LCS#C[A]])(ff: A ⇒ O[C1#C[tl.RCS#C[B]]])(implicit t: Traverse[O]) =
+          ffa >>= { fa: tl.LCS#C[A] ⇒
+            implicit val t1 = t.compose(ct)
+            tl.trans.apply[A, ({type L[B] = O[C1#C[B]]})#L, B](fa)(ff).sequence
+          }
       }
     }
 }
