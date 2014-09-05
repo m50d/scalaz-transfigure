@@ -193,19 +193,18 @@ object SelectLeast {
 
 sealed trait Leib1[C <: Context, D <: Context] {
   def subst[F[_[_]]](fc: F[C#C]): F[D#C]
+  def witness[A](c: C#C[A]): D#C[A] = subst[({ type L[C[_]] = C[A] })#L](c)
 }
 
 object Leib1 {
   implicit def refl[C <: Context] = new Leib1[C, C] {
     def subst[F[_[_]]](fa: F[C#C]) = fa
   }
-
-//  def lift[F[_[_], _], C <: Context, D <: Context](ab: Leib1[C, D]) =
-//    ab.subst[({ type L[X[_]] = Leib1[({ type K[A] = F[C#C, A] })#K, ({ type J[A] = F[X, A] })#J] })#L](refl[Context.Aux[({ type I[A] = F[C#C, A] })#I]])
 }
 
 sealed trait SelectionSort[Idx <: HList, L <: HList] {
   type ICS <: Context
+  type O <: HList
   type OCS <: Context
 
   val trans: NaturalTransformation[ICS#C, OCS#C]
@@ -214,6 +213,7 @@ sealed trait SelectionSort[Idx <: HList, L <: HList] {
 object SelectionSort {
   implicit def nil[Idx <: HList] = new SelectionSort[Idx, HNil] {
     type ICS = Context.Aux[Id]
+    type O = HNil
     type OCS = Context.Aux[Id]
 
     val trans = new NaturalTransformation[ICS#C, OCS#C] {
@@ -229,6 +229,7 @@ object SelectionSort {
     }, f: Functor[C1#C], w: Leib1[SLR, TLI]) =
     new SelectionSort[Idx, L] {
       type ICS = sl.LCS
+      type O = C1 :: tl.O
       type OCS = Context {
         type C[A] = C1#C[tl.OCS#C[A]]
       }
@@ -249,6 +250,264 @@ object SelectionSort {
 
   def selectionSort[Idx <: HList, L <: HList](implicit ss: SelectionSort[Idx, L]): NaturalTransformation[ss.ICS#C, ss.OCS#C] =
     ss.trans
+}
+
+trait Normalizer[Idx <: HList, L <: HList] {
+  type ICS <: Context
+  type OCS <: Context
+  val trans: NaturalTransformation[ICS#C, OCS#C]
+}
+
+trait Normalizer3 {
+  implicit object realNil extends Normalizer[HNil, HNil] {
+    type ICS = Context.Aux[Id]
+    type OCS = Context.Aux[Id]
+
+    val trans = new NaturalTransformation[ICS#C, OCS#C] {
+      def apply[A](fa: A) = fa
+    }
+  }
+
+  implicit def nil[H <: Context, T <: HList, L <: HList](implicit rest: Normalizer[T, L], ap: Applicative[H#C]) = new Normalizer[H :: T, L] {
+    type ICS = rest.ICS
+    type OCS = Context {
+      type C[A] = H#C[rest.OCS#C[A]]
+    }
+    val trans = new NaturalTransformation[ICS#C, OCS#C] {
+      def apply[A](fa: ICS#C[A]) =
+        Applicative[H#C].point(rest.trans.apply(fa))
+    }
+  }
+}
+
+trait Normalizer2 extends Normalizer3 {
+  implicit def one[H <: Context, T <: HList, L <: HList](implicit rest: Normalizer[T, L], f: Functor[H#C]) = new Normalizer[H :: T, H :: L] {
+    type ICS = Context {
+      type C[A] = H#C[rest.ICS#C[A]]
+    }
+    type OCS = Context {
+      type C[A] = H#C[rest.OCS#C[A]]
+    }
+    val trans = new NaturalTransformation[ICS#C, OCS#C] {
+      def apply[A](fa: ICS#C[A]) =
+        fa map { rest.trans.apply(_) }
+    }
+  }
+}
+
+object Normalizer extends Normalizer2 {
+  implicit def two[H <: Context, T <: HList, L <: HList, D <: Context](implicit rest: Normalizer[H :: T, H :: L] {
+    type OCS = Context {
+      type C[A] = H#C[D#C[A]]
+    }
+  },
+    b: Bind[H#C]) = new Normalizer[H :: T, H :: H :: L] {
+    type ICS = Context {
+      type C[A] = H#C[rest.ICS#C[A]]
+    }
+    type OCS = Context {
+      type C[A] = rest.OCS#C[A]
+    }
+    val trans = new NaturalTransformation[ICS#C, OCS#C] {
+      def apply[A](fa: ICS#C[A]) =
+        fa map { rest.trans.apply(_) } μ
+    }
+  }
+}
+
+/**
+ * Substitute for MonadTrans. Inspired by Haskell's layers package,
+ * but not (yet) as general or elegant.
+ */
+trait Layer[M[_]] {
+  def monad[F[_]: Monad]: Monad[({ type L[A] = F[M[A]] })#L]
+}
+
+object Layer {
+  implicit object IdLayer extends Layer[Id] {
+    def monad[F[_]: Monad] = Monad[F]
+  }
+
+  implicit object OptionLayer extends Layer[Option] {
+    def monad[F[_]: Monad] = new Monad[({ type L[A] = F[Option[A]] })#L] {
+      def point[A](a: ⇒ A) = Monad[F].point(Some(a))
+      def bind[A, B](fa: F[Option[A]])(f: A ⇒ F[Option[B]]) =
+        Monad[F].bind(fa) {
+          case None ⇒ Monad[F].point(None: Option[B])
+          case Some(z) ⇒ f(z)
+        }
+    }
+  }
+}
+
+trait MonadStack[L <: HList] {
+  type CS <: Context
+
+  val m: Monad[CS#C]
+}
+
+object MonadStack {
+  implicit object nil extends MonadStack[HNil] {
+    type CS = Context.Aux[Id]
+
+    val m = Id.id
+  }
+
+  implicit def cons[H <: Context, T <: HList, D <: Context](implicit rest: MonadStack[T] {
+    type CS = D
+  }, l: Layer[D#C], mo: Monad[H#C]) =
+    new MonadStack[H :: T] {
+      type CS = Context {
+        type C[A] = H#C[rest.CS#C[A]]
+      }
+
+      val m = l.monad[H#C](mo)
+    }
+}
+
+trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
+  def apply[A, B](f: F[A])(g: A ⇒ G[B]): H[B]
+}
+
+/**
+ * Extracts the stack from an instance, e.g.
+ * Option[List[Int]] => StackHelper {
+ * type A = Int
+ * type S = Context.Aux[Option] :: Context.Aux[List] :: HNil
+ * }
+ * TODO: Shouldn't really require everything to be a monad
+ */
+trait StackHelper[I] {
+  type A
+  type S <: HList
+  type CS <: Context
+  val l: Leibniz.===[I, CS#C[A]]
+}
+
+trait StackHelper2 {
+  implicit def nil[I] = new StackHelper[I] {
+    type A = I
+    type S = HNil
+    type CS = Context.Aux[Id]
+    val l = Leibniz.refl[A]
+  }
+}
+
+object StackHelper extends StackHelper2 {
+  implicit def cons[MA, AA](implicit u: Unapply[Monad, MA] {
+    type A = AA
+  }, rest: StackHelper[AA]) = new StackHelper[MA] {
+    type A = rest.A
+    type S = Context.Aux[u.M] :: rest.S
+    type CS = Context {
+      type C[A] = u.M[rest.CS#C[A]]
+    }
+    //u.leibniz: MA == u.M[AA]
+    //rest.l: AA == rest.CS#C[A]
+    //want: MA == u.M[rest.CS#C[A]]
+    val l = {
+      val step: Leibniz.===[u.M[AA], u.M[rest.CS#C[A]]] = Leibniz.lift[⊥, ⊥, ⊤, ⊤, u.M, AA, rest.CS#C[A]](rest.l)
+      Leibniz.trans[⊥, ⊤, MA, u.M[AA], u.M[rest.CS#C[A]]](step, u.leibniz)
+    }
+  }
+}
+
+trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
+  type LCS <: Context
+  type RCS <: Context
+  type OCS <: Context
+
+  val trans: SuperNaturalTransformation[LCS#C, RCS#C, OCS#C]
+}
+
+trait IndexedApplyBind[Idx <: HList] {
+  def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
+    type A = A1
+    type S = L
+    type CS = LICS
+  }, sh2: StackHelper[BB] {
+    type S = R
+    type CS = RICS
+  }, ab: ApplyBind[Idx, L, R] {
+    type LCS = LICS
+    type RCS = RICS
+  }): ab.OCS#C[sh2.A]
+
+  def partialApply[AA, A1, L <: HList, LICS <: Context](f: AA)(implicit sh1: StackHelper[AA] {
+    type A = A1
+    type S = L
+    type CS = LICS
+  }): PartiallyAppliedApplyBind[Idx, A1, L, LICS] = {
+    val self = this
+    new PartiallyAppliedApplyBind[Idx, A1, L, LICS] {
+      def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper[BB] {
+        type S = R
+        type CS = RICS
+      }, ab: ApplyBind[Idx, L, R] {
+        type LCS = LICS
+        type RCS = RICS
+      }): ab.OCS#C[sh2.A] =
+        self.apply(f, g)
+    }
+  }
+}
+
+trait PartiallyAppliedApplyBind[Idx <: HList, A1, L <: HList, LICS <: Context] {
+  def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper[BB] {
+    type S = R
+    type CS = RICS
+  }, ab: ApplyBind[Idx, L, R] {
+    type LCS = LICS
+    type RCS = RICS
+  }): ab.OCS#C[sh2.A]
+}
+
+object ApplyBind {
+  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, OL <: HList, LOCS <: Context, R <: HList, RICS <: Context, OR <: HList, ROCS <: Context, FCS <: Context, RFCS <: Context](
+    implicit LSS: SelectionSort[Idx, L] {
+      type ICS = LICS
+      type OCS = LOCS
+      type O = OL
+    }, LN: Normalizer[Idx, OL] {
+      type ICS = LOCS
+      type OCS = FCS
+    }, RSS: SelectionSort[Idx, R] {
+      type ICS = RICS
+      type OCS = ROCS
+      type O = OR
+    }, RN: Normalizer[Idx, OR] {
+      type ICS = ROCS
+      type OCS = RFCS
+    }, stack: MonadStack[Idx] {
+      type CS = FCS
+    }, w: Leib1[RFCS, FCS]) =
+    new ApplyBind[Idx, L, R] {
+      type LCS = LICS
+      type RCS = RICS
+      type OCS = FCS
+
+      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
+        def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) = {
+          implicit val m = stack.m
+          LN.trans.apply(LSS.trans.apply(f)) >>= {
+            a: A ⇒ w.witness(RN.trans.apply(RSS.trans.apply(g(a))))
+          }
+        }
+      }
+    }
+  def forIdx[Idx <: HList]: IndexedApplyBind[Idx] = new IndexedApplyBind[Idx] {
+    def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
+      type A = A1
+      type S = L
+      type CS = LICS
+    }, sh2: StackHelper[BB] {
+      type S = R
+      type CS = RICS
+    }, ab: ApplyBind[Idx, L, R] {
+      type LCS = LICS
+      type RCS = RICS
+    }): ab.OCS#C[sh2.A] = ab.trans(sh1.l.apply(f))({ a ⇒ sh2.l.apply(g(a)) })
+  }
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {

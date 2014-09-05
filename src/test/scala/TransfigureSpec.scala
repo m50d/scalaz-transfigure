@@ -8,6 +8,7 @@ import ops.hlist._
 import test._
 import scalaz._
 import scalaz.Scalaz._
+import TransfigureToSyntax._
 
 object Aliases {
   type EitherR[A] = Either[Unit, A]
@@ -85,39 +86,60 @@ class SelectionSortSpec extends mutable.Specification {
   }
 }
 
+class ApplyBindSpec extends mutable.Specification {
+  implicitly[Normalizer[HNil, HNil]]
+  ApplyBind.combine[HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], Context.Aux[Id], Context.Aux[Id]]
+  val i1 = implicitly[SelectionSort[ListContext :: HNil, HNil] {
+    type ICS = Context.Aux[Id]
+    type O = HNil
+    type OCS = Context.Aux[Id]
+  }]
+  val i2 = implicitly[MonadStack[ListContext :: HNil]]
+  ApplyBind.combine[ListContext :: HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], ListContext, ListContext]
+  implicitly[ApplyBind[ListContext :: HNil, HNil, HNil]]
+  "ApplyBind" should {
+    "nil" in {
+      ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
+    }
+    "nillist" in {
+      ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== List(6)
+    }
+  }
+}
+
 class TransfigureSpec extends mutable.Specification {
 
   "Transfigure" should {
 
-    //    "map" in {
-    //      val fa: Option[Int] = Some(42)
-    //      val f: Int ⇒ String = _.toString
-    //
-    //      fa.transfigureTo[Option](f) ==== Some("42")
-    //    }
-    //
-    //    "map (either)" in {
-    //      import scalaz.std.either._
-    //
-    //      val fa: EitherR[Int] = Right(42)
-    //      val f: Int ⇒ String = _.toString
-    //
-    //      fa.transfigureTo[EitherR](f) ==== Right("42")
-    //    }
-    //
-    //    "flatMap" in {
-    //      val fa: Option[Int] = Some(42)
-    //      val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
-    //
-    //      fa.transfigureTo[Option](f) ==== Some("32")
-    //    }
-    //
-    //    "point" in {
-    //      val fa: Option[Int] = Some(42)
-    //      val f: Int ⇒ String = _.toString
-    //
-    //      fa.transfigureTo[List, Option](f) ==== List(Some("42"))
-    //    }
+    "map" in {
+      val fa: Option[Int] = Some(42)
+      val f: Int ⇒ String = _.toString
+
+      fa.transfigureTo1[Option](f) ==== Some("42")
+    }
+
+    "map (either)" in {
+      import scalaz.std.either._
+
+      val fa: EitherR[Int] = Right(42)
+      val f: Int ⇒ String = _.toString
+
+      fa.transfigureTo1[EitherR](f) ==== Right("42")
+    }
+
+    "flatMap" in {
+      val fa: Option[Int] = Some(42)
+      val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
+
+      fa.transfigureTo1[Option](f) ==== Some("32")
+    }
+
+    "point" in {
+      val fa: Option[Int] = Some(42)
+      val f: Int ⇒ String = _.toString
+
+      fa.transfigureTo2[List, Option](f) ==== List(Some("42"))
+    }
     //
     //    "traverse" in {
     //      val fa: Option[Int] = Some(42)
