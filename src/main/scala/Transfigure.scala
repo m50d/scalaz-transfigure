@@ -304,7 +304,7 @@ object ApplyBind extends ApplyBind2 {
     type RCS = RRCS
     type OCS = ROCS
   },
-    mt: Monad[C1#C] with Traverse[C1#C]) =
+    m: Monad[C1#C], t: Traverse[C1#C]) =
     new ApplyBind[C1 :: RIdx, C1 :: RL, C1 :: RR] {
       type LCS = Context {
         type C[A] = C1#C[tl.LCS#C[A]]
@@ -319,7 +319,7 @@ object ApplyBind extends ApplyBind2 {
       val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
         def apply[A, O[_], B](ffa: C1#C[tl.LCS#C[A]])(ff: A ⇒ O[C1#C[tl.RCS#C[B]]])(implicit ap: Applicative[O]) = {
           implicit val cap = ap.compose[C1#C]
-          (ffa map { fa: tl.LCS#C[A] ⇒
+          (Monad[C1#C].map(ffa) { fa: tl.LCS#C[A] ⇒
             tl.trans.apply[A, ({ type L[B] = O[C1#C[B]] })#L, B](fa)(ff)
           } sequence) map { _.μ }
         }
