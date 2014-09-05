@@ -191,17 +191,17 @@ object SelectLeast {
     sl.trans
 }
 
-sealed trait Leib1[A[_], B[_]] {
-  def subst[F[_[_]]](fa: F[A]): F[B]
+sealed trait Leib1[C <: Context, D <: Context] {
+  def subst[F[_[_]]](fc: F[C#C]): F[D#C]
 }
 
 object Leib1 {
-  implicit def refl[A[_]] = new Leib1[A, A] {
-    def subst[F[_[_]]](fa: F[A]) = fa
+  implicit def refl[C <: Context] = new Leib1[C, C] {
+    def subst[F[_[_]]](fa: F[C#C]) = fa
   }
 
-  def lift[F[_[_], _], A[_], B[_]](ab: Leib1[A, B]) =
-    ab.subst[({ type L[X[_]] = Leib1[({ type K[C] = F[A, C] })#K, ({ type J[C] = F[X, C] })#J] })#L](refl[({ type I[C] = F[A, C] })#I])
+//  def lift[F[_[_], _], C <: Context, D <: Context](ab: Leib1[C, D]) =
+//    ab.subst[({ type L[X[_]] = Leib1[({ type K[A] = F[C#C, A] })#K, ({ type J[A] = F[X, A] })#J] })#L](refl[Context.Aux[({ type I[A] = F[C#C, A] })#I]])
 }
 
 sealed trait SelectionSort[Idx <: HList, L <: HList] {
@@ -221,11 +221,11 @@ object SelectionSort {
     }
   }
 
-  implicit def cons[Idx <: HList, L <: HList, C1 <: Context, R <: HList, SLR[_], TLI[_]](implicit sl: SelectLeast.Aux[Idx, L, C1, R] {
-    type RCS = Context.Aux[SLR]
+  implicit def cons[Idx <: HList, L <: HList, C1 <: Context, R <: HList, SLR <: Context, TLI <: Context](implicit sl: SelectLeast.Aux[Idx, L, C1, R] {
+    type RCS = SLR
   },
     tl: SelectionSort[Idx, R] {
-      type ICS = Context.Aux[TLI]
+      type ICS = TLI
     }, f: Functor[C1#C], w: Leib1[SLR, TLI]) =
     new SelectionSort[Idx, L] {
       type ICS = sl.LCS
@@ -238,8 +238,8 @@ object SelectionSort {
             val stepped = sl.trans.apply(ffa)
             stepped.map {
               fa: sl.RCS#C[A] ⇒
-                val ga: SLR[A] = fa
-                val ha: TLI[A] = w.subst[({ type L[B[_]] = B[A] })#L](ga)
+                val ga: SLR#C[A] = fa
+                val ha: TLI#C[A] = w.subst[({ type L[B[_]] = B[A] })#L](ga)
                 val ia: tl.ICS#C[A] = ha
                 tl.trans.apply(ia)
             }

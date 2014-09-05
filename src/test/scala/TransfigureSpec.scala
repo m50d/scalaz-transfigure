@@ -67,7 +67,7 @@ class SelectLeastSpec extends mutable.Specification {
 
 class SelectionSortSpec extends mutable.Specification {
   implicitly[SelectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]]
-  SelectionSort.cons[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil, OptionContext, HNil, Id, Id]
+  SelectionSort.cons[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil, OptionContext, HNil, Context.Aux[Id], Context.Aux[Id]]
 
   "SelectionSort" should {
     "nil" in {
