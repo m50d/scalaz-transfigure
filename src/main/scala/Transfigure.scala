@@ -273,7 +273,7 @@ trait ApplyBind3 {}
 trait ApplyBind2 extends ApplyBind3 {
   implicit def functor[C1 <: Context, RIdx <: HList, RL <: HList, RR <: HList](
     implicit tl: ApplyBind[RIdx, RL, RR], t: Traverse[C1#C]) =
-    new ApplyBind[C1 :: RIdx, RL, C1 :: RR] {
+    new ApplyBind[C1 :: RIdx, C1 :: RL, RR] {
       type LCS = Context {
         type C[A] = C1#C[tl.LCS#C[A]]
       }
@@ -287,6 +287,24 @@ trait ApplyBind2 extends ApplyBind3 {
           ffa traverse { fa: tl.LCS#C[A] ⇒ tl.trans.apply(fa)(ff) }
       }
     }
+
+  implicit def wrap[C1 <: Context, RIdx <: HList, RL <: HList, RR <: HList](
+    implicit tl: ApplyBind[RIdx, RL, RR]) =
+    new ApplyBind[C1 :: RIdx, RL, C1 :: RR] {
+      type LCS = tl.LCS
+      type RCS = Context {
+        type C[A] = C1#C[tl.RCS#C[A]]
+      }
+      type OCS = Context {
+        type C[A] = C1#C[tl.OCS#C[A]]
+      }
+
+//      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
+//        def apply[A, O[_]: Applicative, B](fa: tl.LCS#C[A])(ff: A ⇒ O[C1#C[tl.RCS#C[B]]]) =
+//          tl.trans.apply(fa)(ff) sequence
+//      }
+    }
+
 }
 
 object ApplyBind extends ApplyBind2 {
