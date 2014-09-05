@@ -196,8 +196,6 @@ sealed trait Leib1[A[_], B[_]] {
 }
 
 object Leib1 {
-  type Id[A[_], X] = A[X]
-
   implicit def refl[A[_]] = new Leib1[A, A] {
     def subst[F[_[_]]](fa: F[A]) = fa
   }
