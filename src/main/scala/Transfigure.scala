@@ -339,6 +339,14 @@ trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
   def apply[A, B](f: F[A])(g: A ⇒ G[B]): H[B]
 }
 
+trait StackHelper[I] {
+  type A
+  type S <: HList
+  type CS <: Context
+  
+  val l: Leibniz.===[I, CS#C[A]]
+}
+
 trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
   type LCS <: Context
   type RCS <: Context
@@ -347,37 +355,37 @@ trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
   val trans: SuperNaturalTransformation[LCS#C, RCS#C, OCS#C]
 }
 
-object ApplyBind {
-  implicit def combine[Idx <: HList, L <: HList, R <: HList, LICS <: Context, RICS <: Context, LOCS <: Context, ROCS <: Context, FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
-    type ICS = LICS
-    type OCS = LOCS
-  }, RSS: SelectionSort[Idx, R] {
-    type ICS = RICS
-    type OCS = ROCS
-  }, LN: Normalizer[Idx, LOCS] {
-    type ICS = LOCS
-    type OCS = FCS
-  }, RN: Normalizer[Idx, ROCS] {
-    type ICS = ROCS
-    type OCS = FCS
-  }, stack: MonadStack[Idx] {
-    type CS = FCS
-  }) =
-    new ApplyBind[Idx, L, R] {
-      type LCS = LICS
-      type RCS = RICS
-      type OCS = FCS
-
-      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
-        def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) = {
-          implicit val m = stack.m
-          LN.trans.apply(LSS.trans.apply(f)) >>= {
-            a: A ⇒ RN.trans.apply(RSS.trans.apply(g(a)))
-          }
-        }
-      }
-    }
-}
+//object ApplyBind {
+//  implicit def combine[Idx <: HList, L <: HList, R <: HList, LICS <: Context, RICS <: Context, LOCS <: Context, ROCS <: Context, FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
+//    type ICS = LICS
+//    type OCS = LOCS
+//  }, RSS: SelectionSort[Idx, R] {
+//    type ICS = RICS
+//    type OCS = ROCS
+//  }, LN: Normalizer[Idx, LOCS] {
+//    type ICS = LOCS
+//    type OCS = FCS
+//  }, RN: Normalizer[Idx, ROCS] {
+//    type ICS = ROCS
+//    type OCS = FCS
+//  }, stack: MonadStack[Idx] {
+//    type CS = FCS
+//  }) =
+//    new ApplyBind[Idx, L, R] {
+//      type LCS = LICS
+//      type RCS = RICS
+//      type OCS = FCS
+//
+//      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
+//        def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) = {
+//          implicit val m = stack.m
+//          LN.trans.apply(LSS.trans.apply(f)) >>= {
+//            a: A ⇒ RN.trans.apply(RSS.trans.apply(g(a)))
+//          }
+//        }
+//      }
+//    }
+//}
 
 trait Transfigure[F[_], G[_], Z[_]] {
   def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): G[B]
