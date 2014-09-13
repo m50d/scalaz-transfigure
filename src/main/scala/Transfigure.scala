@@ -203,6 +203,7 @@ object Leib1 {
 
 sealed trait SelectionSort[Idx <: HList, L <: HList] {
   type ICS <: Context
+  type O <: HList
   type OCS <: Context
 
   val trans: NaturalTransformation[ICS#C, OCS#C]
@@ -211,6 +212,7 @@ sealed trait SelectionSort[Idx <: HList, L <: HList] {
 object SelectionSort {
   implicit def nil[Idx <: HList] = new SelectionSort[Idx, HNil] {
     type ICS = Context.Aux[Id]
+    type O = HNil
     type OCS = Context.Aux[Id]
 
     val trans = new NaturalTransformation[ICS#C, OCS#C] {
@@ -226,6 +228,7 @@ object SelectionSort {
     }, f: Functor[C1#C], w: Leib1[SLR, TLI]) =
     new SelectionSort[Idx, L] {
       type ICS = sl.LCS
+      type O = C1 :: tl.O
       type OCS = Context {
         type C[A] = C1#C[tl.OCS#C[A]]
       }
@@ -339,13 +342,13 @@ trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
   def apply[A, B](f: F[A])(g: A ⇒ G[B]): H[B]
 }
 
-trait StackHelper[I] {
-  type A
-  type S <: HList
-  type CS <: Context
-  
-  val l: Leibniz.===[I, CS#C[A]]
-}
+//trait StackHelper[I] {
+//  type A
+//  type S <: HList
+//  type CS <: Context
+//  
+//  val l: Leibniz.===[I, CS#C[A]]
+//}
 
 trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
   type LCS <: Context
@@ -355,37 +358,40 @@ trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
   val trans: SuperNaturalTransformation[LCS#C, RCS#C, OCS#C]
 }
 
-//object ApplyBind {
-//  implicit def combine[Idx <: HList, L <: HList, R <: HList, LICS <: Context, RICS <: Context, LOCS <: Context, ROCS <: Context, FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
-//    type ICS = LICS
-//    type OCS = LOCS
-//  }, RSS: SelectionSort[Idx, R] {
-//    type ICS = RICS
-//    type OCS = ROCS
-//  }, LN: Normalizer[Idx, LOCS] {
-//    type ICS = LOCS
-//    type OCS = FCS
-//  }, RN: Normalizer[Idx, ROCS] {
-//    type ICS = ROCS
-//    type OCS = FCS
-//  }, stack: MonadStack[Idx] {
-//    type CS = FCS
-//  }) =
-//    new ApplyBind[Idx, L, R] {
-//      type LCS = LICS
-//      type RCS = RICS
-//      type OCS = FCS
-//
-//      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
-//        def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) = {
-//          implicit val m = stack.m
-//          LN.trans.apply(LSS.trans.apply(f)) >>= {
-//            a: A ⇒ RN.trans.apply(RSS.trans.apply(g(a)))
-//          }
-//        }
-//      }
-//    }
-//}
+object ApplyBind {
+  implicit def combine[Idx <: HList, L <: HList, R <: HList, LICS <: Context, RICS <: Context, OL <: HList, OR <: HList,
+ LOCS <: Context, ROCS <: Context, FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
+    type ICS = LICS
+    type OCS = LOCS
+	  type O = OL
+  }, RSS: SelectionSort[Idx, R] {
+    type ICS = RICS
+    type OCS = ROCS
+	  type O = OR
+  }, LN: Normalizer[Idx, OL] {
+    type ICS = LOCS
+    type OCS = FCS
+  }, RN: Normalizer[Idx, OR] {
+    type ICS = ROCS
+    type OCS = FCS
+  }, stack: MonadStack[Idx] {
+    type CS = FCS
+  }) =
+    new ApplyBind[Idx, L, R] {
+      type LCS = LICS
+      type RCS = RICS
+      type OCS = FCS
+
+      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
+        def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) = {
+          implicit val m = stack.m
+          LN.trans.apply(LSS.trans.apply(f)) >>= {
+            a: A ⇒ RN.trans.apply(RSS.trans.apply(g(a)))
+          }
+        }
+      }
+    }
+}
 
 trait Transfigure[F[_], G[_], Z[_]] {
   def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): G[B]
