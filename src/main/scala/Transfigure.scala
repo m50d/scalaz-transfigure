@@ -251,98 +251,34 @@ object SelectionSort {
     ss.trans
 }
 
-trait SuperNaturalTransformation[F[_], G[_], H[_]] {
-  self ⇒
-  def apply[A, O[_]: Applicative, B](fa: F[A])(f: A ⇒ O[G[B]]): O[H[B]]
-
-  //  def compose[E[_]](f: E ~> F): E ~> G = new (E ~> G) {
-  //    def apply[A](ea: E[A]) = self(f(ea))
-  //  }
-}
-
-trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
-  type LCS <: Context
-  type RCS <: Context
+trait Normalizer[Idx <: HList, L <: HList] {
+  type ICS <: Context
   type OCS <: Context
-
-  val trans: SuperNaturalTransformation[LCS#C, RCS#C, OCS#C]
+  val trans: NaturalTransformation[ICS#C, OCS#C]
 }
 
-trait ApplyBind3 {}
-
-trait ApplyBind2 extends ApplyBind3 {
-  implicit def functor[C1 <: Context, RIdx <: HList, RL <: HList, RR <: HList](
-    implicit tl: ApplyBind[RIdx, RL, RR], t: Traverse[C1#C]) =
-    new ApplyBind[C1 :: RIdx, C1 :: RL, RR] {
-      type LCS = Context {
-        type C[A] = C1#C[tl.LCS#C[A]]
-      }
-      type RCS = tl.RCS
-      type OCS = Context {
-        type C[A] = C1#C[tl.OCS#C[A]]
-      }
-
-      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
-        def apply[A, O[_]: Applicative, B](ffa: C1#C[tl.LCS#C[A]])(ff: A ⇒ O[tl.RCS#C[B]]) =
-          ffa traverse { fa: tl.LCS#C[A] ⇒ tl.trans.apply(fa)(ff) }
-      }
+trait Normalizer3 {
+  implicit def nil[H <: Context, T <: HList, L <: HList](implicit rest: Normalizer[T, L], ap: Applicative[H#C]) = new Normalizer[H :: T, L] {
+    type ICS = rest.ICS
+    type OCS = Context {
+      type C[A] = H#C[rest.OCS#C[A]]
     }
-
-  implicit def wrap[C1 <: Context, RIdx <: HList, RL <: HList, RR <: HList](
-    implicit tl: ApplyBind[RIdx, RL, RR]) =
-    new ApplyBind[C1 :: RIdx, RL, C1 :: RR] {
-      type LCS = tl.LCS
-      type RCS = Context {
-        type C[A] = C1#C[tl.RCS#C[A]]
-      }
-      type OCS = Context {
-        type C[A] = C1#C[tl.OCS#C[A]]
-      }
-
-//      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
-//        def apply[A, O[_]: Applicative, B](fa: tl.LCS#C[A])(ff: A ⇒ O[C1#C[tl.RCS#C[B]]]) =
-//          tl.trans.apply(fa)(ff) sequence
-//      }
-    }
-
-}
-
-object ApplyBind extends ApplyBind2 {
-  implicit def nil = new ApplyBind[HNil, HNil, HNil] {
-    type LCS = Context.Aux[Id]
-    type RCS = Context.Aux[Id]
-    type OCS = Context.Aux[Id]
-
-    val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
-      def apply[A, O[_]: Applicative, B](a: A)(f: A ⇒ O[B]) = f(a)
+    val trans = new NaturalTransformation[ICS#C, OCS#C]{
+      def apply[A](fa: ICS#C[A]) =
+        Applicative[H#C].point(rest.trans.apply(fa))
     }
   }
+}
 
-  implicit def bind[C1 <: Context, RIdx <: HList, RL <: HList, RR <: HList, RRCS <: Context, ROCS <: Context](implicit tl: ApplyBind[RIdx, RL, RR] {
-    type RCS = RRCS
-    type OCS = ROCS
-  },
-    m: Monad[C1#C], t: Traverse[C1#C]) =
-    new ApplyBind[C1 :: RIdx, C1 :: RL, C1 :: RR] {
-      type LCS = Context {
-        type C[A] = C1#C[tl.LCS#C[A]]
-      }
-      type RCS = Context {
-        type C[A] = C1#C[tl.RCS#C[A]]
-      }
-      type OCS = Context {
-        type C[A] = C1#C[tl.OCS#C[A]]
-      }
+object Normalizer {
 
-      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
-        def apply[A, O[_], B](ffa: C1#C[tl.LCS#C[A]])(ff: A ⇒ O[C1#C[tl.RCS#C[B]]])(implicit ap: Applicative[O]) = {
-          implicit val cap = ap.compose[C1#C]
-          (Monad[C1#C].map(ffa) { fa: tl.LCS#C[A] ⇒
-            tl.trans.apply[A, ({ type L[B] = O[C1#C[B]] })#L, B](fa)(ff)
-          } sequence) map { _.μ }
-        }
-      }
-    }
+}
+
+/**
+ * Substitute for MonadTrans
+ */
+trait Layer[M[_]] {
+  def monad[F[_]: Applicative]: Monad[({ type L[A] = F[M[A]] })#L]
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
