@@ -342,13 +342,24 @@ trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
   def apply[A, B](f: F[A])(g: A ⇒ G[B]): H[B]
 }
 
-//trait StackHelper[I] {
-//  type A
-//  type S <: HList
-//  type CS <: Context
-//  
-//  val l: Leibniz.===[I, CS#C[A]]
-//}
+trait StackHelper[I] {
+  type A
+  type S <: HList
+  //  type CS <: Context
+  //  
+  //  val l: Leibniz.===[I, CS#C[A]]
+}
+
+trait StackHelper2 {
+  implicit def nil[I] = new StackHelper[I] {
+    type A = I
+    type S = HNil
+  }
+}
+
+object StackHelper extends StackHelper2 {
+//  implicit def cons[]
+}
 
 trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
   type LCS <: Context
@@ -359,15 +370,14 @@ trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
 }
 
 object ApplyBind {
-  implicit def combine[Idx <: HList, L <: HList, R <: HList, LICS <: Context, RICS <: Context, OL <: HList, OR <: HList,
- LOCS <: Context, ROCS <: Context, FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
+  implicit def combine[Idx <: HList, L <: HList, R <: HList, LICS <: Context, RICS <: Context, OL <: HList, OR <: HList, LOCS <: Context, ROCS <: Context, FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
     type ICS = LICS
     type OCS = LOCS
-	  type O = OL
+    type O = OL
   }, RSS: SelectionSort[Idx, R] {
     type ICS = RICS
     type OCS = ROCS
-	  type O = OR
+    type O = OR
   }, LN: Normalizer[Idx, OL] {
     type ICS = LOCS
     type OCS = FCS
@@ -391,6 +401,7 @@ object ApplyBind {
         }
       }
     }
+  def apply[Idx <: HList, AA, A, BB](f: AA, g: A => BB)(implicit u1: Unapply[Monad, AA], u2: Unapply[Monad, BB]) = {}
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
