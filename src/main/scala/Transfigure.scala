@@ -310,7 +310,32 @@ object Normalizer extends Normalizer2 {
  * but not (yet) as general or elegant.
  */
 trait Layer[M[_]] {
-  def monad[F[_]: Applicative]: Monad[({ type L[A] = F[M[A]] })#L]
+  def monad[F[_]: Monad]: Monad[({ type L[A] = F[M[A]] })#L]
+}
+
+trait MonadStack[L <: HList] {
+  type CS <: Context
+
+  val m: Monad[CS#C]
+}
+
+object MonadStack {
+  implicit object nil extends MonadStack[HNil] {
+    type CS = Context.Aux[Id]
+
+    val m = Id.id
+  }
+
+  implicit def cons[H <: Context, T <: HList, D <: Context](implicit rest: MonadStack[T] {
+    type CS = D
+  }, l: Layer[D#C], mo: Monad[H#C]) =
+    new MonadStack[H :: T] {
+      type CS = Context {
+        type C[A] = H#C[rest.CS#C[A]]
+      }
+
+      val m = l.monad[H#C](mo)
+    }
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
