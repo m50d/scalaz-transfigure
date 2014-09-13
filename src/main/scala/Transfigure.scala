@@ -286,11 +286,12 @@ trait Normalizer2 extends Normalizer3 {
 }
 
 object Normalizer extends Normalizer2 {
-  implicit def two[H <: Context,  T <: HList, L <: HList](implicit rest: Normalizer[H :: T, H :: L]{
+  implicit def two[H <: Context, T <: HList, L <: HList, D <: Context](implicit rest: Normalizer[H :: T, H :: L] {
     type OCS = Context {
-     type C[A] <: H#C[_] 
+      type C[A] = H#C[D#C[A]]
     }
-  }, b: Bind[H#C]) = new Normalizer[H :: T, H :: H :: L] {
+  },
+    b: Bind[H#C]) = new Normalizer[H :: T, H :: H :: L] {
     type ICS = Context {
       type C[A] = H#C[rest.ICS#C[A]]
     }
@@ -299,7 +300,7 @@ object Normalizer extends Normalizer2 {
     }
     val trans = new NaturalTransformation[ICS#C, OCS#C] {
       def apply[A](fa: ICS#C[A]) =
-        fa.>>=[rest.OCS#C[A]]{ rest.trans.apply(_) }
+        fa map { rest.trans.apply(_) } μ
     }
   }
 }
