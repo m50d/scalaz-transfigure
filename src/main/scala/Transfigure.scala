@@ -263,9 +263,24 @@ trait Normalizer3 {
     type OCS = Context {
       type C[A] = H#C[rest.OCS#C[A]]
     }
-    val trans = new NaturalTransformation[ICS#C, OCS#C]{
+    val trans = new NaturalTransformation[ICS#C, OCS#C] {
       def apply[A](fa: ICS#C[A]) =
         Applicative[H#C].point(rest.trans.apply(fa))
+    }
+  }
+}
+
+trait Normalizer2 extends Normalizer3 {
+  implicit def one[H <: Context, T <: HList, L <: HList](implicit rest: Normalizer[T, L], f: Functor[H#C]) = new Normalizer[H :: T, H :: L] {
+    type ICS = Context {
+      type C[A] = H#C[rest.ICS#C[A]]
+    }
+    type OCS = Context {
+      type C[A] = H#C[rest.OCS#C[A]]
+    }
+    val trans = new NaturalTransformation[ICS#C, OCS#C] {
+      def apply[A](fa: ICS#C[A]) =
+        fa map { rest.trans.apply(_) }
     }
   }
 }
@@ -275,7 +290,8 @@ object Normalizer {
 }
 
 /**
- * Substitute for MonadTrans
+ * Substitute for MonadTrans. Inspired by Haskell's layers package,
+ * but not (yet) as general or elegant.
  */
 trait Layer[M[_]] {
   def monad[F[_]: Applicative]: Monad[({ type L[A] = F[M[A]] })#L]
