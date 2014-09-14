@@ -134,55 +134,62 @@ class TransfigureSpec extends mutable.Specification {
       fa.transfigureTo1[Option](f) ==== Some("32")
     }
 
+    "join" in {
+      val fa: Option[Option[Int]] = Some(Some(42))
+      val f: Int => Int = _ + 1
+
+      fa.transfigureTo1[Option](f) ==== Some(43)
+    }
+
     "point" in {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ String = _.toString
 
       fa.transfigureTo2[List, Option](f) ==== List(Some("42"))
     }
-    //
-    //    "traverse" in {
-    //      val fa: Option[Int] = Some(42)
-    //      val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
-    //
-    //      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
-    //    }
-    //
-    //    "bind.traverse" in {
-    //      val fa: List[Option[Int]] = List(Some(42))
-    //      val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
-    //
-    //      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
-    //    }
-    //
-    //    "traverse.join" in {
-    //      val fa: List[Option[Int]] = List(Some(42))
-    //      val f: Int ⇒ List[Option[String]] = x ⇒ List(Some((x - 10).toString))
-    //
-    //      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
-    //    }
-    //
-    //    "map.map" in {
-    //      val fa: List[Option[Int]] = List(Some(42))
-    //      val f: Int ⇒ String = _.toString
-    //
-    //      fa.transfigureTo[List, Option](f) ==== List(Some("42"))
-    //    }
-    //
-    //    "map.flatMap" in {
-    //      val fa: List[Option[Int]] = List(Some(42))
-    //      val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
-    //
-    //      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
-    //    }
-    //
-    //    "map.map.map" in {
-    //      import scalaz.std.either._
-    //      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
-    //      val f: Int ⇒ Int = x ⇒ x + 2
-    //
-    //      fa.transfigureTo[EitherR, List, Option](f) ==== Right(List(Some(4)))
-    //    }
+
+    "traverse" in {
+      val fa: Option[Int] = Some(42)
+      val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
+
+      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+    }
+
+    "bind.traverse" in {
+      val fa: List[Option[Int]] = List(Some(42))
+      val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
+
+      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+    }
+
+    "traverse.join" in {
+      val fa: List[Option[Int]] = List(Some(42))
+      val f: Int ⇒ List[Option[String]] = x ⇒ List(Some((x - 10).toString))
+
+      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+    }
+
+    "map.map" in {
+      val fa: List[Option[Int]] = List(Some(42))
+      val f: Int ⇒ String = _.toString
+
+      fa.transfigureTo2[List, Option](f) ==== List(Some("42"))
+    }
+
+    "map.flatMap" in {
+      val fa: List[Option[Int]] = List(Some(42))
+      val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
+
+      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+    }
+
+    "map.map.map" in {
+      import scalaz.std.either._
+      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+      val f: Int ⇒ Int = x ⇒ x + 2
+
+      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
+    }
   }
 }
 
