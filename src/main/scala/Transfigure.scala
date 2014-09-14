@@ -265,43 +265,61 @@ object SelectionSort {
 
 trait Normalizer[Idx <: HList, L <: HList] {
   type ICS <: Context
-  type OCS <: Context
-  val trans: NaturalTransformation[ICS#C, OCS#C]
+  type C <: Context
+  type RCS <: Context
+  
+  val trans: NaturalTransformation[ICS#C, ({type L[A] = C#C[RCS#C[A]]})#L]
 }
 
-trait Normalizer3 {
-  implicit object realNil extends Normalizer[HNil, HNil] {
+trait Normalizer5 {
+  implicit def nilPoint[C1 <: Context](implicit ap: Applicative[C1#C]) = new Normalizer[C1 :: HNil, HNil] {
     type ICS = Context.Aux[Id]
-    type OCS = Context.Aux[Id]
-
-    val trans = new NaturalTransformation[ICS#C, OCS#C] {
-      def apply[A](fa: A) = fa
+    type C = C1
+    type RCS = Context.Aux[Id]
+    
+    val trans = new NaturalTransformation[ICS#C, C1#C] {
+      def apply[A](fa: A) =
+        Applicative[C1#C].point(fa)
     }
   }
+}
 
-  implicit def nil[H <: Context, T <: HList, L <: HList](implicit rest: Normalizer[T, L], ap: Applicative[H#C]) = new Normalizer[H :: T, L] {
-    type ICS = rest.ICS
-    type OCS = Context {
-      type C[A] = H#C[rest.OCS#C[A]]
+trait Normalizer4 extends Normalizer5 {
+  implicit def nilMap[C1 <: Context] = new Normalizer[C1 :: HNil, C1 :: HNil] {
+    type ICS = C1
+    type C = C1
+    type RCS = Context.Aux[Id]
+
+    val trans = new NaturalTransformation[ICS#C, C1#C] {
+      def apply[A](fa: ICS#C[A]) = fa
     }
-    val trans = new NaturalTransformation[ICS#C, OCS#C] {
-      def apply[A](fa: ICS#C[A]) =
-        Applicative[H#C].point(rest.trans.apply(fa))
+  }
+}
+
+trait Normalizer3 extends Normalizer4 {
+  implicit def consPoint[C1 <: Context, T <: HList, L <: HList](implicit rest: Normalizer[T, L], ap: Applicative[C1#C]) = new Normalizer[C1 :: T, L] {
+    type ICS = rest.ICS
+    type C = C1
+    type RCS = Context {
+      type C[A] = rest.C#C[rest.RCS#C[A]]
+    }
+    val trans = new NaturalTransformation[ICS#C, ({type L[A] = C#C[RCS#C[A]]})#L] {
+      def apply[A](fa: ICS#C[A]) = Applicative[C1#C].point(rest.trans.apply(fa))
     }
   }
 }
 
 trait Normalizer2 extends Normalizer3 {
-  implicit def one[H <: Context, T <: HList, L <: HList](implicit rest: Normalizer[T, L], f: Functor[H#C]) = new Normalizer[H :: T, H :: L] {
+  implicit def consMap[C1 <: Context, T <: HList, L <: HList](implicit rest: Normalizer[T, L], f: Functor[C1#C]) = new Normalizer[C1 :: T, C1 :: L] {
     type ICS = Context {
-      type C[A] = H#C[rest.ICS#C[A]]
+      type C[A] = C1#C[rest.ICS#C[A]]
     }
-    type OCS = Context {
-      type C[A] = H#C[rest.OCS#C[A]]
+    type C = C1
+    type RCS = Context {
+      type C[A] = rest.C#C[rest.RCS#C[A]]
     }
-    val trans = new NaturalTransformation[ICS#C, OCS#C] {
-      def apply[A](fa: ICS#C[A]) =
-        fa map { rest.trans.apply(_) }
+     val trans = new NaturalTransformation[ICS#C, ({type L[A] = C#C[RCS#C[A]]})#L] {
+      def apply[A](fa: ICS#C[A]) = fa map {rest.trans.apply(_)}
     }
   }
 }
