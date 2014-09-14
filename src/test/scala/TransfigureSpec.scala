@@ -8,6 +8,7 @@ import ops.hlist._
 import test._
 import scalaz._
 import scalaz.Scalaz._
+import TransfigureToSyntax._
 
 object Aliases {
   type EitherR[A] = Either[Unit, A]
@@ -110,12 +111,12 @@ class TransfigureSpec extends mutable.Specification {
 
   "Transfigure" should {
 
-    //    "map" in {
-    //      val fa: Option[Int] = Some(42)
-    //      val f: Int ⇒ String = _.toString
-    //
-    //      fa.transfigureTo[Option](f) ==== Some("42")
-    //    }
+        "map" in {
+          val fa: Option[Int] = Some(42)
+          val f: Int ⇒ String = _.toString
+    
+          fa.transfigureTo1[Option].apply(f) ==== Some("42")
+        }
     //
     //    "map (either)" in {
     //      import scalaz.std.either._

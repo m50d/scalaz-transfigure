@@ -1,15 +1,12 @@
-package scalaz
+package scalaz.transfigure
 
 import shapeless.{ Id ⇒ _, _ }
 import scala.annotation._
-import transfigure._
 import scalaz.Id._
-import scala.language.experimental.macros
-import scala.reflect.macros.Context
 
 object TransfigureToSyntax {
   implicit class Transfigurable[A](a: A) {
-    def transfigureTo1[S0[_]] = ApplyBind.forIdx[Context.Aux[S0] :: HNil].partialApply(a)
+    def transfigureTo1[S0[_]](implicit sh: StackHelper[A]) = ApplyBind.forIdx[Context.Aux[S0] :: HNil].partialApply[A, sh.A, sh.S, sh.CS](a)(sh)
     def transfigureTo2[S0[_], S1[_]] = ApplyBind.forIdx[Context.Aux[S0] :: Context.Aux[S1] :: HNil].partialApply(a)
     def transfigureTo3[S0[_], S1[_], S2[_]] = ApplyBind.forIdx[Context.Aux[S0] :: Context.Aux[S1] :: Context.Aux[S2] :: HNil].partialApply(a)
   }
