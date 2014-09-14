@@ -433,10 +433,10 @@ object ApplyBind {
     }, sh2: StackHelper[BB] {
       type S = R
       type CS = RICS
-    }, ab: ApplyBind[Idx, L, R]{
+    }, ab: ApplyBind[Idx, L, R] {
       type LCS = LICS
       type RCS = RICS
-    }) = ab.trans(sh1.l.apply(f))(g)
+    }) = ab.trans(sh1.l.apply(f))({ a ⇒ sh2.l.apply(g(a)) })
   }
 }
 
