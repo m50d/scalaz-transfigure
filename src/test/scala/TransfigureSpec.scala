@@ -136,8 +136,8 @@ class ApplyBindSpec extends mutable.Specification {
   type StackedContext = Context {
     type C[A] = EitherR[List[Option[A]]]
   }
-//  implicitly[MonadStack[EitherRContext :: ListContext :: OptionContext]]
-  ApplyBind.combine[EitherRContext :: ListContext :: OptionContext :: HNil, HNil, Context.Aux[Id], StackedContext, HNil, Context.Aux[Id], StackedContext, StackedContext]
+  //  implicitly[MonadStack[EitherRContext :: ListContext :: OptionContext]]
+  //  ApplyBind.combine[EitherRContext :: ListContext :: OptionContext :: HNil, HNil, Context.Aux[Id], StackedContext, HNil, Context.Aux[Id], StackedContext, StackedContext]
   "ApplyBind" should {
     "nillist" in {
       ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== List(6)
@@ -225,13 +225,13 @@ class TransfigureSpec extends mutable.Specification {
       fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
     }
 
-    //    "map.map.map" in {
-    //      import scalaz.std.either._
-    //      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
-    //      val f: Int ⇒ Int = x ⇒ x + 2
-    //
-    //      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
-    //    }
+    "map.map.map" in {
+      import scalaz.std.either._
+      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+      val f: Int ⇒ Int = x ⇒ x + 2
+
+      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
+    }
   }
 }
 
