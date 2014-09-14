@@ -248,6 +248,13 @@ object SelectionSort {
       }
     }
 
+  type Aux[Idx <: HList, L <: HList, ICS1 <: Context, O1 <: HList, OCS1 <: Context] = SelectionSort[Idx, L] {
+    type ICS = ICS1
+    type O = O1
+    type OCS = OCS1
+  }
+  def apply[Idx <: HList, L <: HList](implicit ss: SelectionSort[Idx, L]): Aux[Idx, L, ss.ICS, ss.O, ss.OCS] = ss
+  
   def selectionSort[Idx <: HList, L <: HList](implicit ss: SelectionSort[Idx, L]): NaturalTransformation[ss.ICS#C, ss.OCS#C] =
     ss.trans
 }

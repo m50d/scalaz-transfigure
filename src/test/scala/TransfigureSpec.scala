@@ -101,14 +101,30 @@ class ApplyBindSpec extends mutable.Specification {
   val i2 = implicitly[MonadStack[ListContext :: HNil]]
   ApplyBind.combine[ListContext :: HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], ListContext, ListContext]
   implicitly[ApplyBind[ListContext :: HNil, HNil, HNil]]
-  
+
   type OptionOptionContext = Context {
     type C[A] = Option[Option[A]]
   }
   
-  ApplyBind.combine[OptionContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: OptionContext :: HNil, OptionOptionContext,
-    HNil, Context.Aux[Id], HNil, Context.Aux[Id], OptionContext, OptionContext]
+  val ss = SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
   
+  implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
+  implicitly[SelectionSort[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil] {
+  type ICS = Context {
+    type C[A] = List[Option[A]]
+  }
+//  type O = ListContext :: OptionContext :: HNil
+  type OCS = Context {
+    type C[A] = Option[List[A]]
+  }
+  }]
+  implicitly[SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil] {
+//  type ICS = OptionOptionContext
+  type O = OptionContext :: OptionContext :: HNil
+//  type OCS = OptionOptionContext
+  }]
+//  ApplyBind.combine[OptionContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: OptionContext :: HNil, OptionOptionContext, HNil, Context.Aux[Id], HNil, Context.Aux[Id], OptionContext, OptionContext]
+
   "ApplyBind" should {
     "nil" in {
       ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
@@ -146,12 +162,12 @@ class TransfigureSpec extends mutable.Specification {
       fa.transfigureTo1[Option](f) ==== Some("32")
     }
 
-//    "join" in {
-//      val fa: Option[Option[Int]] = Some(Some(42))
-//      val f: Int => Int = _ + 1
-//
-//      fa.transfigureTo1[Option](f) ==== Some(43)
-//    }
+    //    "join" in {
+    //      val fa: Option[Option[Int]] = Some(Some(42))
+    //      val f: Int => Int = _ + 1
+    //
+    //      fa.transfigureTo1[Option](f) ==== Some(43)
+    //    }
 
     "point" in {
       val fa: Option[Int] = Some(42)
@@ -195,13 +211,13 @@ class TransfigureSpec extends mutable.Specification {
       fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
     }
 
-//    "map.map.map" in {
-//      import scalaz.std.either._
-//      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
-//      val f: Int ⇒ Int = x ⇒ x + 2
-//
-//      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
-//    }
+    //    "map.map.map" in {
+    //      import scalaz.std.either._
+    //      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+    //      val f: Int ⇒ Int = x ⇒ x + 2
+    //
+    //      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
+    //    }
   }
 }
 
