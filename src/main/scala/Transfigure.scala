@@ -426,12 +426,17 @@ object ApplyBind {
       }
     }
   def forIdx[Idx <: HList] = {
-    def apply[AA, A1, BB, L <: HList, R <: HList](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
+    def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
       type A = A1
       type S = L
+      type CS = LICS
     }, sh2: StackHelper[BB] {
       type S = R
-    }) = {}
+      type CS = RICS
+    }, ab: ApplyBind[Idx, L, R]{
+      type LCS = LICS
+      type RCS = RICS
+    }) = ab.trans(f)(g)
   }
 }
 
