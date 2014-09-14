@@ -78,18 +78,6 @@ object GTIndexed {
     new GTIndexed[Idx, A, B] {}
 }
 
-/**
- * TODO: Remove this, no-one uses it
- */
-sealed trait NonDecreasingIndexed[Idx <: HList, L <: HList]
-
-object NonDecreasingIndexed {
-  implicit def hnilNonDecreasing[Idx <: HList] = new NonDecreasingIndexed[Idx, HNil] {}
-  implicit def hlistNonDecreasing1[Idx <: HList, H] = new NonDecreasingIndexed[Idx, H :: HNil] {}
-  implicit def hlistNonDecreasing2[Idx <: HList, H1, H2, T <: HList](implicit ltEq: LEIndexed[Idx, H1, H2], ndt: NonDecreasingIndexed[Idx, H2 :: T]) =
-    new NonDecreasingIndexed[Idx, H1 :: H2 :: T] {}
-}
-
 trait Context {
   type C[_]
 }
@@ -204,6 +192,19 @@ object Leib1 {
     def subst[F[_[_]]](fa: F[C#C]) = fa
   }
 }
+
+/**
+ * Attempt to work around scala's misguided inference efforts
+ */
+//sealed trait AlwaysHNil {
+//  type L <: HList
+//}
+//
+//object AlwaysHNil {
+//  implicit object nil extends AlwaysHNil {
+//    type L = HNil
+//  }
+//}
 
 sealed trait SelectionSort[Idx <: HList, L <: HList] {
   type ICS <: Context
@@ -325,6 +326,26 @@ object Normalizer extends Normalizer2 {
   }
 }
 
+trait SortAndExpectedShape[Idx <: HList, L <: HList] {
+  type ICS <: Context
+  type M <: HList
+  type ExpectedShape <: Normalizer[Idx, M]
+
+  val sort: NaturalTransformation[ICS#C, ExpectedShape#ICS#C]
+}
+
+object SortAndExpectedShape {
+  implicit def fromSort[Idx <: HList, L <: HList, ICS1 <: Context, O1 <: HList, OCS1 <: Context](implicit ss: SelectionSort[Idx, L]) =
+    new SortAndExpectedShape[Idx, L] {
+      type ICS = ss.ICS
+      type M = ss.O
+      type ExpectedShape = Normalizer[Idx, ss.O] {
+        type ICS = ss.OCS
+      }
+      val sort = ss.trans
+    }
+}
+
 trait SortAndNormalizer[Idx <: HList, L <: HList] {
   type ICS <: Context
   type OCS <: Context
@@ -333,17 +354,20 @@ trait SortAndNormalizer[Idx <: HList, L <: HList] {
 }
 
 object SortAndNormalizer {
-  implicit def combine[Idx <: HList, L <: HList, ICS1 <: Context, I <: HList, OCS1 <: Context, ICS2 <: Context, OCS2 <: Context](implicit sort: SelectionSort.Aux[Idx, L, ICS1, I, OCS1],
-    normalizer: Normalizer[Idx, I] {
-      type ICS = ICS2
-      type OCS = OCS2
-    }, w: Leib1[OCS1, ICS2]) = new SortAndNormalizer[Idx, L] {
+  implicit def combine[Idx <: HList, L <: HList, ICS1 <: Context, M <: HList, ES <: Normalizer[Idx, M], OCS1 <: Context](implicit sort: SortAndExpectedShape[Idx, L] {
     type ICS = ICS1
-    type OCS = OCS2
+    type ExpectedShape = ES
+  },
+    normalizer: ES {
+      type OCS = OCS1
+    }) = new SortAndNormalizer[Idx, L] {
+    type ICS = ICS1
+    type OCS = OCS1
 
     val trans = new NaturalTransformation[ICS#C, OCS#C] {
+      //I don't know why the compiler doesn't realize that normalizer.ICS == ES.ICS
       def apply[A](fa: ICS1#C[A]) =
-        normalizer.trans.apply(w.witness(sort.trans.apply(fa)))
+        normalizer.trans.apply(sort.sort.apply(fa).asInstanceOf[normalizer.ICS#C[A]])
     }
   }
   type Aux[Idx <: HList, L <: HList, ICS1 <: Context, OCS1 <: Context] = SortAndNormalizer[Idx, L] {
@@ -564,61 +588,4 @@ object ApplyBind {
       type RCS = RICS
     }): ab.OCS#C[sh2.A] = ab.trans(sh1.l.apply(f))({ a ⇒ sh2.l.apply(g(a)) })
   }
-}
-
-trait Transfigure[F[_], G[_], Z[_]] {
-  def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): G[B]
-}
-
-trait TransfigureInstances {
-  //  implicit object ZERO extends Transfigure[Id, Id, Id] {
-  //    def transfigure[A, B](fa: A)(f: A ⇒ B): B = f(fa)
-  //  }
-
-  //  implicit def point[X[_], F[_], G[_], Z[_]](implicit X: Applicative[X], tf: Transfigure[F, G, Z]) = new Transfigure[F, λ[α ⇒ X[G[α]]], Z] {
-  //    def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): X[G[B]] = X.point(tf.transfigure(fa)(f))
-  //  }
-
-  //  implicit def bottomMapR[X[_], F[_], G[_], Z[_]](implicit tf: Transfigure[F, G, Z]) = new Transfigure[F, λ[α ⇒ G[X[α]]], λ[α ⇒ Z[X[α]]]] {
-  //    def transfigure[A, B](fa: F[A])(f: A ⇒ Z[X[B]]): G[X[B]] = tf.transfigure(fa)(f)
-  //  }
-  //
-  //  implicit def topMapL[X[_], F[_], G[_], Z[_]](implicit X: Functor[X], tf: Transfigure[F, G, Z]) = new Transfigure[λ[α ⇒ X[F[α]]], λ[α ⇒ X[G[α]]], Z] {
-  //    def transfigure[A, B](fa: X[F[A]])(f: A ⇒ Z[B]): X[G[B]] = fa map { tf.transfigure(_)(f) }
-  //  }
-
-  //  implicit def bindL[X[_], F[_], G[_], Z[_]]
-
-  //
-  //  implicit def join[F[_]](implicit F: Bind[F]) = new Transfigure[λ[α ⇒ F[F[α]]], F, Id] {
-  //    def transfigure[A, B](ffa: F[F[A]])(f: A ⇒ B): F[B] = F.bind(ffa)(fa ⇒ F.map(fa)(f))
-  //  }
-  //
-  //  implicit def map[F[_]](implicit F: Functor[F]) = new Transfigure[F, F, Id] {
-  //    def transfigure[A, B](fa: F[A])(f: A ⇒ Id[B]): F[B] = F.map(fa)(f)
-  //  }
-  //
-  //  implicit def bind[F[_]](implicit F: Bind[F]) = new Transfigure[F, F, F] {
-  //    def transfigure[A, B](fa: F[A])(f: A ⇒ F[B]): F[B] = F.bind(fa)(f)
-  //  }
-  //
-  //  implicit def bind_traverse[F[_], G[_]](implicit F: Bind[F] with Applicative[F], G: Traverse[G]) = new Transfigure[λ[α ⇒ F[G[α]]], λ[α ⇒ F[G[α]]], F] {
-  //    def transfigure[A, B](fga: F[G[A]])(f: A ⇒ F[B]): F[G[B]] = F.bind(fga)(ga ⇒ G.traverse(ga)(f))
-  //  }
-  //
-  //  implicit def traverse[F[_], Z[_]](implicit F: Traverse[F], Z: Applicative[Z]) = new Transfigure[F, λ[α ⇒ Z[F[α]]], Z] {
-  //    def transfigure[A, B](fa: F[A])(f: A ⇒ Z[B]): Z[F[B]] = F.traverse(fa)(f)
-  //  }
-  //
-  //  implicit def traverse_join[F[_], G[_]](implicit F: Monad[F], G: Traverse[G] with Bind[G]) = new Transfigure[λ[α ⇒ F[G[α]]], λ[α ⇒ F[G[α]]], λ[α ⇒ F[G[α]]]] {
-  //    def transfigure[A, B](fga: F[G[A]])(f: A ⇒ F[G[B]]): F[G[B]] = F.map(F.bind(fga)(G.traverse(_)(f)))(G.join(_))
-  //  }
-  //
-  //  implicit def mapR[X[_], F[_], G[_], Z[_]](implicit X: Functor[X], tf: Transfigure[F, G, Z]) = new Transfigure[λ[α ⇒ X[F[α]]], λ[α ⇒ X[G[α]]], Z] {
-  //    def transfigure[A, B](xa: X[F[A]])(f: A ⇒ Z[B]): X[G[B]] = X.map(xa)(fa ⇒ tf.transfigure(fa)(f))
-  //  }
-}
-
-object Transfigure extends TransfigureInstances {
-  def apply[F[_], G[_], Z[_]](implicit tf: Transfigure[F, G, Z]): Transfigure[F, G, Z] = tf
 }
