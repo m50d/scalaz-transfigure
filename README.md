@@ -18,6 +18,7 @@ val g: List[Option[String]] = fa.transfigureTo2[List, Option](f)
 
  * Support stacks of more than 3 monads
  * General tidy-up of code
+ * Add suitable error messages where possible (@implicitNotFound)
  * Make Layer more consistent with the rest of the world
    * Write Layer instances for more types (e.g. Either)
    * Make it easier to derive Layer from MonadTrans, if possible
