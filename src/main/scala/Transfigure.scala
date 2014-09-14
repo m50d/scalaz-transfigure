@@ -393,6 +393,20 @@ trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
   val trans: SuperNaturalTransformation[LCS#C, RCS#C, OCS#C]
 }
 
+trait IndexedApplyBind[Idx <: HList] {
+  def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
+    type A = A1
+    type S = L
+    type CS = LICS
+  }, sh2: StackHelper[BB] {
+    type S = R
+    type CS = RICS
+  }, ab: ApplyBind[Idx, L, R] {
+    type LCS = LICS
+    type RCS = RICS
+  }): ab.OCS#C[sh2.A]
+}
+
 object ApplyBind {
   implicit def combine[Idx <: HList, L <: HList, R <: HList, LICS <: Context, RICS <: Context, OL <: HList, OR <: HList, LOCS <: Context, ROCS <: Context, FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
     type ICS = LICS
@@ -425,7 +439,7 @@ object ApplyBind {
         }
       }
     }
-  def forIdx[Idx <: HList] = {
+  def forIdx[Idx <: HList]: IndexedApplyBind[Idx] = new IndexedApplyBind[Idx]{
     def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
       type A = A1
       type S = L
@@ -436,7 +450,7 @@ object ApplyBind {
     }, ab: ApplyBind[Idx, L, R] {
       type LCS = LICS
       type RCS = RICS
-    }) = ab.trans(sh1.l.apply(f))({ a ⇒ sh2.l.apply(g(a)) })
+    }): ab.OCS#C[sh2.A] = ab.trans(sh1.l.apply(f))({ a ⇒ sh2.l.apply(g(a)) })
   }
 }
 

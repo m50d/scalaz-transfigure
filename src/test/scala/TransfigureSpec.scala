@@ -85,6 +85,14 @@ class SelectionSortSpec extends mutable.Specification {
   }
 }
 
+class ApplyBindSpec extends mutable.Specification {
+  "ApplyBind" should {
+    "nil" in {
+      ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
+    }
+  }
+}
+
 class TransfigureSpec extends mutable.Specification {
 
   "Transfigure" should {
