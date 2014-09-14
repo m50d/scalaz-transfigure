@@ -193,6 +193,7 @@ object SelectLeast {
 
 sealed trait Leib1[C <: Context, D <: Context] {
   def subst[F[_[_]]](fc: F[C#C]): F[D#C]
+  def witness[A](c: C#C[A]): D#C[A] = subst[({type L[C[_]] = C[A]})#L](c)
 }
 
 object Leib1 {
@@ -405,7 +406,7 @@ trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
   type RCS <: Context
   type OCS <: Context
 
-//  val trans: SuperNaturalTransformation[LCS#C, RCS#C, OCS#C]
+  val trans: SuperNaturalTransformation[LCS#C, RCS#C, OCS#C]
 }
 
 trait IndexedApplyBind[Idx <: HList] {
@@ -423,7 +424,8 @@ trait IndexedApplyBind[Idx <: HList] {
 }
 
 object ApplyBind {
-  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, OL <: HList, LOCS <: Context, R <: HList, RICS <: Context, OR <: HList, ROCS <: Context, FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
+  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, OL <: HList, LOCS <: Context, R <: HList, RICS <: Context, OR <: HList, ROCS <: Context, FCS <: Context, RFCS <: Context](
+      implicit LSS: SelectionSort[Idx, L] {
     type ICS = LICS
     type OCS = LOCS
     type O = OL
@@ -436,23 +438,23 @@ object ApplyBind {
     type O = OR
   }, RN: Normalizer[Idx, OR] {
     type ICS = ROCS
-//    type OCS = FCS
+    type OCS = RFCS
   }, stack: MonadStack[Idx] {
     type CS = FCS
-  }) =
+  }, w: Leib1[RFCS, FCS]) =
     new ApplyBind[Idx, L, R] {
       type LCS = LICS
       type RCS = RICS
       type OCS = FCS
 
-//      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
-//        def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) = {
-//          implicit val m = stack.m
-//          LN.trans.apply(LSS.trans.apply(f)) >>= {
-//            a: A ⇒ RN.trans.apply(RSS.trans.apply(g(a)))
-//          }
-//        }
-//      }
+      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
+        def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) = {
+          implicit val m = stack.m
+          LN.trans.apply(LSS.trans.apply(f)) >>= {
+            a: A ⇒ w.witness(RN.trans.apply(RSS.trans.apply(g(a))))
+          }
+        }
+      }
     }
 //  def forIdx[Idx <: HList]: IndexedApplyBind[Idx] = new IndexedApplyBind[Idx] {
 //    def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {

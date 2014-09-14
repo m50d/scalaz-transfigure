@@ -87,14 +87,14 @@ class SelectionSortSpec extends mutable.Specification {
 
 class ApplyBindSpec extends mutable.Specification {
   implicitly[Normalizer[HNil, HNil]]
-  ApplyBind.combine[HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], Context.Aux[Id]]
+  ApplyBind.combine[HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], Context.Aux[Id], Context.Aux[Id]]
   val i1 = implicitly[SelectionSort[ListContext :: HNil, HNil] {
     type ICS = Context.Aux[Id]
     type O = HNil
     type OCS = Context.Aux[Id]
   }]
   val i2 = implicitly[MonadStack[ListContext :: HNil]]
-  ApplyBind.combine[ListContext :: HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], ListContext]
+  ApplyBind.combine[ListContext :: HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], ListContext, ListContext]
   implicitly[ApplyBind[ListContext :: HNil, HNil, HNil]]
   "ApplyBind" should {
 //    "nil" in {
