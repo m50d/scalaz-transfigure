@@ -88,10 +88,20 @@ class SelectionSortSpec extends mutable.Specification {
 class ApplyBindSpec extends mutable.Specification {
   implicitly[Normalizer[HNil, HNil]]
   ApplyBind.combine[HNil, HNil, HNil, Context.Aux[Id], Context.Aux[Id], HNil, HNil, Context.Aux[Id], Context.Aux[Id], Context.Aux[Id]]
+  val i1 = implicitly[SelectionSort[ListContext :: HNil, HNil]{
+    type ICS = Context.Aux[Id]
+    type O = HNil
+    type OCS = Context.Aux[Id]
+  }]
+  val i2 = implicitly[MonadStack[ListContext :: HNil]]
+  ApplyBind.combine[ListContext :: HNil, HNil, HNil, Context.Aux[Id], Context.Aux[Id], HNil, HNil, Context.Aux[Id], Context.Aux[Id], ListContext]
   "ApplyBind" should {
-//    "nil" in {
-//      ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
-//    }
+    "nil" in {
+      ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
+    }
+    "nillist" in {
+      ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
+    }
   }
 }
 

@@ -322,6 +322,12 @@ trait Layer[M[_]] {
   def monad[F[_]: Monad]: Monad[({ type L[A] = F[M[A]] })#L]
 }
 
+object Layer {
+  implicit object IdLayer extends Layer[Id] {
+    def monad[F[_]: Monad] = Monad[F]
+  }
+}
+
 trait MonadStack[L <: HList] {
   type CS <: Context
 
