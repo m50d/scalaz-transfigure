@@ -5,7 +5,11 @@ import ops.hlist.Length
 import scalaz._
 import scalaz.Scalaz._
 import Nat._0
+import scala.language.postfixOps
 
+/**
+ * Marker that A <= B
+ */
 sealed trait LE[A <: Nat, B <: Nat]
 
 object LE {
@@ -14,6 +18,9 @@ object LE {
     new LE[Succ[A], Succ[B]] {}
 }
 
+/**
+ * Marker that A > B
+ */
 sealed trait GT[A <: Nat, B <: Nat]
 
 object GT {
@@ -22,17 +29,24 @@ object GT {
     new GT[Succ[A], Succ[B]] {}
 }
 
+/**
+ * Extracts the index of A within the list Idx.
+ * (Only exists when A is somewhere in Idx)
+ * Note that our indices count "backwards":
+ * the index of A in A :: B :: HNil is 1,
+ * and that of B is 0. I think.
+ */
 sealed trait IndexOf[Idx <: HList, A] {
   type Out <: Nat
 }
 
-trait LowPriorityIndexOf {
+trait IndexOf2 {
   implicit def cons[A, B, Remainder <: HList](implicit i: IndexOf[Remainder, A]) = new IndexOf[B :: Remainder, A] {
     type Out = i.Out
   }
 }
 
-object IndexOf extends LowPriorityIndexOf {
+object IndexOf extends IndexOf2 {
   implicit def head[A, Remainder <: HList](implicit length: Length[Remainder]) = new IndexOf[A :: Remainder, A] {
     type Out = length.Out
   }
@@ -41,6 +55,11 @@ object IndexOf extends LowPriorityIndexOf {
   def apply[Idx <: HList, A](implicit io: IndexOf[Idx, A]): Aux[Idx, A, io.Out] = io
 }
 
+/**
+ * Helper for type inference.
+ * Expresses that A comes after B in Idx (or A = B)
+ * if the type Out exists.
+ */
 sealed trait IdxAndLtEq[Idx <: HList, A, B] {
   type Out <: LE[_ <: Nat, _ <: Nat]
 }
@@ -54,6 +73,11 @@ object IdxAndLtEq {
   def apply[Idx <: HList, A, B](implicit ile: IdxAndLtEq[Idx, A, B]): Aux[Idx, A, B, ile.Out] = ile
 }
 
+/**
+ * Helper for type inference.
+ * Expresses that A comes before B in Idx
+ * if the type Out exists.
+ */
 sealed trait IdxAndGt[Idx <: HList, A, B] {
   type Out <: GT[_ <: Nat, _ <: Nat]
 }
@@ -66,28 +90,49 @@ object IdxAndGt {
   type Aux[Idx <: HList, A, B, O <: GT[_ <: Nat, _ <: Nat]] = IdxAndGt[Idx, A, B] { type Out = O }
 }
 
+/**
+ * Marker that A comes after B in Idx (or A = B)
+ */
 sealed trait LEIndexed[Idx <: HList, A, B]
 object LEIndexed {
   implicit def ltEqIndexed[Idx <: HList, A, B, O <: LE[_ <: Nat, _ <: Nat]](implicit i: IdxAndLtEq.Aux[Idx, A, B, O], l: O) =
     new LEIndexed[Idx, A, B] {}
 }
 
+/**
+ * Marker that B comes after A in Idx
+ */
 sealed trait GTIndexed[Idx <: HList, A, B]
 object GTIndexed {
   implicit def gtIndexed[Idx <: HList, A, B, O <: GT[_ <: Nat, _ <: Nat]](implicit i: IdxAndGt.Aux[Idx, A, B, O], l: O) =
     new GTIndexed[Idx, A, B] {}
 }
 
+/**
+ * Wrapper for a 1-parameter type
+ * i.e. a type of kind * -> *.
+ * We keep them wrapped in this form to allow type inference to work correctly
+ * and to make it easier to build HLists of them.
+ */
 trait Context {
   type C[_]
 }
 
+/**
+ * TODO: it might be worth having an explicit Context.Id type
+ * since we refer to Context.Aux[scalaz.Id.Id] a lot
+ */
 object Context {
   type Aux[N[_]] = Context {
     type C[A] = N[A]
   }
 }
 
+/**
+ * Represents a step in sorting a stack of contexts according to the given Idx.
+ * trans will be a transformation from C1#C[D#C[A]] to either the same thing
+ * or to D#C[C1#C[A]], depending on which of C1 or D comes first in Idx.
+ */
 sealed trait SelectionStep[Idx <: HList, C1 <: Context, D <: Context] {
   type X <: Context
   type Y <: Context
@@ -126,6 +171,20 @@ object SelectionStep {
   def apply[Idx <: HList, C <: Context, D <: Context](implicit ss: SelectionStep[Idx, C, D]): Aux[Idx, C, D, ss.X, ss.Y] =
     ss
 }
+
+/**
+ * Pulls the earliest context in L to the top of the stack of contexts.
+ * i.e. trans is a function from F[G[H[A]]] to X[...[A]], where X
+ * is whichever of F/G/H comes first in Idx.
+ * From here on we have a "dual" representation of context stacks:
+ * we can see F[G[H[A]]] as a list Context[F] :: Context[G] :: Context[H] :: HNil,
+ * or as a single Context type. We need the former representation to guide type inference
+ * and we need the latter to allow us to declare NaturalTransformations.
+ * Whenever you see L <: HList it's the first representation,
+ * and any *CS <: Context is the second representation.
+ * I have tried to use C/D/etc. to denote "single" contexts,
+ * and ICS/RCS/etc. to denote "context stack"s like F[G[H[A]]]
+ */
 
 sealed trait SelectLeast[Idx <: HList, L <: HList] {
   type X <: Context
@@ -182,6 +241,11 @@ object SelectLeast {
     sl.trans
 }
 
+/**
+ * Leibniz equality (i.e. substitutability) for 1-parameter types wrapped as Contexts.
+ * See scalaz.Leibniz - in Haskell we could use the same type, but Scala doesn't
+ * let us abstract over kind.
+ */
 sealed trait Leib1[C <: Context, D <: Context] {
   def subst[F[_[_]]](fc: F[C#C]): F[D#C]
   def witness[A](c: C#C[A]): D#C[A] = subst[({ type L[C[_]] = C[A] })#L](c)
@@ -194,18 +258,10 @@ object Leib1 {
 }
 
 /**
- * Attempt to work around scala's misguided inference efforts
+ * A complete sort of the context stack L, relative to the index Idx.
+ * O is the output type (OCS) expressed as a list of contexts (rather than a single stacked context).
+ * (this is useful for guiding inference in later steps)
  */
-//sealed trait AlwaysHNil {
-//  type L <: HList
-//}
-//
-//object AlwaysHNil {
-//  implicit object nil extends AlwaysHNil {
-//    type L = HNil
-//  }
-//}
-
 sealed trait SelectionSort[Idx <: HList, L <: HList] {
   type ICS <: Context
   type O <: HList
@@ -263,7 +319,14 @@ object SelectionSort {
     ss.trans
 }
 
-trait Normalizer[Idx <: HList, L <: HList] {
+/**
+ * "Normalizes" the list of contexts L to equal the list Idx.
+ * L should be sorted relative to Idx beforehand.
+ * We represent a normalizer in slightly "peeled" form
+ * (the output context stack is really C[RCS[A]])
+ * to make it easy to write the "consBind" implementation.
+ */
+sealed trait Normalizer[Idx <: HList, L <: HList] {
   type ICS <: Context
   type C <: Context
   type RCS <: Context
@@ -324,19 +387,13 @@ trait Normalizer2 extends Normalizer3 {
   }
 }
 
-//trait PeeledNormalizer[H <: Context, T, L] {
-//  type D <: Context
-//  val normalizer: Normalizer[H :: T, H :: L]
-//  val leib: Leib1[normalizer.OCS, Context {
-//    type C[A] = H#C[D#C[A]]
-//  }]
-//}
-//
-//object PeeledNormalizer {
-//  implicit def fromNormalizer[H ]
-//}
-
 object Normalizer extends Normalizer2 {
+  /**
+   * TODO: I think this might require some handholding of the type inference -
+   * I suspect it can only find the Normalizer with type C = C1 if
+   * it's at the lowest level of the stack.
+   * The same technique we use elsewhere (IdxAndLtEq etc.) should work.
+   */
   implicit def consBind[C1 <: Context, T <: HList, L <: HList](implicit rest: Normalizer[C1 :: T, C1 :: L] { type C = C1 },
     b: Bind[C1#C]) = new Normalizer[C1 :: T, C1 :: C1 :: L] {
     type ICS = Context {
@@ -351,7 +408,16 @@ object Normalizer extends Normalizer2 {
   }
 }
 
-trait SortAndNormalizerRequiringLeibniz[Idx <: HList, L <: HList] {
+/**
+ * Helper to guide type inference.
+ * Represents a combined sort-and-normalize of the context stack L
+ * to the context stack Idx, provided the Leibniz equivalence of
+ * type Required exists.
+ * In fact this equivalence will always exist (because if ss.O = M
+ * then ss.OCS will equal n.ICS, as they're derived in exactly the
+ * same way), but the compiler doesn't know that.
+ */
+sealed trait SortAndNormalizerRequiringLeibniz[Idx <: HList, L <: HList] {
   type ICS <: Context
   type Required <: Leib1[_, _]
   type OCS <: Context
@@ -374,7 +440,10 @@ object SortAndNormalizerRequiringLeibniz {
     }
 }
 
-trait SortAndNormalizer[Idx <: HList, L <: HList] {
+/**
+ * A combined sort-and-normalize from the context stack L to the context stack Idx
+ */
+sealed trait SortAndNormalizer[Idx <: HList, L <: HList] {
   type ICS <: Context
   type OCS <: Context
 
@@ -400,11 +469,28 @@ object SortAndNormalizer {
 /**
  * Substitute for MonadTrans. Inspired by Haskell's layers package,
  * but not (yet) as general or elegant.
+ * Allows us to view a stack of monads (e.g. F[G[A]]) as a single monad,
+ * without having to wrap it in another type.
  */
 trait Layer[M[_]] {
   def monad[F[_]: Monad]: Monad[({ type L[A] = F[M[A]] })#L]
+
+  def lift[N[_]](other: Layer[N]): Layer[({ type L[A] = N[M[A]] })#L] =
+    {
+      val self = this
+      new Layer[({ type L[A] = N[M[A]] })#L] {
+        def monad[F[_]: Monad] = self.monad[({ type L[A] = F[N[A]] })#L](other.monad(Monad[F]))
+      }
+    }
 }
 
+/**
+ * Layer instances for a few existing types, mostly cribbed from
+ * their respective MonadTrans in scalaz.
+ * Note that Layers do not exist for all Monads (e.g. there is
+ * no Layer for Future), but they should
+ * exist for any Monad for which a MonadTrans exists.
+ */
 object Layer {
   implicit object IdLayer extends Layer[Id] {
     def monad[F[_]: Monad] = Monad[F]
@@ -438,33 +524,62 @@ object Layer {
       }
     }
   }
-}
 
-trait MonadStack[L <: HList] {
-  type CS <: Context
-
-  val m: Monad[CS#C]
-}
-
-object MonadStack {
-  implicit object nil extends MonadStack[HNil] {
-    type CS = Context.Aux[Id]
-
-    val m = Id.id
+  implicit def writerLayer[A: Monoid] = new Layer[({ type L[B] = Writer[A, B] })#L] {
+    def monad[F[_]: Monad] = new Monad[({ type L[B] = F[Writer[A, B]] })#L] {
+      def point[B](b: ⇒ B) = MonadTell[Writer, A].point(b).point[F]
+      def bind[B, C](fb: F[Writer[A, B]])(f: B ⇒ F[Writer[A, C]]) =
+        Monad[F].bind(fb) { wa ⇒
+          val z = f(wa.run._2)
+          Monad[F].map(z)(wb ⇒ Writer(Monoid[A].append(wa.run._1, wb.run._1), wb.run._2))
+        }
+    }
   }
+}
 
-  implicit def cons[H <: Context, T <: HList, D <: Context](implicit rest: MonadStack[T] {
-    type CS = D
-  }, l: Layer[D#C], mo: Monad[H#C]) =
-    new MonadStack[H :: T] {
-      type CS = Context {
-        type C[A] = H#C[rest.CS#C[A]]
+/**
+ * Converts between the two representations of a context stack:
+ * L is a HList of contexts, C[RS[A]] is the same stack as a
+ * single composed context. Also contains a monad for the context.
+ * We keep the monad stack in slightly "peeled" form
+ * so that the outer monad is allowed to be one
+ * without a layer (e.g. Future)
+ */
+sealed trait MonadStack[L <: HList] {
+  type C <: Context
+  type RS <: Context
+
+  val l: Layer[RS#C]
+  val cm: Monad[C#C]
+  def m: Monad[({ type L[A] = C#C[RS#C[A]] })#L] = l.monad(cm)
+}
+
+trait MonadStack1 {
+  implicit def nil[C1 <: Context](implicit m1: Monad[C1#C]) = new MonadStack[C1 :: HNil] {
+    type C = C1
+    type RS = Context.Aux[Id]
+
+    val cm = m1
+    val l = Layer.IdLayer
+  }
+}
+
+object MonadStack extends MonadStack1 {
+  implicit def cons[C1 <: Context, D <: Context, T <: HList](implicit rest: MonadStack[D :: T] { type C = D }, l1: Layer[D#C], m1: Monad[C1#C]) =
+    new MonadStack[C1 :: D :: T] {
+      type C = C1
+      type RS = Context {
+        type C[A] = D#C[rest.RS#C[A]]
       }
 
-      val m = l.monad[H#C](mo)
+      val l = rest.l.lift(l1)
+      val cm = m1
     }
 }
 
+/**
+ * Two-argument form of NaturalTransformation.
+ */
 trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
   def apply[A, B](f: F[A])(g: A ⇒ G[B]): H[B]
 }
@@ -477,7 +592,7 @@ trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
  * }
  * TODO: Shouldn't really require everything to be a monad
  */
-trait StackHelper[I] {
+sealed trait StackHelper[I] {
   type A
   type S <: HList
   type CS <: Context
@@ -512,7 +627,16 @@ object StackHelper extends StackHelper2 {
   }
 }
 
-trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
+/**
+ * Brings everything together.
+ * Provides a transformation between two stacks L, R
+ * and a third stack Idx, which first applies
+ * a sort-normalize to each of L and R, transforming
+ * both into Idx, and then uses a monad stack
+ * to combine the two context stacks into a single
+ * instance of the same context stack.
+ */
+sealed trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
   type LCS <: Context
   type RCS <: Context
   type OCS <: Context
@@ -520,7 +644,13 @@ trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
   val trans: SuperNaturalTransformation[LCS#C, RCS#C, OCS#C]
 }
 
-trait IndexedApplyBind[Idx <: HList] {
+/**
+ * Partially constructed ApplyBind. Has Idx fixed but the remaining parameters free.
+ */
+sealed trait IndexedApplyBind[Idx <: HList] {
+  /**
+   * Apply to both arguments directly. Useful for testing, but no longer used directly in code.
+   */
   def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
     type A = A1
     type S = L
@@ -533,6 +663,10 @@ trait IndexedApplyBind[Idx <: HList] {
     type RCS = RICS
   }): ab.OCS#C[sh2.A]
 
+  /**
+   * Apply to one argument, so that it can later be applied to the second argument. This is
+   * the method that the main code actually uses.
+   */
   def partialApply[AA, A1, L <: HList, LICS <: Context](f: AA)(implicit sh1: StackHelper[AA] {
     type A = A1
     type S = L
@@ -552,7 +686,11 @@ trait IndexedApplyBind[Idx <: HList] {
   }
 }
 
-trait PartiallyAppliedApplyBind[Idx <: HList, A1, L <: HList, LICS <: Context] {
+/**
+ * Partially constructed ApplyBind. The index and the left hand side (deconstructed into a context stack)
+ * are fixed, but the right hand side is currently free.
+ */
+sealed trait PartiallyAppliedApplyBind[Idx <: HList, A1, L <: HList, LICS <: Context] {
   def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper[BB] {
     type S = R
     type CS = RICS
@@ -563,7 +701,7 @@ trait PartiallyAppliedApplyBind[Idx <: HList, A1, L <: HList, LICS <: Context] {
 }
 
 object ApplyBind {
-  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, LOCS <: Context, R <: HList, RICS <: Context, ROCS <: Context](
+  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, LOCS <: Context, R <: HList, RICS <: Context, ROCS <: Context, FC <: Context, FRCS <: Context](
     implicit lsn: SortAndNormalizer[Idx, L] {
       type ICS = LICS
       type OCS = LOCS
@@ -571,22 +709,33 @@ object ApplyBind {
       type ICS = RICS
       type OCS = ROCS
     }, stack: MonadStack[Idx] {
-      type CS = LOCS //is this really inferred ok?
-    }, w: Leib1[ROCS, LOCS]) =
+      type C = FC
+      type RS = FRCS
+    },
+    w1: Leib1[LOCS, Context.Aux[({ type L[A] = FC#C[FRCS#C[A]] })#L]],
+    w2: Leib1[ROCS, Context.Aux[({ type L[A] = FC#C[FRCS#C[A]] })#L]]) =
     new ApplyBind[Idx, L, R] {
       type LCS = LICS
       type RCS = RICS
-      type OCS = LOCS
+      type OCS = Context {
+        type C[A] = FC#C[FRCS#C[A]]
+      }
 
       val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
         def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) = {
           implicit val m = stack.m
-          lsn.trans.apply(f) >>= {
-            a: A ⇒ w.witness(rsn.trans.apply(g(a)))
+          w1.witness(lsn.trans.apply(f)) >>= {
+            a: A ⇒ w2.witness(rsn.trans.apply(g(a)))
           }
         }
       }
     }
+
+  /**
+   * Fix the index stack, and return a partially constructed instance
+   * that can be applied to a left stack and a right stack to form
+   * the complete ApplyBind
+   */
   def forIdx[Idx <: HList]: IndexedApplyBind[Idx] = new IndexedApplyBind[Idx] {
     def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
       type A = A1

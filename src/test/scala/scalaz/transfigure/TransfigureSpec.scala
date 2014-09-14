@@ -1,14 +1,19 @@
 package scalaz.transfigure
 
-import org.specs2._
+import org.specs2.mutable._
 import shapeless.{ Id ⇒ _, _ }
-import nat._
-import ops.nat._
-import ops.hlist._
-import test._
+import shapeless.nat._
+import shapeless.ops.nat._
+import shapeless.ops.hlist._
+import shapeless.test._
 import scalaz._
 import scalaz.Scalaz._
 import TransfigureToSyntax._
+import Aliases._
+import org.junit.runner.RunWith
+import scala.Right
+import scalaz.std.either.eitherMonad
+import org.specs2.runner.JUnitRunner
 
 object Aliases {
   type EitherR[A] = Either[Unit, A]
@@ -23,8 +28,6 @@ object Aliases {
   type Idx = OptionContext :: ListContext :: EitherRContext :: HNil
 }
 
-import Aliases._
-
 class IndexOfSpec {
   val p = IndexOf[String :: Int :: Long :: HNil, Int]
   implicitly[p.Out =:= _1]
@@ -34,7 +37,7 @@ class LEEqIndexedSpec {
   implicitly[LEIndexed[Int :: String :: HNil, String, Int]]
 }
 
-class SelectionStepSpec extends mutable.Specification {
+class SelectionStepSpec extends Specification {
 
   "SelectionStep" should {
     "option.list" in {
@@ -48,7 +51,7 @@ class SelectionStepSpec extends mutable.Specification {
   }
 }
 
-class SelectLeastSpec extends mutable.Specification {
+class SelectLeastSpec extends Specification {
   "SelectLeast" should {
     "list" in {
       val sl = SelectLeast.selectLeast[ListContext :: HNil, ListContext :: HNil]
@@ -69,7 +72,7 @@ class SelectLeastSpec extends mutable.Specification {
   }
 }
 
-class SelectionSortSpec extends mutable.Specification {
+class SelectionSortSpec extends Specification {
   implicitly[SelectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]]
   SelectionSort.cons[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil, OptionContext, HNil, Context.Aux[Id], Context.Aux[Id]]
 
@@ -93,23 +96,15 @@ class SelectionSortSpec extends mutable.Specification {
   }
 }
 
-class NormalizerSpec extends mutable.Specification {
+class NormalizerSpec {
   implicitly[Normalizer[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]]
   implicitly[Normalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]]
 }
 
-class SortAndNormalizerSpec extends mutable.Specification {
-  implicitly[Normalizer[OptionContext :: ListContext :: HNil, HNil] {
-    //    type ICS = Context.Aux[Id]
-    //    type OCS = Context.Aux[Id]
-  }]
-  //  implicitly[SortAndNormalizerRequiringLeibniz[OptionContext :: ListContext ::HNil, OptionContext :: OptionContext :: HNil]]
-
+class SortAndNormalizerSpec extends Specification {
   val ss = SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
   implicitly[=:=[ss.ICS, OptionOptionContext]]
   implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
-  //  implicitly[Normalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]]
-  //  SortAndNormalizerRequiringLeibniz.fromSort(ss, )
 
   "SortAndNormalizer" should {
     "nil" in {
@@ -120,65 +115,43 @@ class SortAndNormalizerSpec extends mutable.Specification {
       val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
       sn.trans.apply(List(Some(5))) ==== Some(List(5))
     }
-    //        "option.option" in {
-    //          val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
-    //          sn.trans.apply(Some(Some(5))) ==== Some(List(5))
-    //        }
+    "option.option" in {
+      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
+      sn.trans.apply(Some(Some(5))) ==== Some(List(5))
+    }
   }
 }
 
-class ApplyBindSpec extends mutable.Specification {
-  //  implicitly[Normalizer[HNil, HNil]]
-  //  ApplyBind.combine[HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], Context.Aux[Id], Context.Aux[Id]]
+@RunWith(classOf[JUnitRunner])
+class ApplyBindSpec extends Specification {
   val i1 = implicitly[SelectionSort[ListContext :: HNil, HNil] {
     type ICS = Context.Aux[Id]
     type O = HNil
     type OCS = Context.Aux[Id]
   }]
   val i2 = implicitly[MonadStack[ListContext :: HNil]]
-  //  ApplyBind.combine[ListContext :: HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], ListContext, ListContext]
   implicitly[ApplyBind[ListContext :: HNil, HNil, HNil]]
 
   val ss = SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
 
   implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
-  implicitly[SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil] {
-    type ICS = Context {
-      type C[A] = Option[List[A]]
-    }
-    type O = OptionContext :: ListContext :: HNil
-    //    type OCS = Context {
-    //      type C[A] = Option[List[A]]
-    //    }
-  }]
-  implicitly[SelectionSort[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil] {
-    type ICS = Context {
-      type C[A] = List[Option[A]]
-    }
-    //  type O = ListContext :: OptionContext :: HNil
-    type OCS = Context {
-      type C[A] = Option[List[A]]
-    }
-  }]
-  implicitly[SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil] {
-    type ICS = OptionOptionContext
-    //    type O = OptionContext :: OptionContext :: HNil
-    type OCS = OptionOptionContext
-  }]
-  //    ApplyBind.combine[OptionContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: OptionContext :: HNil, OptionOptionContext, HNil, Context.Aux[Id], HNil, Context.Aux[Id], OptionContext, OptionContext]
 
-  //  ApplyBind.forIdx[OptionContext :: HNil].apply(Some(Some(5)): Option[Option[Int]], { x: Int ⇒ x + 1 })
-  //  "ApplyBind" should {
-  //    "nil" in {
-  //      ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
-  //    }
-  //    "nillist" in {
-  //      ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== List(6)
-  //    }
-  //  }
+  type StackedContext = Context {
+    type C[A] = EitherR[List[Option[A]]]
+  }
+  "ApplyBind" should {
+    "nillist" in {
+      ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== List(6)
+    }
+    "nileitherlistoption" in {
+      import scalaz.std.either._
+      ApplyBind.forIdx[EitherRContext :: ListContext :: OptionContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== Right(List(Some(6)))
+    }
+  }
 }
 
-class TransfigureSpec extends mutable.Specification {
+@RunWith(classOf[JUnitRunner])
+class TransfigureSpec extends Specification {
 
   "Transfigure" should {
 
@@ -258,6 +231,14 @@ class TransfigureSpec extends mutable.Specification {
       import scalaz.std.either._
       val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
       val f: Int ⇒ Int = x ⇒ x + 2
+
+      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
+    }
+
+    "flatMap.map.flatMap" in {
+      import scalaz.std.either._
+      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+      val f: Int ⇒ EitherR[Option[Int]] = x ⇒ Right(Some(x + 2))
 
       fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
     }
