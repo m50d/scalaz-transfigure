@@ -375,7 +375,12 @@ object StackHelper extends StackHelper2 {
     type CS = Context {
       type C[A] = u.M[rest.CS#C[A]]
     }
-    val l = u.leibniz
+    //u.leibniz: MA == u.M[AA]
+    //rest.l: AA == rest.CS#C[A]
+    //want: MA == u.M[rest.CS#C[A]]
+    val l = {
+      val step: Leibniz.===[u.M[AA], u.M[rest.CS#C[A]]] = Leibniz.lift[⊥, ⊥, ⊤, ⊤, u.M, AA, rest.CS#C[A]](rest.l)
+    }
   }
 }
 
