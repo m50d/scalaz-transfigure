@@ -128,15 +128,15 @@ class SortAndNormalizerSpec extends mutable.Specification {
 }
 
 class ApplyBindSpec extends mutable.Specification {
-  implicitly[Normalizer[HNil, HNil]]
-  ApplyBind.combine[HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], Context.Aux[Id], Context.Aux[Id]]
+//  implicitly[Normalizer[HNil, HNil]]
+//  ApplyBind.combine[HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], Context.Aux[Id], Context.Aux[Id]]
   val i1 = implicitly[SelectionSort[ListContext :: HNil, HNil] {
     type ICS = Context.Aux[Id]
     type O = HNil
     type OCS = Context.Aux[Id]
   }]
   val i2 = implicitly[MonadStack[ListContext :: HNil]]
-  ApplyBind.combine[ListContext :: HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], ListContext, ListContext]
+//  ApplyBind.combine[ListContext :: HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], ListContext, ListContext]
   implicitly[ApplyBind[ListContext :: HNil, HNil, HNil]]
 
   val ss = SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
@@ -168,14 +168,14 @@ class ApplyBindSpec extends mutable.Specification {
   //    ApplyBind.combine[OptionContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: OptionContext :: HNil, OptionOptionContext, HNil, Context.Aux[Id], HNil, Context.Aux[Id], OptionContext, OptionContext]
 
   //  ApplyBind.forIdx[OptionContext :: HNil].apply(Some(Some(5)): Option[Option[Int]], { x: Int ⇒ x + 1 })
-  "ApplyBind" should {
-    "nil" in {
-      ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
-    }
-    "nillist" in {
-      ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== List(6)
-    }
-  }
+//  "ApplyBind" should {
+//    "nil" in {
+//      ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
+//    }
+//    "nillist" in {
+//      ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== List(6)
+//    }
+//  }
 }
 
 class TransfigureSpec extends mutable.Specification {
