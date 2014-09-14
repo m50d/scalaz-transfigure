@@ -384,6 +384,14 @@ object SortAndNormalizer {
  */
 trait Layer[M[_]] {
   def monad[F[_]: Monad]: Monad[({ type L[A] = F[M[A]] })#L]
+
+  def lift[N[_]](other: Layer[N]): Layer[({ type L[A] = N[M[A]] })#L] =
+    {
+      val self = this
+      new Layer[({ type L[A] = N[M[A]] })#L] {
+        def monad[F[_]: Monad] = self.monad[({ type L[A] = F[N[A]] })#L](other.monad(Monad[F]))
+      }
+    }
 }
 
 object Layer {
@@ -421,28 +429,39 @@ object Layer {
   }
 }
 
+/**
+ * We keep the monad stack in slightly "peeled" form
+ * so that the outer monad is allowed to be one
+ * without a layer (e.g. Future)
+ */
 trait MonadStack[L <: HList] {
-  type CS <: Context
+  type C <: Context
+  type RS <: Context
 
-  val m: Monad[CS#C]
+  val m: Monad[({ type L[A] = C#C[RS#C[A]] })#L]
+  val l: Layer[RS#C]
 }
 
-object MonadStack {
-  implicit object nil extends MonadStack[HNil] {
-    type CS = Context.Aux[Id]
-
-    val m = Id.id
+trait MonadStack1 {
+  implicit def nil[C1 <: Context](implicit m1: Monad[C1#C]) = new MonadStack[C1 :: HNil] {
+    type C = C1
+    type RS = Context.Aux[Id]
+    
+    val m = m1
+    val l = Layer.IdLayer
   }
+}
 
-  implicit def cons[H <: Context, T <: HList, D <: Context](implicit rest: MonadStack[T] {
-    type CS = D
-  }, l: Layer[D#C], mo: Monad[H#C]) =
-    new MonadStack[H :: T] {
-      type CS = Context {
-        type C[A] = H#C[rest.CS#C[A]]
+object MonadStack extends MonadStack1 {
+  implicit def cons[C1 <: Context, D <: Context, T <: HList](implicit rest: MonadStack[D :: T]{type C = D}, l1: Layer[D#C], m1: Monad[C1#C]) =
+    new MonadStack[C1 :: D :: T] {
+      type C = C1
+      type RS = Context {
+        type C[A] = D#C[rest.RS#C[A]]
       }
 
-      val m = l.monad[H#C](mo)
+      val m = m1
+      val l = rest.l.lift(l1)
     }
 }
 
