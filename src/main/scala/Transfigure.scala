@@ -380,6 +380,7 @@ object StackHelper extends StackHelper2 {
     //want: MA == u.M[rest.CS#C[A]]
     val l = {
       val step: Leibniz.===[u.M[AA], u.M[rest.CS#C[A]]] = Leibniz.lift[⊥, ⊥, ⊤, ⊤, u.M, AA, rest.CS#C[A]](rest.l)
+      Leibniz.trans[⊥, ⊤, MA, u.M[AA], u.M[rest.CS#C[A]]](step, u.leibniz)
     }
   }
 }
