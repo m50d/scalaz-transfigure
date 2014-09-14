@@ -136,6 +136,7 @@ class ApplyBindSpec extends mutable.Specification {
   type StackedContext = Context {
     type C[A] = EitherR[List[Option[A]]]
   }
+//  implicitly[MonadStack[EitherRContext :: ListContext :: OptionContext]]
   ApplyBind.combine[EitherRContext :: ListContext :: OptionContext :: HNil, HNil, Context.Aux[Id], StackedContext, HNil, Context.Aux[Id], StackedContext, StackedContext]
   "ApplyBind" should {
     "nillist" in {
