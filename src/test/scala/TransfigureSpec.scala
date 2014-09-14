@@ -97,12 +97,12 @@ class ApplyBindSpec extends mutable.Specification {
   ApplyBind.combine[ListContext :: HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], ListContext, ListContext]
   implicitly[ApplyBind[ListContext :: HNil, HNil, HNil]]
   "ApplyBind" should {
-//    "nil" in {
-//      ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
-//    }
-//    "nillist" in {
-//      ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
-//    }
+    "nil" in {
+      ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
+    }
+    "nillist" in {
+      ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== List(6)
+    }
   }
 }
 
