@@ -98,7 +98,7 @@ class SortAndNormalizerSpec extends mutable.Specification {
 //    type ICS = Context.Aux[Id]
 //    type OCS = Context.Aux[Id]
   }]
-  SortAndNormalizer.combine[OptionContext :: ListContext :: HNil, HNil, Context.Aux[Id], HNil, Normalizer[OptionContext :: ListContext :: HNil, HNil] { type ICS = Context.Aux[Id] }]
+//  SortAndNormalizer.combine[OptionContext :: ListContext :: HNil, HNil, Context.Aux[Id], HNil, Normalizer[OptionContext :: ListContext :: HNil, HNil] { type ICS = Context.Aux[Id] }]
   //  implicitly[SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]{
   ////    type ICS = OptionOptionContext
   //    type O = OptionContext :: HNil
@@ -109,10 +109,10 @@ class SortAndNormalizerSpec extends mutable.Specification {
   //  SortAndNormalizer.combine[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: HNil, OptionOptionContext, OptionContext]
 
   "SortAndNormalizer" should {
-//        "nil" in {
-//          val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, HNil]
-//          sn.trans.apply(5) ==== Some(List(5))
-//        }
+        "nil" in {
+          val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, HNil]
+          sn.trans.apply(5) ==== Some(List(5))
+        }
     //    "list.option" in {
     //      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
     //      sn.trans.apply(List(Some(5))) ==== Some(List(5))

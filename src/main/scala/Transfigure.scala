@@ -326,23 +326,24 @@ object Normalizer extends Normalizer2 {
   }
 }
 
-trait SortAndExpectedShape[Idx <: HList, L <: HList] {
+trait SortAndNormalizerRequiringLeibniz[Idx <: HList, L <: HList] {
   type ICS <: Context
-  type M <: HList
-  type ExpectedShape <: Normalizer[Idx, M]
+  type Required <: Leib1[_, _]
+  type OCS <: Context
 
-  val sort: NaturalTransformation[ICS#C, ExpectedShape#ICS#C]
+  def sort(leib: Required): NaturalTransformation[ICS#C, OCS#C]
 }
 
-object SortAndExpectedShape {
-  implicit def fromSort[Idx <: HList, L <: HList, ICS1 <: Context, O1 <: HList, OCS1 <: Context](implicit ss: SelectionSort[Idx, L]) =
-    new SortAndExpectedShape[Idx, L] {
+object SortAndNormalizerRequiringLeibniz {
+  implicit def fromSort[Idx <: HList, L <: HList, M <: HList](implicit ss: SelectionSort[Idx, L] { type O = M }, n: Normalizer[Idx, M]) =
+    new SortAndNormalizerRequiringLeibniz[Idx, L] {
       type ICS = ss.ICS
-      type M = ss.O
-      type ExpectedShape = Normalizer[Idx, ss.O] {
-        type ICS = ss.OCS
+      type Required = Leib1[ss.OCS, n.ICS]
+      type OCS = n.OCS
+      def sort(leib: Required) = new NaturalTransformation[ICS#C, OCS#C] {
+        def apply[A](fa: ICS#C[A]) =
+          n.trans.apply(leib.witness(ss.trans.apply(fa)))
       }
-      val sort = ss.trans
     }
 }
 
@@ -354,19 +355,13 @@ trait SortAndNormalizer[Idx <: HList, L <: HList] {
 }
 
 object SortAndNormalizer {
-  implicit def combine[Idx <: HList, L <: HList, ICS1 <: Context, M <: HList, ES <: Normalizer[Idx, M]](implicit sort: SortAndExpectedShape[Idx, L] {
-    type ICS = ICS1
-    type ExpectedShape = ES
-  },
-    normalizer: ES) = new SortAndNormalizer[Idx, L] {
-    type ICS = ICS1
-    type OCS = normalizer.OCS
+  implicit def fromSN[Idx <: HList, L <: HList, R <: Leib1[_, _]](implicit sort: SortAndNormalizerRequiringLeibniz[Idx, L] {
+    type Required = R
+  }, leib: R) = new SortAndNormalizer[Idx, L] {
+    type ICS = sort.ICS
+    type OCS = sort.OCS
 
-    val trans = new NaturalTransformation[ICS#C, OCS#C] {
-      //I don't know why the compiler doesn't realize that normalizer.ICS == ES.ICS
-      def apply[A](fa: ICS1#C[A]) =
-        normalizer.trans.apply(sort.sort.apply(fa).asInstanceOf[normalizer.ICS#C[A]])
-    }
+    val trans = sort.sort(leib)
   }
   type Aux[Idx <: HList, L <: HList, ICS1 <: Context, OCS1 <: Context] = SortAndNormalizer[Idx, L] {
     type ICS = ICS1
