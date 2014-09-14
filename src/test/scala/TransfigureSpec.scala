@@ -134,12 +134,12 @@ class TransfigureSpec extends mutable.Specification {
       fa.transfigureTo1[Option](f) ==== Some("32")
     }
 
-    "join" in {
-      val fa: Option[Option[Int]] = Some(Some(42))
-      val f: Int => Int = _ + 1
-
-      fa.transfigureTo1[Option](f) ==== Some(43)
-    }
+//    "join" in {
+//      val fa: Option[Option[Int]] = Some(Some(42))
+//      val f: Int => Int = _ + 1
+//
+//      fa.transfigureTo1[Option](f) ==== Some(43)
+//    }
 
     "point" in {
       val fa: Option[Int] = Some(42)

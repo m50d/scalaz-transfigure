@@ -338,6 +338,24 @@ object Layer {
         }
     }
   }
+
+  implicit object ListLayer extends Layer[List] {
+    def monad[F[_]: Monad] = new Monad[({ type L[A] = F[List[A]] })#L] {
+      def point[A](a: ⇒ A) = Monad[F].point(List(a))
+      def bind[A, B](fa: F[List[A]])(f: A ⇒ F[List[B]]) = {
+        def ++(as: F[List[B]], bs: F[List[B]]) = Monad[F].bind(as) { list1 ⇒
+          Monad[F].map(bs) { list2 ⇒
+            list1 ++ list2
+          }
+        }
+
+        Monad[F].bind(fa) {
+          case Nil ⇒ Monad[F].point(Nil)
+          case nonEmpty ⇒ nonEmpty.map(f).reduce[F[List[B]]](++ _)
+        }
+      }
+    }
+  }
 }
 
 trait MonadStack[L <: HList] {
