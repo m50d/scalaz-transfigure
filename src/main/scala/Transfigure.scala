@@ -327,6 +327,17 @@ object Layer {
   implicit object IdLayer extends Layer[Id] {
     def monad[F[_]: Monad] = Monad[F]
   }
+
+  implicit object OptionLayer extends Layer[Option] {
+    def monad[F[_]: Monad] = new Monad[({ type L[A] = F[Option[A]] })#L] {
+      def point[A](a: ⇒ A) = Monad[F].point(Some(a))
+      def bind[A, B](fa: F[Option[A]])(f: A ⇒ F[Option[B]]) =
+        Monad[F].bind(fa) {
+          case None ⇒ Monad[F].point(None: Option[B])
+          case Some(z) ⇒ f(z)
+        }
+    }
+  }
 }
 
 trait MonadStack[L <: HList] {
