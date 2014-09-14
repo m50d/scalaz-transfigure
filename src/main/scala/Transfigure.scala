@@ -267,8 +267,8 @@ trait Normalizer[Idx <: HList, L <: HList] {
   type ICS <: Context
   type C <: Context
   type RCS <: Context
-  
-  val trans: NaturalTransformation[ICS#C, ({type L[A] = C#C[RCS#C[A]]})#L]
+
+  val trans: NaturalTransformation[ICS#C, ({ type L[A] = C#C[RCS#C[A]] })#L]
 }
 
 trait Normalizer5 {
@@ -276,7 +276,7 @@ trait Normalizer5 {
     type ICS = Context.Aux[Id]
     type C = C1
     type RCS = Context.Aux[Id]
-    
+
     val trans = new NaturalTransformation[ICS#C, C1#C] {
       def apply[A](fa: A) =
         Applicative[C1#C].point(fa)
@@ -303,7 +303,7 @@ trait Normalizer3 extends Normalizer4 {
     type RCS = Context {
       type C[A] = rest.C#C[rest.RCS#C[A]]
     }
-    val trans = new NaturalTransformation[ICS#C, ({type L[A] = C#C[RCS#C[A]]})#L] {
+    val trans = new NaturalTransformation[ICS#C, ({ type L[A] = C#C[RCS#C[A]] })#L] {
       def apply[A](fa: ICS#C[A]) = Applicative[C1#C].point(rest.trans.apply(fa))
     }
   }
@@ -318,38 +318,33 @@ trait Normalizer2 extends Normalizer3 {
     type RCS = Context {
       type C[A] = rest.C#C[rest.RCS#C[A]]
     }
-     val trans = new NaturalTransformation[ICS#C, ({type L[A] = C#C[RCS#C[A]]})#L] {
-      def apply[A](fa: ICS#C[A]) = fa map {rest.trans.apply(_)}
+    val trans = new NaturalTransformation[ICS#C, ({ type L[A] = C#C[RCS#C[A]] })#L] {
+      def apply[A](fa: ICS#C[A]) = fa map { rest.trans.apply(_) }
     }
   }
 }
 
-trait PeeledNormalizer[H <: Context, T, L] {
-  type D <: Context
-  val normalizer: Normalizer[H :: T, H :: L]
-  val leib: Leib1[normalizer.OCS, Context {
-    type C[A] = H#C[D#C[A]]
-  }]
-}
+//trait PeeledNormalizer[H <: Context, T, L] {
+//  type D <: Context
+//  val normalizer: Normalizer[H :: T, H :: L]
+//  val leib: Leib1[normalizer.OCS, Context {
+//    type C[A] = H#C[D#C[A]]
+//  }]
+//}
 //
 //object PeeledNormalizer {
 //  implicit def fromNormalizer[H ]
 //}
 
 object Normalizer extends Normalizer2 {
-  implicit def two[H <: Context, T <: HList, L <: HList, D <: Context](implicit rest: Normalizer[H :: T, H :: L] {
-    type OCS = Context {
-      type C[A] = H#C[D#C[A]]
-    }
-  },
-    b: Bind[H#C]) = new Normalizer[H :: T, H :: H :: L] {
+  implicit def consBind[C1 <: Context, T <: HList, L <: HList](implicit rest: Normalizer[C1 :: T, C1 :: L] { type C = C1 },
+    b: Bind[C1#C]) = new Normalizer[C1 :: T, C1 :: C1 :: L] {
     type ICS = Context {
-      type C[A] = H#C[rest.ICS#C[A]]
+      type C[A] = C1#C[rest.ICS#C[A]]
     }
-    type OCS = Context {
-      type C[A] = rest.OCS#C[A]
-    }
-    val trans = new NaturalTransformation[ICS#C, OCS#C] {
+    type C = C1
+    type RCS = rest.RCS
+    val trans = new NaturalTransformation[ICS#C, ({ type L[A] = C#C[RCS#C[A]] })#L] {
       def apply[A](fa: ICS#C[A]) =
         fa map { rest.trans.apply(_) } μ
     }
@@ -369,7 +364,9 @@ object SortAndNormalizerRequiringLeibniz {
     new SortAndNormalizerRequiringLeibniz[Idx, L] {
       type ICS = ss.ICS
       type Required = Leib1[ss.OCS, n.ICS]
-      type OCS = n.OCS
+      type OCS = Context {
+        type C[A] = n.C#C[n.RCS#C[A]]
+      }
       def sort(leib: Required) = new NaturalTransformation[ICS#C, OCS#C] {
         def apply[A](fa: ICS#C[A]) =
           n.trans.apply(leib.witness(ss.trans.apply(fa)))
