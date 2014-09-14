@@ -100,6 +100,10 @@ class SortAndNormalizerSpec extends mutable.Specification {
       val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
       sn.trans.apply(List(Some(5))) ==== Some(List(5))
     }
+    "option.option" in {
+      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
+      sn.trans.apply(Some(Some(5))) ==== Some(List(5))
+    }
   }
 }
 
