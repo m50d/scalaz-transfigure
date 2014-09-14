@@ -232,6 +232,14 @@ class TransfigureSpec extends mutable.Specification {
 
       fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
     }
+
+    "flatMap.map.flatMap" in {
+      import scalaz.std.either._
+      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+      val f: Int ⇒ EitherR[Option[Int]] = x ⇒ Right(Some(x + 2))
+
+      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
+    }
   }
 }
 
