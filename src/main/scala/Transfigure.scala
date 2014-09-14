@@ -193,19 +193,6 @@ object Leib1 {
   }
 }
 
-/**
- * Attempt to work around scala's misguided inference efforts
- */
-//sealed trait AlwaysHNil {
-//  type L <: HList
-//}
-//
-//object AlwaysHNil {
-//  implicit object nil extends AlwaysHNil {
-//    type L = HNil
-//  }
-//}
-
 sealed trait SelectionSort[Idx <: HList, L <: HList] {
   type ICS <: Context
   type O <: HList
@@ -324,19 +311,13 @@ trait Normalizer2 extends Normalizer3 {
   }
 }
 
-//trait PeeledNormalizer[H <: Context, T, L] {
-//  type D <: Context
-//  val normalizer: Normalizer[H :: T, H :: L]
-//  val leib: Leib1[normalizer.OCS, Context {
-//    type C[A] = H#C[D#C[A]]
-//  }]
-//}
-//
-//object PeeledNormalizer {
-//  implicit def fromNormalizer[H ]
-//}
-
 object Normalizer extends Normalizer2 {
+  /**
+   * TODO: I think this might require some handholding of the type inference -
+   * I suspect it can only find the Normalizer with type C = C1 if
+   * it's at the lowest level of the stack.
+   * The same technique we use elsewhere (IdxAndLtEq etc.) should work.
+   */
   implicit def consBind[C1 <: Context, T <: HList, L <: HList](implicit rest: Normalizer[C1 :: T, C1 :: L] { type C = C1 },
     b: Bind[C1#C]) = new Normalizer[C1 :: T, C1 :: C1 :: L] {
     type ICS = Context {
