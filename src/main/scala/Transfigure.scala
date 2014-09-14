@@ -342,27 +342,40 @@ trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
   def apply[A, B](f: F[A])(g: A ⇒ G[B]): H[B]
 }
 
+/**
+ * Extracts the stack from an instance, e.g.
+ * Option[List[Int]] => StackHelper {
+ * type A = Int
+ * type S = Context.Aux[Option] :: Context.Aux[List] :: HNil
+ * }
+ * TODO: Shouldn't really require everything to be a monad
+ */
 trait StackHelper[I] {
   type A
   type S <: HList
-  //  type CS <: Context
-  //  
-  //  val l: Leibniz.===[I, CS#C[A]]
+  type CS <: Context
+  val l: Leibniz.===[I, CS#C[A]]
 }
 
 trait StackHelper2 {
   implicit def nil[I] = new StackHelper[I] {
     type A = I
     type S = HNil
+    type CS = Context.Aux[Id]
+    val l = Leibniz.refl[A]
   }
 }
 
 object StackHelper extends StackHelper2 {
-  implicit def cons[MA, AA](implicit u: Unapply[Monad, MA]{
+  implicit def cons[MA, AA](implicit u: Unapply[Monad, MA] {
     type A = AA
   }, rest: StackHelper[AA]) = new StackHelper[MA] {
     type A = rest.A
     type S = Context.Aux[u.M] :: rest.S
+    type CS = Context {
+      type C[A] = u.M[rest.CS#C[A]]
+    }
+    val l = u.leibniz
   }
 }
 
@@ -407,7 +420,12 @@ object ApplyBind {
       }
     }
   def forIdx[Idx <: HList] = {
-    def apply[AA, A, BB](f: AA, g: A => BB)(implicit u1: Unapply[Monad, AA], u2: Unapply[Monad, BB]) = {}
+    def apply[AA, A1, BB, L <: HList, R <: HList](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
+      type A = A1
+      type S = L
+    }, sh2: StackHelper[BB] {
+      type S = R
+    }) = {}
   }
 }
 
