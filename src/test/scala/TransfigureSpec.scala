@@ -115,7 +115,7 @@ class TransfigureSpec extends mutable.Specification {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo1[Option].apply(f) ==== Some("42")
+      fa.transfigureTo1[Option](f) ==== Some("42")
     }
 
     "map (either)" in {
@@ -124,22 +124,22 @@ class TransfigureSpec extends mutable.Specification {
       val fa: EitherR[Int] = Right(42)
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo1[EitherR].apply(f) ==== Right("42")
+      fa.transfigureTo1[EitherR](f) ==== Right("42")
     }
 
     "flatMap" in {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
 
-      fa.transfigureTo1[Option].apply(f) ==== Some("32")
+      fa.transfigureTo1[Option](f) ==== Some("32")
     }
-    //
-    //    "point" in {
-    //      val fa: Option[Int] = Some(42)
-    //      val f: Int ⇒ String = _.toString
-    //
-    //      fa.transfigureTo[List, Option](f) ==== List(Some("42"))
-    //    }
+
+//    "point" in {
+//      val fa: Option[Int] = Some(42)
+//      val f: Int ⇒ String = _.toString
+//
+//      fa.transfigureTo2[List, Option].apply(f) ==== List(Some("42"))
+//    }
     //
     //    "traverse" in {
     //      val fa: Option[Int] = Some(42)
