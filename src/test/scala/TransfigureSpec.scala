@@ -109,6 +109,15 @@ class ApplyBindSpec extends mutable.Specification {
   val ss = SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
   
   implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
+  implicitly[SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil] {
+  type ICS = Context {
+    type C[A] = Option[List[A]]
+  }
+//  type O = OptionContext :: ListContext :: HNil
+  type OCS = Context {
+    type C[A] = Option[List[A]]
+  }
+  }]
   implicitly[SelectionSort[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil] {
   type ICS = Context {
     type C[A] = List[Option[A]]
@@ -119,7 +128,7 @@ class ApplyBindSpec extends mutable.Specification {
   }
   }]
   implicitly[SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil] {
-//  type ICS = OptionOptionContext
+  type ICS = OptionOptionContext
   type O = OptionContext :: OptionContext :: HNil
 //  type OCS = OptionOptionContext
   }]
