@@ -94,29 +94,33 @@ class SelectionSortSpec extends mutable.Specification {
 }
 
 class SortAndNormalizerSpec extends mutable.Specification {
-//  SortAndNormalizer.combine[OptionContext :: ListContext :: HNil, HNil, Context.Aux[Id], ]
-//  implicitly[SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]{
-////    type ICS = OptionOptionContext
-//    type O = OptionContext :: HNil
-//  }]
+  implicitly[Normalizer[OptionContext :: ListContext :: HNil, HNil] {
+//    type ICS = Context.Aux[Id]
+//    type OCS = Context.Aux[Id]
+  }]
+//  SortAndNormalizer.combine[OptionContext :: ListContext :: HNil, HNil, Context.Aux[Id], HNil, Normalizer[OptionContext :: ListContext :: HNil, HNil] { type ICS = Context.Aux[Id] }, Context.Aux[Id]]
+  //  implicitly[SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]{
+  ////    type ICS = OptionOptionContext
+  //    type O = OptionContext :: HNil
+  //  }]
   val ss = SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
   implicitly[=:=[ss.ICS, OptionOptionContext]]
   implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
-//  SortAndNormalizer.combine[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: HNil, OptionOptionContext, OptionContext]
-  
+  //  SortAndNormalizer.combine[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: HNil, OptionOptionContext, OptionContext]
+
   "SortAndNormalizer" should {
-    "nil" in {
-      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, HNil]
-      sn.trans.apply(5) ==== Some(List(5))
-    }
-//    "list.option" in {
-//      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
-//      sn.trans.apply(List(Some(5))) ==== Some(List(5))
-//    }
-//    "option.option" in {
-//      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
-//      sn.trans.apply(Some(Some(5))) ==== Some(List(5))
-//    }
+    //    "nil" in {
+    //      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, HNil]
+    //      sn.trans.apply(5) ==== Some(List(5))
+    //    }
+    //    "list.option" in {
+    //      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
+    //      sn.trans.apply(List(Some(5))) ==== Some(List(5))
+    //    }
+    //    "option.option" in {
+    //      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
+    //      sn.trans.apply(Some(Some(5))) ==== Some(List(5))
+    //    }
   }
 }
 
@@ -139,10 +143,10 @@ class ApplyBindSpec extends mutable.Specification {
     type ICS = Context {
       type C[A] = Option[List[A]]
     }
-      type O = OptionContext :: ListContext :: HNil
-//    type OCS = Context {
-//      type C[A] = Option[List[A]]
-//    }
+    type O = OptionContext :: ListContext :: HNil
+    //    type OCS = Context {
+    //      type C[A] = Option[List[A]]
+    //    }
   }]
   implicitly[SelectionSort[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil] {
     type ICS = Context {
@@ -155,12 +159,12 @@ class ApplyBindSpec extends mutable.Specification {
   }]
   implicitly[SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil] {
     type ICS = OptionOptionContext
-//    type O = OptionContext :: OptionContext :: HNil
-      type OCS = OptionOptionContext
+    //    type O = OptionContext :: OptionContext :: HNil
+    type OCS = OptionOptionContext
   }]
-//    ApplyBind.combine[OptionContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: OptionContext :: HNil, OptionOptionContext, HNil, Context.Aux[Id], HNil, Context.Aux[Id], OptionContext, OptionContext]
+  //    ApplyBind.combine[OptionContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: OptionContext :: HNil, OptionOptionContext, HNil, Context.Aux[Id], HNil, Context.Aux[Id], OptionContext, OptionContext]
 
-//  ApplyBind.forIdx[OptionContext :: HNil].apply(Some(Some(5)): Option[Option[Int]], { x: Int ⇒ x + 1 })
+  //  ApplyBind.forIdx[OptionContext :: HNil].apply(Some(Some(5)): Option[Option[Int]], { x: Int ⇒ x + 1 })
   "ApplyBind" should {
     "nil" in {
       ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6

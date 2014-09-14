@@ -354,15 +354,13 @@ trait SortAndNormalizer[Idx <: HList, L <: HList] {
 }
 
 object SortAndNormalizer {
-  implicit def combine[Idx <: HList, L <: HList, ICS1 <: Context, M <: HList, ES <: Normalizer[Idx, M], OCS1 <: Context](implicit sort: SortAndExpectedShape[Idx, L] {
+  implicit def combine[Idx <: HList, L <: HList, ICS1 <: Context, M <: HList, ES <: Normalizer[Idx, M]](implicit sort: SortAndExpectedShape[Idx, L] {
     type ICS = ICS1
     type ExpectedShape = ES
   },
-    normalizer: ES {
-      type OCS = OCS1
-    }) = new SortAndNormalizer[Idx, L] {
+    normalizer: ES) = new SortAndNormalizer[Idx, L] {
     type ICS = ICS1
-    type OCS = OCS1
+    type OCS = normalizer.OCS
 
     val trans = new NaturalTransformation[ICS#C, OCS#C] {
       //I don't know why the compiler doesn't realize that normalizer.ICS == ES.ICS
