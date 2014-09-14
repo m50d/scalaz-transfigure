@@ -333,17 +333,17 @@ trait SortAndNormalizer[Idx <: HList, L <: HList] {
 }
 
 object SortAndNormalizer {
-  implicit def combine[Idx <: HList, L <: HList, ICS1 <: Context, I <: HList, OCS1 <: Context, OCS2 <: Context](implicit sort: SelectionSort.Aux[Idx, L, ICS1, I, OCS1],
+  implicit def combine[Idx <: HList, L <: HList, ICS1 <: Context, I <: HList, OCS1 <: Context, ICS2 <: Context, OCS2 <: Context](implicit sort: SelectionSort.Aux[Idx, L, ICS1, I, OCS1],
     normalizer: Normalizer[Idx, I] {
-      type ICS = OCS1
+      type ICS = ICS2
       type OCS = OCS2
-    }) = new SortAndNormalizer[Idx, L] {
+    }, w: Leib1[OCS1, ICS2]) = new SortAndNormalizer[Idx, L] {
     type ICS = ICS1
     type OCS = OCS2
 
     val trans = new NaturalTransformation[ICS#C, OCS#C] {
       def apply[A](fa: ICS1#C[A]) =
-        normalizer.trans.apply(sort.trans.apply(fa))
+        normalizer.trans.apply(w.witness(sort.trans.apply(fa)))
     }
   }
   type Aux[Idx <: HList, L <: HList, ICS1 <: Context, OCS1 <: Context] = SortAndNormalizer[Idx, L] {

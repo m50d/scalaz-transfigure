@@ -17,6 +17,9 @@ object Aliases {
   type ListContext = Context.Aux[List]
   type EitherRContext = Context.Aux[EitherR]
   type IntReaderContext = Context.Aux[IntReader]
+  type OptionOptionContext = Context {
+    type C[A] = Option[Option[A]]
+  }
   type Idx = OptionContext :: ListContext :: EitherRContext :: HNil
 }
 
@@ -91,6 +94,8 @@ class SelectionSortSpec extends mutable.Specification {
 }
 
 class SortAndNormalizerSpec extends mutable.Specification {
+//  SortAndNormalizer.combine[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: HNil, OptionOptionContext, OptionContext]
+  
   "SortAndNormalizer" should {
     "nil" in {
       val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, HNil]
@@ -118,10 +123,6 @@ class ApplyBindSpec extends mutable.Specification {
   val i2 = implicitly[MonadStack[ListContext :: HNil]]
   ApplyBind.combine[ListContext :: HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], ListContext, ListContext]
   implicitly[ApplyBind[ListContext :: HNil, HNil, HNil]]
-
-  type OptionOptionContext = Context {
-    type C[A] = Option[Option[A]]
-  }
 
   val ss = SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
 
