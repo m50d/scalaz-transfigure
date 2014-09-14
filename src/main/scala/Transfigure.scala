@@ -491,14 +491,14 @@ object ApplyBind {
   implicit def combine[Idx <: HList, L <: HList, LICS <: Context, OL <: HList, LOCS <: Context, R <: HList, RICS <: Context, OR <: HList, ROCS <: Context, FCS <: Context, RFCS <: Context](
     implicit LSS: SelectionSort[Idx, L] {
       type ICS = LICS
-//      type O = OL
+      type O = OL
       type OCS = LOCS
     }, LN: Normalizer[Idx, OL] {
       type ICS = LOCS
       type OCS = FCS
     }, RSS: SelectionSort[Idx, R] {
       type ICS = RICS
-//      type O = OR
+      type O = OR
       type OCS = ROCS
     }, RN: Normalizer[Idx, OR] {
       type ICS = ROCS
