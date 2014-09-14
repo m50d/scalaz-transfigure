@@ -258,6 +258,15 @@ trait Normalizer[Idx <: HList, L <: HList] {
 }
 
 trait Normalizer3 {
+  implicit object realNil extends Normalizer[HNil, HNil] {
+    type ICS = Context.Aux[Id]
+    type OCS = Context.Aux[Id]
+
+    val trans = new NaturalTransformation[ICS#C, OCS#C] {
+      def apply[A](fa: A) = fa
+    }
+  }
+
   implicit def nil[H <: Context, T <: HList, L <: HList](implicit rest: Normalizer[T, L], ap: Applicative[H#C]) = new Normalizer[H :: T, L] {
     type ICS = rest.ICS
     type OCS = Context {
@@ -439,7 +448,7 @@ object ApplyBind {
         }
       }
     }
-  def forIdx[Idx <: HList]: IndexedApplyBind[Idx] = new IndexedApplyBind[Idx]{
+  def forIdx[Idx <: HList]: IndexedApplyBind[Idx] = new IndexedApplyBind[Idx] {
     def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
       type A = A1
       type S = L

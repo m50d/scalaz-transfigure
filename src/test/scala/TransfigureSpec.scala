@@ -86,10 +86,12 @@ class SelectionSortSpec extends mutable.Specification {
 }
 
 class ApplyBindSpec extends mutable.Specification {
+  implicitly[Normalizer[HNil, HNil]]
+  ApplyBind.combine[HNil, HNil, HNil, Context.Aux[Id], Context.Aux[Id], HNil, HNil, Context.Aux[Id], Context.Aux[Id], Context.Aux[Id]]
   "ApplyBind" should {
-    "nil" in {
-      ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
-    }
+//    "nil" in {
+//      ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6
+//    }
   }
 }
 
