@@ -423,17 +423,17 @@ trait IndexedApplyBind[Idx <: HList] {
 }
 
 object ApplyBind {
-  implicit def combine[Idx <: HList, L <: HList, R <: HList, LICS <: Context, RICS <: Context, OL <: HList, OR <: HList, LOCS <: Context, ROCS <: Context, FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
+  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, OL <: HList, LOCS <: Context, R <: HList, RICS <: Context, OR <: HList, ROCS <: Context, FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
     type ICS = LICS
     type OCS = LOCS
     type O = OL
+  }, LN: Normalizer[Idx, OL] {
+    type ICS = LOCS
+    type OCS = FCS
   }, RSS: SelectionSort[Idx, R] {
     type ICS = RICS
     type OCS = ROCS
     type O = OR
-  }, LN: Normalizer[Idx, OL] {
-    type ICS = LOCS
-    type OCS = FCS
   }, RN: Normalizer[Idx, OR] {
     type ICS = ROCS
     type OCS = FCS
