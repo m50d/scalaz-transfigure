@@ -193,7 +193,7 @@ object SelectLeast {
 
 sealed trait Leib1[C <: Context, D <: Context] {
   def subst[F[_[_]]](fc: F[C#C]): F[D#C]
-  def witness[A](c: C#C[A]): D#C[A] = subst[({type L[C[_]] = C[A]})#L](c)
+  def witness[A](c: C#C[A]): D#C[A] = subst[({ type L[C[_]] = C[A] })#L](c)
 }
 
 object Leib1 {
@@ -421,27 +421,55 @@ trait IndexedApplyBind[Idx <: HList] {
     type LCS = LICS
     type RCS = RICS
   }): ab.OCS#C[sh2.A]
+
+  def partialApply[AA, A1, L <: HList, LICS <: Context](f: AA)(implicit sh1: StackHelper[AA] {
+    type A = A1
+    type S = L
+    type CS = LICS
+  }): PartiallyAppliedApplyBind[Idx, A1, L, LICS] = {
+    val self = this
+    new PartiallyAppliedApplyBind[Idx, A1, L, LICS] {
+      def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper[BB] {
+        type S = R
+        type CS = RICS
+      }, ab: ApplyBind[Idx, L, R] {
+        type LCS = LICS
+        type RCS = RICS
+      }): ab.OCS#C[sh2.A] =
+        self.apply(f, g)
+    }
+  }
+}
+
+trait PartiallyAppliedApplyBind[Idx <: HList, A1, L <: HList, LICS <: Context] {
+  def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper[BB] {
+    type S = R
+    type CS = RICS
+  }, ab: ApplyBind[Idx, L, R] {
+    type LCS = LICS
+    type RCS = RICS
+  }): ab.OCS#C[sh2.A]
 }
 
 object ApplyBind {
   implicit def combine[Idx <: HList, L <: HList, LICS <: Context, OL <: HList, LOCS <: Context, R <: HList, RICS <: Context, OR <: HList, ROCS <: Context, FCS <: Context, RFCS <: Context](
-      implicit LSS: SelectionSort[Idx, L] {
-    type ICS = LICS
-    type OCS = LOCS
-    type O = OL
-  }, LN: Normalizer[Idx, OL] {
-    type ICS = LOCS
-    type OCS = FCS
-  }, RSS: SelectionSort[Idx, R] {
-    type ICS = RICS
-    type OCS = ROCS
-    type O = OR
-  }, RN: Normalizer[Idx, OR] {
-    type ICS = ROCS
-    type OCS = RFCS
-  }, stack: MonadStack[Idx] {
-    type CS = FCS
-  }, w: Leib1[RFCS, FCS]) =
+    implicit LSS: SelectionSort[Idx, L] {
+      type ICS = LICS
+      type OCS = LOCS
+      type O = OL
+    }, LN: Normalizer[Idx, OL] {
+      type ICS = LOCS
+      type OCS = FCS
+    }, RSS: SelectionSort[Idx, R] {
+      type ICS = RICS
+      type OCS = ROCS
+      type O = OR
+    }, RN: Normalizer[Idx, OR] {
+      type ICS = ROCS
+      type OCS = RFCS
+    }, stack: MonadStack[Idx] {
+      type CS = FCS
+    }, w: Leib1[RFCS, FCS]) =
     new ApplyBind[Idx, L, R] {
       type LCS = LICS
       type RCS = RICS
