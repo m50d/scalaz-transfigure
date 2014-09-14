@@ -105,35 +105,36 @@ class ApplyBindSpec extends mutable.Specification {
   type OptionOptionContext = Context {
     type C[A] = Option[Option[A]]
   }
-  
+
   val ss = SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
-  
+
   implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
   implicitly[SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil] {
-  type ICS = Context {
-    type C[A] = Option[List[A]]
-  }
-//  type O = OptionContext :: ListContext :: HNil
-  type OCS = Context {
-    type C[A] = Option[List[A]]
-  }
+    type ICS = Context {
+      type C[A] = Option[List[A]]
+    }
+    //  type O = OptionContext :: ListContext :: HNil
+    type OCS = Context {
+      type C[A] = Option[List[A]]
+    }
   }]
   implicitly[SelectionSort[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil] {
-  type ICS = Context {
-    type C[A] = List[Option[A]]
-  }
-//  type O = ListContext :: OptionContext :: HNil
-  type OCS = Context {
-    type C[A] = Option[List[A]]
-  }
+    type ICS = Context {
+      type C[A] = List[Option[A]]
+    }
+    //  type O = ListContext :: OptionContext :: HNil
+    type OCS = Context {
+      type C[A] = Option[List[A]]
+    }
   }]
   implicitly[SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil] {
-  type ICS = OptionOptionContext
-  type O = OptionContext :: OptionContext :: HNil
-//  type OCS = OptionOptionContext
+    type ICS = OptionOptionContext
+//    type O = OptionContext :: OptionContext :: HNil
+      type OCS = OptionOptionContext
   }]
-//  ApplyBind.combine[OptionContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: OptionContext :: HNil, OptionOptionContext, HNil, Context.Aux[Id], HNil, Context.Aux[Id], OptionContext, OptionContext]
+    ApplyBind.combine[OptionContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: OptionContext :: HNil, OptionOptionContext, HNil, Context.Aux[Id], HNil, Context.Aux[Id], OptionContext, OptionContext]
 
+//  ApplyBind.forIdx[OptionContext :: HNil].apply(Some(Some(5)): Option[Option[Int]], { x: Int ⇒ x + 1 })
   "ApplyBind" should {
     "nil" in {
       ApplyBind.forIdx[HNil].apply(5, { x: Int ⇒ x + 1 }) ==== 6

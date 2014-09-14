@@ -254,7 +254,7 @@ object SelectionSort {
     type OCS = OCS1
   }
   def apply[Idx <: HList, L <: HList](implicit ss: SelectionSort[Idx, L]): Aux[Idx, L, ss.ICS, ss.O, ss.OCS] = ss
-  
+
   def selectionSort[Idx <: HList, L <: HList](implicit ss: SelectionSort[Idx, L]): NaturalTransformation[ss.ICS#C, ss.OCS#C] =
     ss.trans
 }
@@ -491,15 +491,15 @@ object ApplyBind {
   implicit def combine[Idx <: HList, L <: HList, LICS <: Context, OL <: HList, LOCS <: Context, R <: HList, RICS <: Context, OR <: HList, ROCS <: Context, FCS <: Context, RFCS <: Context](
     implicit LSS: SelectionSort[Idx, L] {
       type ICS = LICS
+//      type O = OL
       type OCS = LOCS
-      type O = OL
     }, LN: Normalizer[Idx, OL] {
       type ICS = LOCS
       type OCS = FCS
     }, RSS: SelectionSort[Idx, R] {
       type ICS = RICS
+//      type O = OR
       type OCS = ROCS
-      type O = OR
     }, RN: Normalizer[Idx, OR] {
       type ICS = ROCS
       type OCS = RFCS
