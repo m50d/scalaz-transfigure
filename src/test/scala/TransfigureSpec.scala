@@ -90,6 +90,19 @@ class SelectionSortSpec extends mutable.Specification {
   }
 }
 
+class SortAndNormalizerSpec extends mutable.Specification {
+  "SortAndNormalizer" should {
+    "nil" in {
+      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, HNil]
+      sn.trans.apply(5) ==== Some(List(5))
+    }
+    "list.option" in {
+      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
+      sn.trans.apply(List(Some(5))) ==== Some(List(5))
+    }
+  }
+}
+
 class ApplyBindSpec extends mutable.Specification {
   implicitly[Normalizer[HNil, HNil]]
   ApplyBind.combine[HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], Context.Aux[Id], Context.Aux[Id]]

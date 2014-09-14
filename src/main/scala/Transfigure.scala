@@ -78,6 +78,9 @@ object GTIndexed {
     new GTIndexed[Idx, A, B] {}
 }
 
+/**
+ * TODO: Remove this, no-one uses it
+ */
 sealed trait NonDecreasingIndexed[Idx <: HList, L <: HList]
 
 object NonDecreasingIndexed {
@@ -320,6 +323,34 @@ object Normalizer extends Normalizer2 {
         fa map { rest.trans.apply(_) } μ
     }
   }
+}
+
+trait SortAndNormalizer[Idx <: HList, L <: HList] {
+  type ICS <: Context
+  type OCS <: Context
+
+  val trans: NaturalTransformation[ICS#C, OCS#C]
+}
+
+object SortAndNormalizer {
+  implicit def combine[Idx <: HList, L <: HList, ICS1 <: Context, I <: HList, OCS1 <: Context, OCS2 <: Context](implicit sort: SelectionSort.Aux[Idx, L, ICS1, I, OCS1],
+    normalizer: Normalizer[Idx, I] {
+      type ICS = OCS1
+      type OCS = OCS2
+    }) = new SortAndNormalizer[Idx, L] {
+    type ICS = ICS1
+    type OCS = OCS2
+
+    val trans = new NaturalTransformation[ICS#C, OCS#C] {
+      def apply[A](fa: ICS1#C[A]) =
+        normalizer.trans.apply(sort.trans.apply(fa))
+    }
+  }
+  type Aux[Idx <: HList, L <: HList, ICS1 <: Context, OCS1 <: Context] = SortAndNormalizer[Idx, L] {
+    type ICS = ICS1
+    type OCS = OCS1
+  }
+  def apply[Idx <: HList, L <: HList](implicit sn: SortAndNormalizer[Idx, L]): Aux[Idx, L, sn.ICS, sn.OCS] = sn
 }
 
 /**
