@@ -306,6 +306,18 @@ trait Normalizer2 extends Normalizer3 {
   }
 }
 
+trait PeeledNormalizer[H <: Context, T, L] {
+  type D <: Context
+  val normalizer: Normalizer[H :: T, H :: L]
+  val leib: Leib1[normalizer.OCS, Context {
+    type C[A] = H#C[D#C[A]]
+  }]
+}
+//
+//object PeeledNormalizer {
+//  implicit def fromNormalizer[H ]
+//}
+
 object Normalizer extends Normalizer2 {
   implicit def two[H <: Context, T <: HList, L <: HList, D <: Context](implicit rest: Normalizer[H :: T, H :: L] {
     type OCS = Context {
