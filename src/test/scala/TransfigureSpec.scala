@@ -27,8 +27,8 @@ class IndexOfSpec {
   implicitly[p.Out =:= _1]
 }
 
-class LTEqIndexedSpec {
-  implicitly[LTIndexed[Int :: String :: HNil, String, Int]]
+class LEEqIndexedSpec {
+  implicitly[LEIndexed[Int :: String :: HNil, String, Int]]
 }
 
 class SelectionStepSpec extends mutable.Specification {
@@ -134,12 +134,12 @@ class TransfigureSpec extends mutable.Specification {
       fa.transfigureTo1[Option](f) ==== Some("32")
     }
 
-//    "join" in {
-//      val fa: Option[Option[Int]] = Some(Some(42))
-//      val f: Int => Int = _ + 1
-//
-//      fa.transfigureTo1[Option](f) ==== Some(43)
-//    }
+    "join" in {
+      val fa: Option[Option[Int]] = Some(Some(42))
+      val f: Int => Int = _ + 1
+
+      fa.transfigureTo1[Option](f) ==== Some(43)
+    }
 
     "point" in {
       val fa: Option[Int] = Some(42)
@@ -183,13 +183,13 @@ class TransfigureSpec extends mutable.Specification {
       fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
     }
 
-    "map.map.map" in {
-      import scalaz.std.either._
-      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
-      val f: Int ⇒ Int = x ⇒ x + 2
-
-      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
-    }
+//    "map.map.map" in {
+//      import scalaz.std.either._
+//      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+//      val f: Int ⇒ Int = x ⇒ x + 2
+//
+//      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
+//    }
   }
 }
 

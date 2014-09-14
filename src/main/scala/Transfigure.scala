@@ -6,12 +6,12 @@ import scalaz._
 import scalaz.Scalaz._
 import Nat._0
 
-sealed trait LT[A <: Nat, B <: Nat]
+sealed trait LE[A <: Nat, B <: Nat]
 
-object LT {
-  implicit def lt1[B <: Nat] = new LT[_0, Succ[B]] {}
-  implicit def lt2[A <: Nat, B <: Nat](implicit lt: LT[A, B]) =
-    new LT[Succ[A], Succ[B]] {}
+object LE {
+  implicit def le1[B <: Nat] = new LE[_0, B] {}
+  implicit def le2[A <: Nat, B <: Nat](implicit le: LE[A, B]) =
+    new LE[Succ[A], Succ[B]] {}
 }
 
 sealed trait GT[A <: Nat, B <: Nat]
@@ -42,15 +42,15 @@ object IndexOf extends LowPriorityIndexOf {
 }
 
 sealed trait IdxAndLtEq[Idx <: HList, A, B] {
-  type Out <: LT[_ <: Nat, _ <: Nat]
+  type Out <: LE[_ <: Nat, _ <: Nat]
 }
 
 object IdxAndLtEq {
   implicit def byIndex[Idx <: HList, A, B](
     implicit i1: IndexOf[Idx, A], i2: IndexOf[Idx, B]) = new IdxAndLtEq[Idx, A, B] {
-    type Out = LT[i1.Out, i2.Out]
+    type Out = LE[i1.Out, i2.Out]
   }
-  type Aux[Idx <: HList, A, B, O <: LT[_ <: Nat, _ <: Nat]] = IdxAndLtEq[Idx, A, B] { type Out = O }
+  type Aux[Idx <: HList, A, B, O <: LE[_ <: Nat, _ <: Nat]] = IdxAndLtEq[Idx, A, B] { type Out = O }
   def apply[Idx <: HList, A, B](implicit ile: IdxAndLtEq[Idx, A, B]): Aux[Idx, A, B, ile.Out] = ile
 }
 
@@ -66,10 +66,10 @@ object IdxAndGt {
   type Aux[Idx <: HList, A, B, O <: GT[_ <: Nat, _ <: Nat]] = IdxAndGt[Idx, A, B] { type Out = O }
 }
 
-sealed trait LTIndexed[Idx <: HList, A, B]
-object LTIndexed {
-  implicit def ltEqIndexed[Idx <: HList, A, B, O <: LT[_ <: Nat, _ <: Nat]](implicit i: IdxAndLtEq.Aux[Idx, A, B, O], l: O) =
-    new LTIndexed[Idx, A, B] {}
+sealed trait LEIndexed[Idx <: HList, A, B]
+object LEIndexed {
+  implicit def ltEqIndexed[Idx <: HList, A, B, O <: LE[_ <: Nat, _ <: Nat]](implicit i: IdxAndLtEq.Aux[Idx, A, B, O], l: O) =
+    new LEIndexed[Idx, A, B] {}
 }
 
 sealed trait GTIndexed[Idx <: HList, A, B]
@@ -83,7 +83,7 @@ sealed trait NonDecreasingIndexed[Idx <: HList, L <: HList]
 object NonDecreasingIndexed {
   implicit def hnilNonDecreasing[Idx <: HList] = new NonDecreasingIndexed[Idx, HNil] {}
   implicit def hlistNonDecreasing1[Idx <: HList, H] = new NonDecreasingIndexed[Idx, H :: HNil] {}
-  implicit def hlistNonDecreasing2[Idx <: HList, H1, H2, T <: HList](implicit ltEq: LTIndexed[Idx, H1, H2], ndt: NonDecreasingIndexed[Idx, H2 :: T]) =
+  implicit def hlistNonDecreasing2[Idx <: HList, H1, H2, T <: HList](implicit ltEq: LEIndexed[Idx, H1, H2], ndt: NonDecreasingIndexed[Idx, H2 :: T]) =
     new NonDecreasingIndexed[Idx, H1 :: H2 :: T] {}
 }
 
@@ -120,7 +120,7 @@ object SelectionStep {
     }
   }
 
-  implicit def lt[Idx <: HList, C <: Context, D <: Context](implicit lt: LTIndexed[Idx, C, D], traverse: Traverse[C#C], ap: Applicative[D#C]) = new SelectionStep[Idx, C, D] {
+  implicit def le[Idx <: HList, C <: Context, D <: Context](implicit le: LEIndexed[Idx, C, D], traverse: Traverse[C#C], ap: Applicative[D#C]) = new SelectionStep[Idx, C, D] {
     type X = D
     type Y = C
     val trans = new NaturalTransformation[I#C, O#C] {
