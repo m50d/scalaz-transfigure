@@ -358,7 +358,12 @@ trait StackHelper2 {
 }
 
 object StackHelper extends StackHelper2 {
-//  implicit def cons[]
+  implicit def cons[MA, AA](implicit u: Unapply[Monad, MA]{
+    type A = AA
+  }, rest: StackHelper[AA]) = new StackHelper[MA] {
+    type A = rest.A
+    type S = Context.Aux[u.M] :: rest.S
+  }
 }
 
 trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
@@ -401,7 +406,9 @@ object ApplyBind {
         }
       }
     }
-  def apply[Idx <: HList, AA, A, BB](f: AA, g: A => BB)(implicit u1: Unapply[Monad, AA], u2: Unapply[Monad, BB]) = {}
+  def forIdx[Idx <: HList] = {
+    def apply[AA, A, BB](f: AA, g: A => BB)(implicit u1: Unapply[Monad, AA], u2: Unapply[Monad, BB]) = {}
+  }
 }
 
 trait Transfigure[F[_], G[_], Z[_]] {
