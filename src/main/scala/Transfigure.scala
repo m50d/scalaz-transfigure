@@ -434,8 +434,8 @@ object ApplyBind {
     type ICS = RICS
     type OCS = ROCS
     type O = OR
-//  }, RN: Normalizer[Idx, OR] {
-//    type ICS = ROCS
+  }, RN: Normalizer[Idx, OR] {
+    type ICS = ROCS
 //    type OCS = FCS
   }, stack: MonadStack[Idx] {
     type CS = FCS
