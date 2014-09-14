@@ -93,6 +93,11 @@ class SelectionSortSpec extends mutable.Specification {
   }
 }
 
+class NormalizerSpec extends mutable.Specification {
+  implicitly[Normalizer[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]]
+  implicitly[Normalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]]
+}
+
 class SortAndNormalizerSpec extends mutable.Specification {
   implicitly[Normalizer[OptionContext :: ListContext :: HNil, HNil] {
 //    type ICS = Context.Aux[Id]
@@ -103,7 +108,7 @@ class SortAndNormalizerSpec extends mutable.Specification {
   val ss = SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
   implicitly[=:=[ss.ICS, OptionOptionContext]]
   implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
-  implicitly[Normalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]]
+//  implicitly[Normalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]]
 //  SortAndNormalizerRequiringLeibniz.fromSort(ss, )
 
   "SortAndNormalizer" should {
