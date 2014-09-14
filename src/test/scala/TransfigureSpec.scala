@@ -99,17 +99,9 @@ class NormalizerSpec extends mutable.Specification {
 }
 
 class SortAndNormalizerSpec extends mutable.Specification {
-  implicitly[Normalizer[OptionContext :: ListContext :: HNil, HNil] {
-    //    type ICS = Context.Aux[Id]
-    //    type OCS = Context.Aux[Id]
-  }]
-  //  implicitly[SortAndNormalizerRequiringLeibniz[OptionContext :: ListContext ::HNil, OptionContext :: OptionContext :: HNil]]
-
   val ss = SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
   implicitly[=:=[ss.ICS, OptionOptionContext]]
   implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
-  //  implicitly[Normalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]]
-  //  SortAndNormalizerRequiringLeibniz.fromSort(ss, )
 
   "SortAndNormalizer" should {
     "nil" in {
@@ -120,51 +112,25 @@ class SortAndNormalizerSpec extends mutable.Specification {
       val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
       sn.trans.apply(List(Some(5))) ==== Some(List(5))
     }
-    //        "option.option" in {
-    //          val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
-    //          sn.trans.apply(Some(Some(5))) ==== Some(List(5))
-    //        }
+    "option.option" in {
+      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
+      sn.trans.apply(Some(Some(5))) ==== Some(List(5))
+    }
   }
 }
 
 class ApplyBindSpec extends mutable.Specification {
-  //  implicitly[Normalizer[HNil, HNil]]
-  //  ApplyBind.combine[HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], Context.Aux[Id], Context.Aux[Id]]
   val i1 = implicitly[SelectionSort[ListContext :: HNil, HNil] {
     type ICS = Context.Aux[Id]
     type O = HNil
     type OCS = Context.Aux[Id]
   }]
   val i2 = implicitly[MonadStack[ListContext :: HNil]]
-  //  ApplyBind.combine[ListContext :: HNil, HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], HNil, Context.Aux[Id], ListContext, ListContext]
   implicitly[ApplyBind[ListContext :: HNil, HNil, HNil]]
 
   val ss = SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
 
   implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
-  implicitly[SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil] {
-    type ICS = Context {
-      type C[A] = Option[List[A]]
-    }
-    type O = OptionContext :: ListContext :: HNil
-    //    type OCS = Context {
-    //      type C[A] = Option[List[A]]
-    //    }
-  }]
-  implicitly[SelectionSort[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil] {
-    type ICS = Context {
-      type C[A] = List[Option[A]]
-    }
-    //  type O = ListContext :: OptionContext :: HNil
-    type OCS = Context {
-      type C[A] = Option[List[A]]
-    }
-  }]
-  implicitly[SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil] {
-    type ICS = OptionOptionContext
-    //    type O = OptionContext :: OptionContext :: HNil
-    type OCS = OptionOptionContext
-  }]
   //    ApplyBind.combine[OptionContext :: HNil, OptionContext :: OptionContext :: HNil, OptionOptionContext, OptionContext :: OptionContext :: HNil, OptionOptionContext, HNil, Context.Aux[Id], HNil, Context.Aux[Id], OptionContext, OptionContext]
 
   //  ApplyBind.forIdx[OptionContext :: HNil].apply(Some(Some(5)): Option[Option[Int]], { x: Int ⇒ x + 1 })
