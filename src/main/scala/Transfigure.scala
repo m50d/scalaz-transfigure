@@ -423,26 +423,26 @@ trait IndexedApplyBind[Idx <: HList] {
 }
 
 object ApplyBind {
-  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, OL <: HList, LOCS <: Context, /*R <: HList, RICS <: Context, OR <: HList, ROCS <: Context,*/ FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
+  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, OL <: HList, LOCS <: Context, R <: HList, RICS <: Context, OR <: HList, ROCS <: Context, FCS <: Context](implicit LSS: SelectionSort[Idx, L] {
     type ICS = LICS
     type OCS = LOCS
     type O = OL
   }, LN: Normalizer[Idx, OL] {
     type ICS = LOCS
     type OCS = FCS
-//  }, RSS: SelectionSort[Idx, R] {
-//    type ICS = RICS
-//    type OCS = ROCS
-//    type O = OR
+  }, RSS: SelectionSort[Idx, R] {
+    type ICS = RICS
+    type OCS = ROCS
+    type O = OR
 //  }, RN: Normalizer[Idx, OR] {
 //    type ICS = ROCS
 //    type OCS = FCS
   }, stack: MonadStack[Idx] {
     type CS = FCS
   }) =
-    new ApplyBind[Idx, L, /*R */ HNil] {
+    new ApplyBind[Idx, L, R] {
       type LCS = LICS
-//      type RCS = RICS
+      type RCS = RICS
       type OCS = FCS
 
 //      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
