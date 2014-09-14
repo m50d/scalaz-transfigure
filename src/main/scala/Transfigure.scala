@@ -436,7 +436,7 @@ object ApplyBind {
     }, ab: ApplyBind[Idx, L, R]{
       type LCS = LICS
       type RCS = RICS
-    }) = ab.trans(f)(g)
+    }) = ab.trans(sh1.l.apply(f))(g)
   }
 }
 
