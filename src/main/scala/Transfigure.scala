@@ -544,7 +544,7 @@ trait PartiallyAppliedApplyBind[Idx <: HList, A1, L <: HList, LICS <: Context] {
 }
 
 object ApplyBind {
-  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, LOCS <: Context, R <: HList, RICS <: Context, ROCS <: Context](
+  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, LOCS <: Context, R <: HList, RICS <: Context, ROCS <: Context, FOCS <: Context](
     implicit lsn: SortAndNormalizer[Idx, L] {
       type ICS = LICS
       type OCS = LOCS
@@ -552,18 +552,19 @@ object ApplyBind {
       type ICS = RICS
       type OCS = ROCS
     }, stack: MonadStack[Idx] {
-      type CS = LOCS //is this really inferred ok?
-    }, w: Leib1[ROCS, LOCS]) =
+      type CS = FOCS //is this really inferred ok?
+    }, w1: Leib1[ROCS, LOCS],
+    w2: Leib1[LOCS, FOCS]) =
     new ApplyBind[Idx, L, R] {
       type LCS = LICS
       type RCS = RICS
-      type OCS = LOCS
+      type OCS = FOCS
 
       val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
         def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) = {
           implicit val m = stack.m
-          lsn.trans.apply(f) >>= {
-            a: A ⇒ w.witness(rsn.trans.apply(g(a)))
+          w2.witness(lsn.trans.apply(f)) >>= {
+            a: A ⇒ w2.witness(w1.witness(rsn.trans.apply(g(a))))
           }
         }
       }
