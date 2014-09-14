@@ -93,7 +93,7 @@ class SelectionSortSpec extends mutable.Specification {
   }
 }
 
-class NormalizerSpec extends mutable.Specification {
+class NormalizerSpec {
   implicitly[Normalizer[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]]
   implicitly[Normalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]]
 }
@@ -132,12 +132,9 @@ class ApplyBindSpec extends mutable.Specification {
 
   implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
 
-  //  ApplyBind.forIdx[OptionContext :: HNil].apply(Some(Some(5)): Option[Option[Int]], { x: Int ⇒ x + 1 })
   type StackedContext = Context {
     type C[A] = EitherR[List[Option[A]]]
   }
-  //  implicitly[MonadStack[EitherRContext :: ListContext :: OptionContext]]
-  //  ApplyBind.combine[EitherRContext :: ListContext :: OptionContext :: HNil, HNil, Context.Aux[Id], StackedContext, HNil, Context.Aux[Id], StackedContext, StackedContext]
   "ApplyBind" should {
     "nillist" in {
       ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== List(6)
