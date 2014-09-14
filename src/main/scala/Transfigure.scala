@@ -438,30 +438,31 @@ trait MonadStack[L <: HList] {
   type C <: Context
   type RS <: Context
 
-  val m: Monad[({ type L[A] = C#C[RS#C[A]] })#L]
   val l: Layer[RS#C]
+  val cm: Monad[C#C]
+  val m: Monad[({ type L[A] = C#C[RS#C[A]] })#L] = l.monad(cm)
 }
 
 trait MonadStack1 {
   implicit def nil[C1 <: Context](implicit m1: Monad[C1#C]) = new MonadStack[C1 :: HNil] {
     type C = C1
     type RS = Context.Aux[Id]
-    
-    val m = m1
+
+    val cm = m1
     val l = Layer.IdLayer
   }
 }
 
 object MonadStack extends MonadStack1 {
-  implicit def cons[C1 <: Context, D <: Context, T <: HList](implicit rest: MonadStack[D :: T]{type C = D}, l1: Layer[D#C], m1: Monad[C1#C]) =
+  implicit def cons[C1 <: Context, D <: Context, T <: HList](implicit rest: MonadStack[D :: T] { type C = D }, l1: Layer[D#C], m1: Monad[C1#C]) =
     new MonadStack[C1 :: D :: T] {
       type C = C1
       type RS = Context {
         type C[A] = D#C[rest.RS#C[A]]
       }
 
-      val m = m1
       val l = rest.l.lift(l1)
+      val cm = m1
     }
 }
 
@@ -574,8 +575,8 @@ object ApplyBind {
       type C = FC
       type RS = FRCS
     },
-    w1: Leib1[LOCS, Context.Aux[({type L[A] = FC#C[FRCS#C[A]]})#L]],
-    w2: Leib1[ROCS, Context.Aux[({type L[A] = FC#C[FRCS#C[A]]})#L]]) =
+    w1: Leib1[LOCS, Context.Aux[({ type L[A] = FC#C[FRCS#C[A]] })#L]],
+    w2: Leib1[ROCS, Context.Aux[({ type L[A] = FC#C[FRCS#C[A]] })#L]]) =
     new ApplyBind[Idx, L, R] {
       type LCS = LICS
       type RCS = RICS
@@ -587,7 +588,7 @@ object ApplyBind {
         def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) = {
           implicit val m = stack.m
           w1.witness(lsn.trans.apply(f)) >>= {
-            a: A ⇒w2.witness(rsn.trans.apply(g(a)))
+            a: A ⇒ w2.witness(rsn.trans.apply(g(a)))
           }
         }
       }
