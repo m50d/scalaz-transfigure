@@ -543,6 +543,14 @@ object Layer {
         Monad[F].bind(fb){_.fold(a => Monad[F].point(Left(a): Either[A, C]), b => f(b))}
     }
   }
+
+  implicit def scalazEitherLayer[A] = new Layer[({ type L[B] = A \/ B })#L] {
+    def monad[F[_]: Monad] = new Monad[({ type L[B] = F[A \/ B] })#L] {
+      def point[B](b: ⇒ B) = (\/-(b): A \/ B).point[F]
+      def bind[B, C](fb: F[A \/ B])(f: B ⇒ F[A \/ C]) =
+        Monad[F].bind(fb){_.fold(a => Monad[F].point(-\/(a): A \/ C), b => f(b))}
+    }
+  }
 }
 
 /**
