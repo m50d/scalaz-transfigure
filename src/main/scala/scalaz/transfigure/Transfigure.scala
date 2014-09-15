@@ -535,6 +535,14 @@ object Layer {
         }
     }
   }
+
+  implicit def eitherLayer[A] = new Layer[({ type L[B] = Either[A, B] })#L] {
+    def monad[F[_]: Monad] = new Monad[({ type L[B] = F[Either[A, B]] })#L] {
+      def point[B](b: ⇒ B) = (Right(b): Either[A, B]).point[F]
+      def bind[B, C](fb: F[Either[A, B]])(f: B ⇒ F[Either[A, C]]) =
+        Monad[F].bind(fb){_.fold(a => Monad[F].point(Left(a): Either[A, C]), b => f(b))}
+    }
+  }
 }
 
 /**
