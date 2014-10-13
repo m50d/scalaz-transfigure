@@ -81,6 +81,10 @@ class SelectionSortSpec extends Specification {
       val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]
       ss.apply(5) ==== 5
     }
+    "reallynil" in {
+      val ss = SelectionSort.selectionSort[HNil, HNil]
+      ss.apply(5) ==== 5
+    }
     "option" in {
       val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil]
       ss.apply(Some(5)) ==== Some(5)
@@ -159,7 +163,7 @@ class TransfigureSpec extends Specification {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo1[Option](f) ==== Some("42")
+      fa.transfigureTo[Option](f) ==== Some("42")
     }
 
     "map (either)" in {
@@ -168,63 +172,63 @@ class TransfigureSpec extends Specification {
       val fa: EitherR[Int] = Right(42)
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo1[EitherR](f) ==== Right("42")
+      fa.transfigureTo[EitherR](f) ==== Right("42")
     }
 
     "flatMap" in {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
 
-      fa.transfigureTo1[Option](f) ==== Some("32")
+      fa.transfigureTo[Option](f) ==== Some("32")
     }
 
     "join" in {
       val fa: Option[Option[Int]] = Some(Some(42))
       val f: Int ⇒ Int = _ + 1
 
-      fa.transfigureTo1[Option](f) ==== Some(43)
+      fa.transfigureTo[Option](f) ==== Some(43)
     }
 
     "point" in {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("42"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("42"))
     }
 
     "traverse" in {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
     }
 
     "bind.traverse" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
     }
 
     "traverse.join" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ List[Option[String]] = x ⇒ List(Some((x - 10).toString))
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
     }
 
     "map.map" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("42"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("42"))
     }
 
     "map.flatMap" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
     }
 
     "map.map.map" in {
@@ -232,7 +236,7 @@ class TransfigureSpec extends Specification {
       val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
       val f: Int ⇒ Int = x ⇒ x + 2
 
-      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
+      fa.transfigureTo[EitherR, List, Option](f) ==== Right(List(Some(4)))
     }
 
     "flatMap.map.flatMap" in {
@@ -240,7 +244,7 @@ class TransfigureSpec extends Specification {
       val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
       val f: Int ⇒ EitherR[Option[Int]] = x ⇒ Right(Some(x + 2))
 
-      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
+      fa.transfigureTo[EitherR, List, Option](f) ==== Right(List(Some(4)))
     }
   }
 }

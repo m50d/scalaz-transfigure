@@ -1,11 +1,12 @@
 package scalaz.transfigure
 
 import shapeless.{ Id ⇒ _, _ }
-import ops.hlist.Length
+import ops.hlist.{Length, Prepend}
 import scalaz._
 import scalaz.Scalaz._
 import Nat._0
 import scala.language.postfixOps
+import scala.language.higherKinds
 
 /**
  * Marker that A <= B
@@ -118,14 +119,11 @@ trait Context {
   type C[_]
 }
 
-/**
- * TODO: it might be worth having an explicit Context.Id type
- * since we refer to Context.Aux[scalaz.Id.Id] a lot
- */
 object Context {
   type Aux[N[_]] = Context {
     type C[A] = N[A]
   }
+  type Id = Aux[scalaz.Id.Id]
 }
 
 /**
@@ -187,37 +185,31 @@ object SelectionStep {
  */
 
 sealed trait SelectLeast[Idx <: HList, L <: HList] {
-  type X <: Context
+  type C <: Context
   type R <: HList
 
   type LCS <: Context
   type RCS <: Context
 
-  val trans: NaturalTransformation[LCS#C, ({ type CRCS[A] = X#C[RCS#C[A]] })#CRCS]
+  val trans: NaturalTransformation[LCS#C, ({ type CRCS[A] = C#C[RCS#C[A]] })#CRCS]
 }
 
 object SelectLeast {
-  type Aux[Idx <: HList, L <: HList, C <: Context, R1 <: HList] = SelectLeast[Idx, L] {
-    type X = C
-    type R = R1
-  }
 
-  implicit def selectLeast1[Idx <: HList, C <: Context] = new SelectLeast[Idx, C :: HNil] {
-    type X = C
+  implicit def selectLeast1[Idx <: HList, C1 <: Context] = new SelectLeast[Idx, C1 :: HNil] {
+    type C = C1
     type R = HNil
-    type LCS = C
-    type RCS = Context.Aux[Id]
-    val trans = new NaturalTransformation[LCS#C, ({ type CRCS[A] = X#C[RCS#C[A]] })#CRCS] {
+    type LCS = C1
+    type RCS = Context.Id
+    val trans = new NaturalTransformation[LCS#C, ({ type CRCS[A] = C#C[RCS#C[A]] })#CRCS] {
       def apply[A](fa: C#C[A]) = fa
     }
   }
 
   implicit def selectLeastCons[Idx <: HList, L <: HList, C1 <: Context, D <: Context](
-    implicit tl: SelectLeast[Idx, L] {
-      type X = D
-    }, step: SelectionStep[Idx, C1, D], f: Functor[C1#C]) =
+    implicit tl: Aux3[Idx, L, D], step: SelectionStep[Idx, C1, D], f: Functor[C1#C]) =
     new SelectLeast[Idx, C1 :: L] {
-      type X = step.X
+      type C = step.X
       type R = step.Y :: tl.R
 
       type LCS = Context {
@@ -227,34 +219,44 @@ object SelectLeast {
         type C[A] = step.Y#C[tl.RCS#C[A]]
       }
 
-      val trans = new NaturalTransformation[LCS#C, ({ type CRCS[A] = X#C[RCS#C[A]] })#CRCS] {
+      val trans = new NaturalTransformation[LCS#C, ({ type CRCS[A] = C#C[RCS#C[A]] })#CRCS] {
         def apply[A](fa: C1#C[tl.LCS#C[A]]) = {
-          val ga: C1#C[tl.X#C[tl.RCS#C[A]]] = fa map {
+          val ga: C1#C[tl.C#C[tl.RCS#C[A]]] = fa map {
             tl.trans.apply(_)
           }
           step.trans(ga)
         }
       }
     }
+  
+  type Aux3[Idx <: HList, L <: HList, C1 <: Context] = SelectLeast[Idx, L] {
+    type C = C1
+  }
+  type Aux1[Idx <: HList, L <: HList, C <: Context, R1 <: HList, RCS1 <: Context] = Aux3[Idx, L, C] {
+    type R = R1
+    type RCS = RCS1
+  }
 
-  def selectLeast[Idx <: HList, L <: HList](implicit sl: SelectLeast[Idx, L]): NaturalTransformation[sl.LCS#C, ({ type CRCS[A] = sl.X#C[sl.RCS#C[A]] })#CRCS] =
+  def selectLeast[Idx <: HList, L <: HList](implicit sl: SelectLeast[Idx, L]): NaturalTransformation[sl.LCS#C, ({ type CRCS[A] = sl.C#C[sl.RCS#C[A]] })#CRCS] =
     sl.trans
 }
 
 /**
- * Leibniz equality (i.e. substitutability) for 1-parameter types wrapped as Contexts.
+ * Leibniz equality (i.e. substitutability) for 1-parameter types.
  * See scalaz.Leibniz - in Haskell we could use the same type, but Scala doesn't
  * let us abstract over kind.
  */
-sealed trait Leib1[C <: Context, D <: Context] {
+sealed trait LeibC[C <: Context, D <: Context] {
   def subst[F[_[_]]](fc: F[C#C]): F[D#C]
   def witness[A](c: C#C[A]): D#C[A] = subst[({ type L[C[_]] = C[A] })#L](c)
 }
 
-object Leib1 {
-  implicit def refl[C <: Context] = new Leib1[C, C] {
+object LeibC {
+  implicit def refl[C <: Context] = new LeibC[C, C] {
     def subst[F[_[_]]](fa: F[C#C]) = fa
   }
+  def symm[C[_], D[_]](l: LeibC[Context.Aux[C], Context.Aux[D]]): LeibC[Context.Aux[D], Context.Aux[C]] =
+    l.subst[({type L[G[_]] = LeibC[Context.Aux[G], Context.Aux[C]]})#L](refl[Context.Aux[C]])
 }
 
 /**
@@ -272,21 +274,17 @@ sealed trait SelectionSort[Idx <: HList, L <: HList] {
 
 object SelectionSort {
   implicit def nil[Idx <: HList] = new SelectionSort[Idx, HNil] {
-    type ICS = Context.Aux[Id]
+    type ICS = Context.Id
     type O = HNil
-    type OCS = Context.Aux[Id]
+    type OCS = Context.Id
 
     val trans = new NaturalTransformation[ICS#C, OCS#C] {
       def apply[A](fa: A) = fa
     }
   }
 
-  implicit def cons[Idx <: HList, L <: HList, C1 <: Context, R <: HList, SLR <: Context, TLI <: Context](implicit sl: SelectLeast.Aux[Idx, L, C1, R] {
-    type RCS = SLR
-  },
-    tl: SelectionSort[Idx, R] {
-      type ICS = TLI
-    }, f: Functor[C1#C], w: Leib1[SLR, TLI]) =
+  implicit def cons[Idx <: HList, L <: HList, C1 <: Context, R <: HList, SLR <: Context, TLI <: Context](implicit sl: SelectLeast.Aux1[Idx, L, C1, R, SLR],
+    tl: Aux2[Idx, R, TLI], f: Functor[C1#C], w: LeibC[SLR, TLI]) =
     new SelectionSort[Idx, L] {
       type ICS = sl.LCS
       type O = C1 :: tl.O
@@ -307,9 +305,12 @@ object SelectionSort {
           }
       }
     }
-
-  type Aux[Idx <: HList, L <: HList, ICS1 <: Context, O1 <: HList, OCS1 <: Context] = SelectionSort[Idx, L] {
+  
+  type Aux2[Idx <: HList, L <: HList, ICS1 <: Context] = SelectionSort[Idx, L] {
     type ICS = ICS1
+  }
+
+  type Aux[Idx <: HList, L <: HList, ICS <: Context, O1 <: HList, OCS1 <: Context] = Aux2[Idx, L, ICS] {
     type O = O1
     type OCS = OCS1
   }
@@ -330,15 +331,17 @@ sealed trait Normalizer[Idx <: HList, L <: HList] {
   type ICS <: Context
   type C <: Context
   type RCS <: Context
+  type K <: HList
 
   val trans: NaturalTransformation[ICS#C, ({ type L[A] = C#C[RCS#C[A]] })#L]
 }
 
 trait Normalizer5 {
   implicit def nilPoint[C1 <: Context](implicit ap: Applicative[C1#C]) = new Normalizer[C1 :: HNil, HNil] {
-    type ICS = Context.Aux[Id]
+    type ICS = Context.Id
     type C = C1
-    type RCS = Context.Aux[Id]
+    type RCS = Context.Id
+    type K = HNil
 
     val trans = new NaturalTransformation[ICS#C, C1#C] {
       def apply[A](fa: A) =
@@ -351,7 +354,8 @@ trait Normalizer4 extends Normalizer5 {
   implicit def nilMap[C1 <: Context] = new Normalizer[C1 :: HNil, C1 :: HNil] {
     type ICS = C1
     type C = C1
-    type RCS = Context.Aux[Id]
+    type RCS = Context.Id
+    type K = HNil
 
     val trans = new NaturalTransformation[ICS#C, C1#C] {
       def apply[A](fa: ICS#C[A]) = fa
@@ -366,6 +370,8 @@ trait Normalizer3 extends Normalizer4 {
     type RCS = Context {
       type C[A] = rest.C#C[rest.RCS#C[A]]
     }
+    type K = rest.C :: rest.K
+    
     val trans = new NaturalTransformation[ICS#C, ({ type L[A] = C#C[RCS#C[A]] })#L] {
       def apply[A](fa: ICS#C[A]) = Applicative[C1#C].point(rest.trans.apply(fa))
     }
@@ -381,6 +387,8 @@ trait Normalizer2 extends Normalizer3 {
     type RCS = Context {
       type C[A] = rest.C#C[rest.RCS#C[A]]
     }
+    type K = rest.C :: rest.K
+    
     val trans = new NaturalTransformation[ICS#C, ({ type L[A] = C#C[RCS#C[A]] })#L] {
       def apply[A](fa: ICS#C[A]) = fa map { rest.trans.apply(_) }
     }
@@ -401,6 +409,8 @@ object Normalizer extends Normalizer2 {
     }
     type C = C1
     type RCS = rest.RCS
+    type K = rest.K
+    
     val trans = new NaturalTransformation[ICS#C, ({ type L[A] = C#C[RCS#C[A]] })#L] {
       def apply[A](fa: ICS#C[A]) =
         fa map { rest.trans.apply(_) } μ
@@ -419,8 +429,9 @@ object Normalizer extends Normalizer2 {
  */
 sealed trait SortAndNormalizerRequiringLeibniz[Idx <: HList, L <: HList] {
   type ICS <: Context
-  type Required <: Leib1[_, _]
+  type Required <: LeibC[_, _]
   type OCS <: Context
+  type K <: HList
 
   def sort(leib: Required): NaturalTransformation[ICS#C, OCS#C]
 }
@@ -429,10 +440,11 @@ object SortAndNormalizerRequiringLeibniz {
   implicit def fromSort[Idx <: HList, L <: HList, M <: HList](implicit ss: SelectionSort[Idx, L] { type O = M }, n: Normalizer[Idx, M]) =
     new SortAndNormalizerRequiringLeibniz[Idx, L] {
       type ICS = ss.ICS
-      type Required = Leib1[ss.OCS, n.ICS]
+      type Required = LeibC[ss.OCS, n.ICS]
       type OCS = Context {
         type C[A] = n.C#C[n.RCS#C[A]]
       }
+      type K = n.C :: n.K
       def sort(leib: Required) = new NaturalTransformation[ICS#C, OCS#C] {
         def apply[A](fa: ICS#C[A]) =
           n.trans.apply(leib.witness(ss.trans.apply(fa)))
@@ -446,24 +458,27 @@ object SortAndNormalizerRequiringLeibniz {
 sealed trait SortAndNormalizer[Idx <: HList, L <: HList] {
   type ICS <: Context
   type OCS <: Context
+  type K <: HList
 
   val trans: NaturalTransformation[ICS#C, OCS#C]
 }
 
 object SortAndNormalizer {
-  implicit def fromSN[Idx <: HList, L <: HList, R <: Leib1[_, _]](implicit sort: SortAndNormalizerRequiringLeibniz[Idx, L] {
+  implicit def fromSN[Idx <: HList, L <: HList, R <: LeibC[_, _]](implicit sort: SortAndNormalizerRequiringLeibniz[Idx, L] {
     type Required = R
   }, leib: R) = new SortAndNormalizer[Idx, L] {
     type ICS = sort.ICS
     type OCS = sort.OCS
+    type K = sort.K
 
     val trans = sort.sort(leib)
   }
-  type Aux[Idx <: HList, L <: HList, ICS1 <: Context, OCS1 <: Context] = SortAndNormalizer[Idx, L] {
+  type Aux[Idx <: HList, L <: HList, ICS1 <: Context, OCS1 <: Context, K1 <: HList] = SortAndNormalizer[Idx, L] {
     type ICS = ICS1
     type OCS = OCS1
+    type K = K1
   }
-  def apply[Idx <: HList, L <: HList](implicit sn: SortAndNormalizer[Idx, L]): Aux[Idx, L, sn.ICS, sn.OCS] = sn
+  def apply[Idx <: HList, L <: HList](implicit sn: SortAndNormalizer[Idx, L]): Aux[Idx, L, sn.ICS, sn.OCS, sn.K] = sn
 }
 
 /**
@@ -573,7 +588,7 @@ sealed trait MonadStack[L <: HList] {
 trait MonadStack1 {
   implicit def nil[C1 <: Context](implicit m1: Monad[C1#C]) = new MonadStack[C1 :: HNil] {
     type C = C1
-    type RS = Context.Aux[Id]
+    type RS = Context.Id
 
     val cm = m1
     val l = Layer.IdLayer
@@ -591,6 +606,10 @@ object MonadStack extends MonadStack1 {
       val l = rest.l.lift(l1)
       val cm = m1
     }
+  type Aux[L <: HList, C1 <: Context, RS1 <: Context] = MonadStack[L] {
+    type C = C1
+    type RS = RS1
+  }
 }
 
 /**
@@ -606,7 +625,6 @@ trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
  * type A = Int
  * type S = Context.Aux[Option] :: Context.Aux[List] :: HNil
  * }
- * TODO: Shouldn't really require everything to be a monad
  */
 sealed trait StackHelper[I] {
   type A
@@ -619,13 +637,13 @@ trait StackHelper2 {
   implicit def nil[I] = new StackHelper[I] {
     type A = I
     type S = HNil
-    type CS = Context.Aux[Id]
+    type CS = Context.Id
     val l = Leibniz.refl[A]
   }
 }
 
 object StackHelper extends StackHelper2 {
-  implicit def cons[MA, AA](implicit u: Unapply[Monad, MA] {
+  implicit def cons[MA, AA](implicit u: Unapply[Functor, MA] {
     type A = AA
   }, rest: StackHelper[AA]) = new StackHelper[MA] {
     type A = rest.A
@@ -633,13 +651,19 @@ object StackHelper extends StackHelper2 {
     type CS = Context {
       type C[A] = u.M[rest.CS#C[A]]
     }
-    //u.leibniz: MA == u.M[AA]
-    //rest.l: AA == rest.CS#C[A]
-    //want: MA == u.M[rest.CS#C[A]]
     val l = {
       val step: Leibniz.===[u.M[AA], u.M[rest.CS#C[A]]] = Leibniz.lift[⊥, ⊥, ⊤, ⊤, u.M, AA, rest.CS#C[A]](rest.l)
       Leibniz.trans[⊥, ⊤, MA, u.M[AA], u.M[rest.CS#C[A]]](step, u.leibniz)
     }
+  }
+  
+  type Aux1[I, S1, CS1] = StackHelper[I] {
+    type S = S1
+    type CS = CS1
+  }
+  
+  type Aux[I, A1, S, CS] = Aux1[I, S, CS] {
+    type A = A1
   }
 }
 
@@ -667,14 +691,8 @@ sealed trait IndexedApplyBind[Idx <: HList] {
   /**
    * Apply to both arguments directly. Useful for testing, but no longer used directly in code.
    */
-  def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
-    type A = A1
-    type S = L
-    type CS = LICS
-  }, sh2: StackHelper[BB] {
-    type S = R
-    type CS = RICS
-  }, ab: ApplyBind[Idx, L, R] {
+  def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(
+      implicit sh1: StackHelper.Aux[AA, A1, L, LICS], sh2: StackHelper.Aux1[BB, R, RICS], ab: ApplyBind[Idx, L, R] {
     type LCS = LICS
     type RCS = RICS
   }): ab.OCS#C[sh2.A]
@@ -683,17 +701,10 @@ sealed trait IndexedApplyBind[Idx <: HList] {
    * Apply to one argument, so that it can later be applied to the second argument. This is
    * the method that the main code actually uses.
    */
-  def partialApply[AA, A1, L <: HList, LICS <: Context](f: AA)(implicit sh1: StackHelper[AA] {
-    type A = A1
-    type S = L
-    type CS = LICS
-  }): PartiallyAppliedApplyBind[Idx, A1, L, LICS] = {
+  def partialApply[AA, A1, L <: HList, LICS <: Context](f: AA)(implicit sh1: StackHelper.Aux[AA, A1, L, LICS]): PartiallyAppliedApplyBind[Idx, A1, L, LICS] = {
     val self = this
     new PartiallyAppliedApplyBind[Idx, A1, L, LICS] {
-      def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper[BB] {
-        type S = R
-        type CS = RICS
-      }, ab: ApplyBind[Idx, L, R] {
+      def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper.Aux1[BB, R, RICS], ab: ApplyBind[Idx, L, R] {
         type LCS = LICS
         type RCS = RICS
       }): ab.OCS#C[sh2.A] =
@@ -703,33 +714,44 @@ sealed trait IndexedApplyBind[Idx <: HList] {
 }
 
 /**
+ * The remaining implicits needed by a PartiallyAppliedApplyBind
+ */
+sealed trait RemainingApplication[Idx <: HList, BB, R <: HList]
+
+/**
  * Partially constructed ApplyBind. The index and the left hand side (deconstructed into a context stack)
  * are fixed, but the right hand side is currently free.
  */
 sealed trait PartiallyAppliedApplyBind[Idx <: HList, A1, L <: HList, LICS <: Context] {
-  def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper[BB] {
-    type S = R
-    type CS = RICS
-  }, ab: ApplyBind[Idx, L, R] {
+  def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper.Aux1[BB, R, RICS], ab: ApplyBind[Idx, L, R] {
     type LCS = LICS
     type RCS = RICS
   }): ab.OCS#C[sh2.A]
 }
 
 object ApplyBind {
-  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, LOCS <: Context, R <: HList, RICS <: Context, ROCS <: Context, FC <: Context, FRCS <: Context](
+  implicit def combine[Idx <: HList, L <: HList, LICS <: Context, LOCS <: Context, LK <: HList, R <: HList, RICS <: Context, ROCS <: Context, RK <: HList, FC <: Context, FRCS <: Context,
+    I <: HList, OICS <: Context, OOCS <: Context](
     implicit lsn: SortAndNormalizer[Idx, L] {
       type ICS = LICS
       type OCS = LOCS
+      type K = LK
     }, rsn: SortAndNormalizer[Idx, R] {
       type ICS = RICS
       type OCS = ROCS
-    }, stack: MonadStack[Idx] {
-      type C = FC
-      type RS = FRCS
+      type K = RK
+    }, stack: MonadStack.Aux[Idx, FC, FRCS],
+    w1: LeibC[LOCS, Context.Aux[({ type L[A] = FC#C[FRCS#C[A]] })#L]],
+    w2: LeibC[ROCS, Context.Aux[({ type L[A] = FC#C[FRCS#C[A]] })#L]],
+    pa: Prepend.Aux[LK, RK, I],
+    osn: SortAndNormalizer[Idx, I]{
+      type ICS = OICS
+      type OCS = OOCS
     },
-    w1: Leib1[LOCS, Context.Aux[({ type L[A] = FC#C[FRCS#C[A]] })#L]],
-    w2: Leib1[ROCS, Context.Aux[({ type L[A] = FC#C[FRCS#C[A]] })#L]]) =
+    w3: LeibC[Context.Aux[({type L[A] = LOCS#C[ROCS#C[A]]})#L], OICS],
+    w4: LeibC[OOCS, Context.Aux[({type L[A] = FC#C[FRCS#C[A]]})#L]],
+    w5: LeibC[Context.Aux[({ type L[A] = FC#C[FRCS#C[A]] })#L], LOCS]
+    ) =
     new ApplyBind[Idx, L, R] {
       type LCS = LICS
       type RCS = RICS
@@ -739,10 +761,9 @@ object ApplyBind {
 
       val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
         def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) = {
-          implicit val m = stack.m
-          w1.witness(lsn.trans.apply(f)) >>= {
-            a: A ⇒ w2.witness(rsn.trans.apply(g(a)))
-          }
+          implicit val n = w5.subst(stack.m)
+          val mapped = lsn.trans.apply(f) map {a: A => rsn.trans.apply(g(a))}
+          w4.witness(osn.trans.apply(w3.witness(mapped)))
         }
       }
     }
@@ -753,16 +774,15 @@ object ApplyBind {
    * the complete ApplyBind
    */
   def forIdx[Idx <: HList]: IndexedApplyBind[Idx] = new IndexedApplyBind[Idx] {
-    def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(implicit sh1: StackHelper[AA] {
-      type A = A1
-      type S = L
-      type CS = LICS
-    }, sh2: StackHelper[BB] {
-      type S = R
-      type CS = RICS
-    }, ab: ApplyBind[Idx, L, R] {
+    def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(
+        implicit sh1: StackHelper.Aux[AA, A1, L, LICS], sh2: StackHelper.Aux1[BB, R, RICS], ab: ApplyBind[Idx, L, R] {
       type LCS = LICS
       type RCS = RICS
     }): ab.OCS#C[sh2.A] = ab.trans(sh1.l.apply(f))({ a ⇒ sh2.l.apply(g(a)) })
+  }
+  
+  type AnyAux[Idx <: HList, L <: HList, R <: HList, LICS1 <: Context, RICS1 <: Context] = ApplyBind[Idx, L, R] {
+    type LICS = LICS1
+    type RICS = RICS1
   }
 }
