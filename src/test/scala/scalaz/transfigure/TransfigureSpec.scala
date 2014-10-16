@@ -27,6 +27,8 @@ object Aliases {
     type C[A] = Option[Option[A]]
   }
   type Idx = OptionContext :: ListContext :: EitherRContext :: HNil
+
+  //  type PairedEither
 }
 
 class IndexOfSpec {
@@ -39,7 +41,6 @@ class LEEqIndexedSpec {
 }
 
 class SelectionStepSpec extends Specification {
-
   "SelectionStep" should {
     "option.list" in {
       SelectionStep[Idx, OptionContext, ListContext].trans(Some(List(5))) ====
@@ -106,6 +107,7 @@ class NormalizerSpec {
   implicitly[Normalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]]
 }
 
+@RunWith(classOf[JUnitRunner])
 class SortAndNormalizerSpec extends Specification {
   val ss = SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
   implicitly[=:=[ss.ICS, OptionOptionContext]]
@@ -267,6 +269,13 @@ class TransfigureSpec extends Specification {
       val f: Int => Int = x => x + 2
 
       fa.transfigureTo[ValidationS](f) ==== 6.success
+    }
+
+    "distribute" in {
+      val fa: Name[Int] = Name(5)
+      val f: Int => IntReader[Int] = i => Reader(j => i + j)
+      
+      fa.transfigureTo[IntReader, Name](f).run(4).value ==== 9
     }
   }
 }

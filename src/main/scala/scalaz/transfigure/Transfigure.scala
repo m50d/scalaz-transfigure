@@ -35,7 +35,7 @@ object GT {
  * (Only exists when A is somewhere in Idx)
  * Note that our indices count "backwards":
  * the index of A in A :: B :: HNil is 1,
- * and that of B is 0. I think.
+ * and that of B is 0.
  */
 sealed trait IndexOf[Idx <: HList, A] {
   type Out <: Nat
@@ -145,7 +145,18 @@ sealed trait SelectionStep[Idx <: HList, C1 <: Context, D <: Context] {
   val trans: NaturalTransformation[I#C, O#C]
 }
 
-object SelectionStep {
+trait SelectionStep2 {
+  implicit def leDistribute[Idx <: HList, C <: Context, D <: Context](implicit le: LEIndexed[Idx, C, D], functor: Functor[C#C], dist: Distributive[D#C]) =
+    new SelectionStep[Idx, C, D] {
+    type X = D
+    type Y = C
+    val trans = new NaturalTransformation[I#C, O#C] {
+      def apply[A](fa: C#C[D#C[A]]) = dist.distribute(fa)(identity)
+    }
+  }
+}
+
+object SelectionStep extends SelectionStep2 {
   implicit def gt[Idx <: HList, C <: Context, D <: Context](implicit gt: GTIndexed[Idx, C, D]) = new SelectionStep[Idx, C, D] {
     type X = C
     type Y = D
@@ -255,8 +266,6 @@ object LeibC {
   implicit def refl[C <: Context] = new LeibC[C, C] {
     def subst[F[_[_]]](fa: F[C#C]) = fa
   }
-  def symm[C[_], D[_]](l: LeibC[Context.Aux[C], Context.Aux[D]]): LeibC[Context.Aux[D], Context.Aux[C]] =
-    l.subst[({ type L[G[_]] = LeibC[Context.Aux[G], Context.Aux[C]] })#L](refl[Context.Aux[C]])
 }
 
 /**
@@ -650,10 +659,5 @@ object ApplyBind {
         type LCS = LICS
         type RCS = RICS
       }): ab.OCS#C[sh2.A] = ab.trans(sh1.l.apply(f))({ a ⇒ sh2.l.apply(g(a)) })
-  }
-
-  type AnyAux[Idx <: HList, L <: HList, R <: HList, LICS1 <: Context, RICS1 <: Context] = ApplyBind[Idx, L, R] {
-    type LICS = LICS1
-    type RICS = RICS1
   }
 }

@@ -12,14 +12,14 @@ object TransfigureToSyntax {
       type RCS = RICS
     }): ab.OCS#C[sh2.A] = inner.apply(g)
   }
-  
+
   class PartialApply2[S0[_], S1[_], A, L <: HList, LICS <: Context](inner: PartiallyAppliedApplyBind[Context.Aux[S0] :: Context.Aux[S1] :: HNil, A, L, LICS]) {
     def apply[BB, R <: HList, RICS <: Context](g: A ⇒ BB)(implicit sh2: StackHelper.Aux1[BB, R, RICS], ab: ApplyBind[Context.Aux[S0] :: Context.Aux[S1] :: HNil, L, R] {
       type LCS = LICS
       type RCS = RICS
     }): ab.OCS#C[sh2.A] = inner.apply(g)
   }
-  
+
   class PartialApply3[S0[_], S1[_], S2[_], A, L <: HList, LICS <: Context](inner: PartiallyAppliedApplyBind[Context.Aux[S0] :: Context.Aux[S1] :: Context.Aux[S2] :: HNil, A, L, LICS]) {
     def apply[BB, R <: HList, RICS <: Context](g: A ⇒ BB)(implicit sh2: StackHelper.Aux1[BB, R, RICS], ab: ApplyBind[Context.Aux[S0] :: Context.Aux[S1] :: Context.Aux[S2] :: HNil, L, R] {
       type LCS = LICS
