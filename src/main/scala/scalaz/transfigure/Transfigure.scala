@@ -405,12 +405,6 @@ trait Normalizer2 extends Normalizer3 {
 }
 
 object Normalizer extends Normalizer2 {
-  /**
-   * TODO: I think this might require some handholding of the type inference -
-   * I suspect it can only find the Normalizer with type C = C1 if
-   * it's at the lowest level of the stack.
-   * The same technique we use elsewhere (IdxAndLtEq etc.) should work.
-   */
   implicit def consBind[C1 <: Context, T <: HList, L <: HList](implicit rest: Normalizer[C1 :: T, C1 :: L] { type C = C1 },
     b: Bind[C1#C]) = new Normalizer[C1 :: T, C1 :: C1 :: L] {
     type ICS = Context {

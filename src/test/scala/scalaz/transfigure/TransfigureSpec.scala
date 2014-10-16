@@ -277,6 +277,14 @@ class TransfigureSpec extends Specification {
       
       fa.transfigureTo[IntReader, Name](f).run(4).value ==== 9
     }
+    
+//TODO: this would be nice    
+//    "ignoreUnindexed" in {
+//      val fa: Option[List[Int]] = Some(List(42))
+//      val f: List[Int] ⇒ List[String] = _.map(_.toString)
+//
+//      fa.transfigureTo[Option](f) ==== Some(List("42"))
+//    }
   }
 }
 
