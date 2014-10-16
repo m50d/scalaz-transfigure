@@ -17,6 +17,7 @@ import org.specs2.runner.JUnitRunner
 
 object Aliases {
   type EitherR[A] = Either[Unit, A]
+  type ValidationS[A] = Validation[String, A]
   type IntReader[A] = scalaz.Reader[Int, A]
   type OptionContext = Context.Aux[Option]
   type ListContext = Context.Aux[List]
@@ -133,7 +134,7 @@ class ApplyBindSpec extends Specification {
     type O = HNil
     type OCS = Context.Aux[Id]
   }]
-  val i2 = implicitly[MonadStack[ListContext :: HNil]]
+  val i2 = implicitly[FunctorStack[ListContext :: HNil]]
   implicitly[ApplyBind[ListContext :: HNil, HNil, HNil]]
 
   val ss = SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
@@ -245,6 +246,27 @@ class TransfigureSpec extends Specification {
       val f: Int ⇒ EitherR[Option[Int]] = x ⇒ Right(Some(x + 2))
 
       fa.transfigureTo[EitherR, List, Option](f) ==== Right(List(Some(4)))
+    }
+
+    "functor" in {
+      val fa: Int = 4
+      val f: Int => ValidationS[Int] = x => (x - 1).success
+
+      fa.transfigureTo[ValidationS](f) ==== 3.success
+    }
+
+    "map functor" in {
+      val fa: ValidationS[Int] = 5.success
+      val f: Int => Int = x => x + 3
+
+      fa.transfigureTo[ValidationS](f) ==== 8.success
+    }
+
+    "point functor" in {
+      val fa: Int = 4
+      val f: Int => Int = x => x + 2
+
+      fa.transfigureTo[ValidationS](f) ==== 6.success
     }
   }
 }
