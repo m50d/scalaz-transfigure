@@ -17,6 +17,5 @@ val g: List[Option[String]] = fa.transfigureTo[List, Option](f)
 ## Todo
 
  * Add more UnapplyC implicits so that it's usable with more container types
- * Add suitable error messages where possible (@implicitNotFound)
  * Make it possible to use transfigureTo with for/yield sugar, if possible.
  * Add support for MonadTrans, or something more generic (e.g. a port of Haskell's Layer)

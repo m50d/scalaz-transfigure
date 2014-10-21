@@ -7,6 +7,7 @@ import scala.language.higherKinds
 
 object TransfigureToSyntax {
   abstract class PartialApply[Idx <: HList, AA](inner: IndexedApplyBind[Idx], f: AA) {
+    @implicitNotFound("Can't combine $AA and $BB in context stack $Idx")
     def apply[A, L <: HList, LCS0 <: Context, BB, R <: HList, RCS0 <: Context, B](g: A ⇒ BB)(implicit sh1: StackHelper.Aux[Idx, AA, A, L, LCS0],
       sh2: StackHelper.Aux1[Idx, BB, R, RCS0], ab: ApplyBind[Idx, L, R] {
         type LCS = LCS0
