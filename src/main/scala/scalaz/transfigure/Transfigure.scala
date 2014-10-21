@@ -1,12 +1,13 @@
 package scalaz.transfigure
 
 import shapeless.{ Id ⇒ _, _ }
-import ops.hlist.{ Length, Prepend }
+import ops.hlist.{ Length, Prepend, Selector }
 import scalaz._
 import scalaz.Scalaz._
 import Nat._0
 import scala.language.postfixOps
 import scala.language.higherKinds
+
 
 /**
  * Marker that A <= B
@@ -525,7 +526,7 @@ trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
  * type S = Context.Aux[Option] :: Context.Aux[List] :: HNil
  * }
  */
-sealed trait StackHelper[I] {
+sealed trait StackHelper[Idx <: HList, I] {
   type A
   type S <: HList
   type CS <: Context
@@ -533,7 +534,7 @@ sealed trait StackHelper[I] {
 }
 
 trait StackHelper2 {
-  implicit def nil[I] = new StackHelper[I] {
+  implicit def nil[Idx <: HList, I] = new StackHelper[Idx, I] {
     type A = I
     type S = HNil
     type CS = Context.Id
@@ -542,26 +543,27 @@ trait StackHelper2 {
 }
 
 object StackHelper extends StackHelper2 {
-  implicit def cons[MA, AA](implicit u: Unapply[Functor, MA] {
-    type A = AA
-  }, rest: StackHelper[AA]) = new StackHelper[MA] {
+  implicit def cons[Idx <: HList, MA, M1 <: Context, A1](implicit u: UnapplyC[MA] {
+    type M = M1
+    type A = A1
+  }, rest: StackHelper[Idx, A1], sel: Selector[Idx, M1]) = new StackHelper[Idx, MA] {
     type A = rest.A
-    type S = Context.Aux[u.M] :: rest.S
+    type S = u.M :: rest.S
     type CS = Context {
-      type C[A] = u.M[rest.CS#C[A]]
+      type C[A] = u.M#C[rest.CS#C[A]]
     }
     val l = {
-      val step: Leibniz.===[u.M[AA], u.M[rest.CS#C[A]]] = Leibniz.lift[⊥, ⊥, ⊤, ⊤, u.M, AA, rest.CS#C[A]](rest.l)
-      Leibniz.trans[⊥, ⊤, MA, u.M[AA], u.M[rest.CS#C[A]]](step, u.leibniz)
+      val step: Leibniz.===[u.M#C[A1], u.M#C[rest.CS#C[A]]] = Leibniz.lift[⊥, ⊥, ⊤, ⊤, u.M#C, A1, rest.CS#C[A]](rest.l)
+      Leibniz.trans[⊥, ⊤, MA, u.M#C[A1], u.M#C[rest.CS#C[A]]](step, u.leibniz)
     }
   }
 
-  type Aux1[I, S1, CS1] = StackHelper[I] {
+  type Aux1[Idx <: HList, I, S1, CS1] = StackHelper[Idx, I] {
     type S = S1
     type CS = CS1
   }
 
-  type Aux[I, A1, S, CS] = Aux1[I, S, CS] {
+  type Aux[Idx <: HList, I, A1, S, CS] = Aux1[Idx, I, S, CS] {
     type A = A1
   }
 }
@@ -574,7 +576,7 @@ sealed trait IndexedApplyBind[Idx <: HList] {
    * Apply to both arguments directly. Useful for testing, but no longer used directly in code.
    */
   def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(
-    implicit sh1: StackHelper.Aux[AA, A1, L, LICS], sh2: StackHelper.Aux1[BB, R, RICS], ab: ApplyBind[Idx, L, R] {
+    implicit sh1: StackHelper.Aux[Idx, AA, A1, L, LICS], sh2: StackHelper.Aux1[Idx, BB, R, RICS], ab: ApplyBind[Idx, L, R] {
       type LCS = LICS
       type RCS = RICS
     }): ab.OCS#C[sh2.A]
@@ -583,10 +585,10 @@ sealed trait IndexedApplyBind[Idx <: HList] {
    * Apply to one argument, so that it can later be applied to the second argument. This is
    * the method that the main code actually uses.
    */
-  def partialApply[AA, A1, L <: HList, LICS <: Context](f: AA)(implicit sh1: StackHelper.Aux[AA, A1, L, LICS]): PartiallyAppliedApplyBind[Idx, A1, L, LICS] = {
+  def partialApply[AA, A1, L <: HList, LICS <: Context](f: AA)(implicit sh1: StackHelper.Aux[Idx, AA, A1, L, LICS]): PartiallyAppliedApplyBind[Idx, A1, L, LICS] = {
     val self = this
     new PartiallyAppliedApplyBind[Idx, A1, L, LICS] {
-      def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper.Aux1[BB, R, RICS], ab: ApplyBind[Idx, L, R] {
+      def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper.Aux1[Idx, BB, R, RICS], ab: ApplyBind[Idx, L, R] {
         type LCS = LICS
         type RCS = RICS
       }): ab.OCS#C[sh2.A] =
@@ -605,7 +607,7 @@ sealed trait RemainingApplication[Idx <: HList, BB, R <: HList]
  * are fixed, but the right hand side is currently free.
  */
 sealed trait PartiallyAppliedApplyBind[Idx <: HList, A1, L <: HList, LICS <: Context] {
-  def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper.Aux1[BB, R, RICS], ab: ApplyBind[Idx, L, R] {
+  def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper.Aux1[Idx, BB, R, RICS], ab: ApplyBind[Idx, L, R] {
     type LCS = LICS
     type RCS = RICS
   }): ab.OCS#C[sh2.A]
@@ -649,7 +651,7 @@ object ApplyBind {
    */
   def forIdx[Idx <: HList]: IndexedApplyBind[Idx] = new IndexedApplyBind[Idx] {
     def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(
-      implicit sh1: StackHelper.Aux[AA, A1, L, LICS], sh2: StackHelper.Aux1[BB, R, RICS], ab: ApplyBind[Idx, L, R] {
+      implicit sh1: StackHelper.Aux[Idx, AA, A1, L, LICS], sh2: StackHelper.Aux1[Idx, BB, R, RICS], ab: ApplyBind[Idx, L, R] {
         type LCS = LICS
         type RCS = RICS
       }): ab.OCS#C[sh2.A] = ab.trans(sh1.l.apply(f))({ a ⇒ sh2.l.apply(g(a)) })

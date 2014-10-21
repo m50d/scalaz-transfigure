@@ -27,8 +27,6 @@ object Aliases {
     type C[A] = Option[Option[A]]
   }
   type Idx = OptionContext :: ListContext :: EitherRContext :: HNil
-
-  //  type PairedEither
 }
 
 class IndexOfSpec {
@@ -274,17 +272,16 @@ class TransfigureSpec extends Specification {
     "distribute" in {
       val fa: Name[Int] = Name(5)
       val f: Int => IntReader[Int] = i => Reader(j => i + j)
-      
+
       fa.transfigureTo[IntReader, Name](f).run(4).value ==== 9
     }
-    
-//TODO: this would be nice    
-//    "ignoreUnindexed" in {
-//      val fa: Option[List[Int]] = Some(List(42))
-//      val f: List[Int] ⇒ List[String] = _.map(_.toString)
-//
-//      fa.transfigureTo[Option](f) ==== Some(List("42"))
-//    }
+
+    "ignoreUnindexed" in {
+      val fa: Option[List[Int]] = Some(List(42))
+      val f: List[Int] ⇒ List[String] = _.map(_.toString)
+
+      fa.transfigureTo[Option](f) ==== Some(List("42"))
+    }
   }
 }
 
