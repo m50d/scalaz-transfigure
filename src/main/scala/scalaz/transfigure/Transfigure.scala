@@ -8,7 +8,6 @@ import Nat._0
 import scala.language.postfixOps
 import scala.language.higherKinds
 
-
 /**
  * Marker that A <= B
  */
@@ -149,12 +148,12 @@ sealed trait SelectionStep[Idx <: HList, C1 <: Context, D <: Context] {
 trait SelectionStep2 {
   implicit def leDistribute[Idx <: HList, C <: Context, D <: Context](implicit le: LEIndexed[Idx, C, D], functor: Functor[C#C], dist: Distributive[D#C]) =
     new SelectionStep[Idx, C, D] {
-    type X = D
-    type Y = C
-    val trans = new NaturalTransformation[I#C, O#C] {
-      def apply[A](fa: C#C[D#C[A]]) = dist.distribute(fa)(identity)
+      type X = D
+      type Y = C
+      val trans = new NaturalTransformation[I#C, O#C] {
+        def apply[A](fa: C#C[D#C[A]]) = dist.distribute(fa)(identity)
+      }
     }
-  }
 }
 
 object SelectionStep extends SelectionStep2 {
@@ -184,7 +183,7 @@ object SelectionStep extends SelectionStep2 {
 
 /**
  * Pulls the earliest context in L to the top of the stack of contexts.
- * i.e. trans is a function from F[G[H[A]]] to X[...[A]], where X
+ * i.e. trans is a function from F[G[H[A]]] to X[...[A]], where XFunctorStack
  * is whichever of F/G/H comes first in Idx.
  * From here on we have a "dual" representation of context stacks:
  * we can see F[G[H[A]]] as a list Context[F] :: Context[G] :: Context[H] :: HNil,
@@ -462,7 +461,6 @@ object SortAndNormalizerRequiringLeibniz {
 sealed trait SortAndNormalizer[Idx <: HList, L <: HList] {
   type ICS <: Context
   type OCS <: Context
-  type K <: HList
 
   val trans: NaturalTransformation[ICS#C, OCS#C]
 }
@@ -473,16 +471,16 @@ object SortAndNormalizer {
   }, leib: R) = new SortAndNormalizer[Idx, L] {
     type ICS = sort.ICS
     type OCS = sort.OCS
-    type K = sort.K
 
     val trans = sort.sort(leib)
   }
-  type Aux[Idx <: HList, L <: HList, ICS1 <: Context, OCS1 <: Context, K1 <: HList] = SortAndNormalizer[Idx, L] {
+  type Aux1[Idx <: HList, L <: HList, ICS1 <: Context] = SortAndNormalizer[Idx, L] {
     type ICS = ICS1
-    type OCS = OCS1
-    type K = K1
   }
-  def apply[Idx <: HList, L <: HList](implicit sn: SortAndNormalizer[Idx, L]): Aux[Idx, L, sn.ICS, sn.OCS, sn.K] = sn
+  type Aux[Idx <: HList, L <: HList, ICS <: Context, OCS1 <: Context] = Aux1[Idx, L, ICS] {
+    type OCS = OCS1
+  }
+  def apply[Idx <: HList, L <: HList](implicit sn: SortAndNormalizer[Idx, L]): Aux[Idx, L, sn.ICS, sn.OCS] = sn
 }
 
 /**
@@ -519,6 +517,65 @@ trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
   def apply[A, B](f: F[A])(g: A ⇒ G[B]): H[B]
 }
 
+//sealed trait FunctorStackStack[LS <: HList] {
+//  type L <: HList
+//  type CSS <: HList
+//  type CS <: Context
+//
+//  val f: Functor[CS#C]
+//}
+//
+//object FunctorStackStack {
+//  implicit object nil extends FunctorStackStack[HNil] {
+//    type L = HNil
+//    type CSS = HNil
+//    type CS = Context.Id
+//
+//    val f = Functor[Id]
+//  }
+//
+//  implicit def cons[S <: HList, RLS <: HList, RL <: HList](implicit fs: FunctorStack[S], rest: FunctorStackStack[RLS] { type L = RL },
+//    p: Prepend[S, RL]) =
+//    new FunctorStackStack[S :: RLS] {
+//      type L = p.Out
+//      type CSS = fs.CS :: rest.CSS
+//      type CS = Context {
+//        type C[A] = fs.CS#C[rest.CS#C[A]]
+//      }
+//
+//      val f = fs.f.compose(rest.f)
+//    }
+//}
+
+trait ConcreteFunctorStackStack[Idx <: HList, A, LS <: HList] {
+  type CS <: Context
+  val fs: FunctorStack.Aux[LS, CS]
+  val a: CS#C[A]
+
+  def flatMap[BB, B, L <: HList, LCS <: Context, KS <: HList, CS0 <: Context](f: A => BB)(implicit sh: StackHelper.Aux[Idx, BB, B, L, LCS], pp: Prepend.Aux[LS, L, KS],
+    fs0: FunctorStack.Aux[KS, CS0], w: Leibniz.===[fs.CS#C[BB], CS0#C[B]]) = {
+    val f0 = fs.f
+    val a0 = a
+
+    new ConcreteFunctorStackStack[Idx, B, KS] {
+      type CS = CS0
+      val fs = fs0
+      val a = Leibniz.subst(f0.map(a0)(f))(w)
+    }
+  }
+
+  def run[CS <: Context](implicit sn: SortAndNormalizer.Aux1[Idx, LS, CS], w: LeibC[fs.CS, CS]) =
+    sn.trans.apply(w.witness(a))
+
+  def map[BB, B, L <: HList, LCS <: Context, KS <: HList, CS0 <: Context, CS1 <: Context](f: A => BB)(
+    implicit sh: StackHelper.Aux[Idx, BB, B, L, LCS], pp: Prepend.Aux[LS, L, KS],
+    fs0: FunctorStack.Aux[KS, CS0], w1: Leibniz.===[fs.CS#C[BB], CS0#C[B]], sn: SortAndNormalizer.Aux1[Idx, KS, CS1],
+    w2: LeibC[CS0, CS1]) = {
+    val g = flatMap(f)
+    g.run
+  }
+}
+
 /**
  * Extracts the stack from an instance, e.g.
  * Option[List[Int]] => StackHelper {
@@ -531,6 +588,7 @@ sealed trait StackHelper[Idx <: HList, I] {
   type S <: HList
   type CS <: Context
   val l: Leibniz.===[I, CS#C[A]]
+  val fs: FunctorStack.Aux[S, CS]
 }
 
 trait StackHelper2 {
@@ -539,6 +597,7 @@ trait StackHelper2 {
     type S = HNil
     type CS = Context.Id
     val l = Leibniz.refl[A]
+    val fs = FunctorStack.nil
   }
 }
 
@@ -546,7 +605,7 @@ object StackHelper extends StackHelper2 {
   implicit def cons[Idx <: HList, MA, M1 <: Context, A1](implicit u: UnapplyC[MA] {
     type M = M1
     type A = A1
-  }, rest: StackHelper[Idx, A1], sel: Selector[Idx, M1]) = new StackHelper[Idx, MA] {
+  }, rest: StackHelper[Idx, A1], sel: Selector[Idx, M1], f: Functor[M1#C]) = new StackHelper[Idx, MA] {
     type A = rest.A
     type S = u.M :: rest.S
     type CS = Context {
@@ -556,6 +615,7 @@ object StackHelper extends StackHelper2 {
       val step: Leibniz.===[u.M#C[A1], u.M#C[rest.CS#C[A]]] = Leibniz.lift[⊥, ⊥, ⊤, ⊤, u.M#C, A1, rest.CS#C[A]](rest.l)
       Leibniz.trans[⊥, ⊤, MA, u.M#C[A1], u.M#C[rest.CS#C[A]]](step, u.leibniz)
     }
+    val fs = FunctorStack.cons[M1, rest.S](rest.fs, f)
   }
 
   type Aux1[Idx <: HList, I, S1, CS1] = StackHelper[Idx, I] {

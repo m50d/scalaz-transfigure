@@ -250,30 +250,51 @@ class TransfigureSpec extends Specification {
 
     "functor" in {
       val fa: Int = 4
-      val f: Int => ValidationS[Int] = x => (x - 1).success
+      val f: Int ⇒ ValidationS[Int] = x ⇒ (x - 1).success
 
       fa.transfigureTo[ValidationS](f) ==== 3.success
     }
 
     "map functor" in {
       val fa: ValidationS[Int] = 5.success
-      val f: Int => Int = x => x + 3
+      val f: Int ⇒ Int = x ⇒ x + 3
 
       fa.transfigureTo[ValidationS](f) ==== 8.success
     }
 
     "point functor" in {
       val fa: Int = 4
-      val f: Int => Int = x => x + 2
+      val f: Int ⇒ Int = x ⇒ x + 2
 
       fa.transfigureTo[ValidationS](f) ==== 6.success
     }
 
     "distribute" in {
       val fa: Name[Int] = Name(5)
-      val f: Int => IntReader[Int] = i => Reader(j => i + j)
+      val f: Int ⇒ IntReader[Int] = i ⇒ Reader(j ⇒ i + j)
 
       fa.transfigureTo[IntReader, Name](f).run(4).value ==== 9
+    }
+
+    "sugar" in {
+      import scalaz.std.either._
+      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+      val f: Int ⇒ EitherR[Option[Float]] = x ⇒ Right(Some(x + 2.0f))
+      val g: Float ⇒ List[Float] = x ⇒ List(x, x, x)
+      val h: Float ⇒ Option[String] = x ⇒ Some(x.toString)
+
+      for {
+        a ← fa.mapWith[EitherR]
+      } yield a
+
+      val fb = fa.mapWith[EitherR, List, Option].flatMap(f).flatMap(g).flatMap(h).map(identity)
+      //    (for {
+      //      a ← fa.mapWith[EitherR, List, Option]
+      //      b ← f(a)
+      //      c ← g(b)
+      //      d ← h(c)
+      //    } yield d) 
+      fb ==== Right(List(Some("4.0"), Some("4.0"), Some("4.0")))
     }
 
     "ignoreUnindexed" in {
