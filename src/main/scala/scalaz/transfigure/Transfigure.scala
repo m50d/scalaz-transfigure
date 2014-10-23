@@ -511,43 +511,9 @@ object FunctorStack {
 }
 
 /**
- * Two-argument form of NaturalTransformation.
+ * A functor stack LS indexed by Idx and containing a concrete value a.
  */
-trait SuperNaturalTransformation[-F[_], -G[_], +H[_]] {
-  def apply[A, B](f: F[A])(g: A ⇒ G[B]): H[B]
-}
-
-//sealed trait FunctorStackStack[LS <: HList] {
-//  type L <: HList
-//  type CSS <: HList
-//  type CS <: Context
-//
-//  val f: Functor[CS#C]
-//}
-//
-//object FunctorStackStack {
-//  implicit object nil extends FunctorStackStack[HNil] {
-//    type L = HNil
-//    type CSS = HNil
-//    type CS = Context.Id
-//
-//    val f = Functor[Id]
-//  }
-//
-//  implicit def cons[S <: HList, RLS <: HList, RL <: HList](implicit fs: FunctorStack[S], rest: FunctorStackStack[RLS] { type L = RL },
-//    p: Prepend[S, RL]) =
-//    new FunctorStackStack[S :: RLS] {
-//      type L = p.Out
-//      type CSS = fs.CS :: rest.CSS
-//      type CS = Context {
-//        type C[A] = fs.CS#C[rest.CS#C[A]]
-//      }
-//
-//      val f = fs.f.compose(rest.f)
-//    }
-//}
-
-trait ConcreteFunctorStackStack[Idx <: HList, A, LS <: HList] {
+trait ConcreteFunctorStack[Idx <: HList, A, LS <: HList] {
   type CS <: Context
   val fs: FunctorStack.Aux[LS, CS]
   val a: CS#C[A]
@@ -557,7 +523,7 @@ trait ConcreteFunctorStackStack[Idx <: HList, A, LS <: HList] {
     val f0 = fs.f
     val a0 = a
 
-    new ConcreteFunctorStackStack[Idx, B, KS] {
+    new ConcreteFunctorStack[Idx, B, KS] {
       type CS = CS0
       val fs = fs0
       val a = Leibniz.subst(f0.map(a0)(f))(w)
@@ -625,95 +591,5 @@ object StackHelper extends StackHelper2 {
 
   type Aux[Idx <: HList, I, A1, S, CS] = Aux1[Idx, I, S, CS] {
     type A = A1
-  }
-}
-
-/**
- * Partially constructed ApplyBind. Has Idx fixed but the remaining parameters free.
- */
-sealed trait IndexedApplyBind[Idx <: HList] {
-  /**
-   * Apply to both arguments directly. Useful for testing, but no longer used directly in code.
-   */
-  def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(
-    implicit sh1: StackHelper.Aux[Idx, AA, A1, L, LICS], sh2: StackHelper.Aux1[Idx, BB, R, RICS], ab: ApplyBind[Idx, L, R] {
-      type LCS = LICS
-      type RCS = RICS
-    }): ab.OCS#C[sh2.A]
-
-  /**
-   * Apply to one argument, so that it can later be applied to the second argument. This is
-   * the method that the main code actually uses.
-   */
-  def partialApply[AA, A1, L <: HList, LICS <: Context](f: AA)(implicit sh1: StackHelper.Aux[Idx, AA, A1, L, LICS]): PartiallyAppliedApplyBind[Idx, A1, L, LICS] = {
-    val self = this
-    new PartiallyAppliedApplyBind[Idx, A1, L, LICS] {
-      def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper.Aux1[Idx, BB, R, RICS], ab: ApplyBind[Idx, L, R] {
-        type LCS = LICS
-        type RCS = RICS
-      }): ab.OCS#C[sh2.A] =
-        self.apply(f, g)
-    }
-  }
-}
-
-/**
- * The remaining implicits needed by a PartiallyAppliedApplyBind
- */
-sealed trait RemainingApplication[Idx <: HList, BB, R <: HList]
-
-/**
- * Partially constructed ApplyBind. The index and the left hand side (deconstructed into a context stack)
- * are fixed, but the right hand side is currently free.
- */
-sealed trait PartiallyAppliedApplyBind[Idx <: HList, A1, L <: HList, LICS <: Context] {
-  def apply[BB, R <: HList, RICS <: Context](g: A1 ⇒ BB)(implicit sh2: StackHelper.Aux1[Idx, BB, R, RICS], ab: ApplyBind[Idx, L, R] {
-    type LCS = LICS
-    type RCS = RICS
-  }): ab.OCS#C[sh2.A]
-}
-
-/**
- * Something that knows how to apply/bind the stacks L and R
- * to get the stack Idx
- */
-sealed trait ApplyBind[Idx <: HList, L <: HList, R <: HList] {
-  type LCS <: Context
-  type RCS <: Context
-  type OCS <: Context
-
-  val trans: SuperNaturalTransformation[LCS#C, RCS#C, OCS#C]
-}
-
-object ApplyBind {
-  implicit def combine[Idx <: HList, L <: HList, LCS1 <: Context, R <: HList, RCS1 <: Context, I <: HList, ICS1 <: Context](
-    implicit lfs: FunctorStack.Aux[L, LCS1], rfs: FunctorStack.Aux[R, RCS1],
-    pa: Prepend.Aux[L, R, I],
-    osn: SortAndNormalizer[Idx, I] {
-      type ICS = ICS1
-    },
-    w3: LeibC[Context.Aux[({ type L[A] = LCS1#C[RCS1#C[A]] })#L], ICS1]) =
-    new ApplyBind[Idx, L, R] {
-      type LCS = LCS1
-      type RCS = RCS1
-      type OCS = osn.OCS
-
-      val trans = new SuperNaturalTransformation[LCS#C, RCS#C, OCS#C] {
-        def apply[A, B](f: LCS#C[A])(g: A ⇒ RCS#C[B]) =
-          osn.trans.apply(w3.witness(lfs.f.map(f)(g)))
-      }
-    }
-
-  /**
-   * Fix the index stack, and return a partially constructed instance
-   * that can be applied to a left stack and a right stack to form
-   * the complete ApplyBind
-   */
-  def forIdx[Idx <: HList]: IndexedApplyBind[Idx] = new IndexedApplyBind[Idx] {
-    def apply[AA, A1, BB, L <: HList, R <: HList, LICS <: Context, RICS <: Context](f: AA, g: A1 ⇒ BB)(
-      implicit sh1: StackHelper.Aux[Idx, AA, A1, L, LICS], sh2: StackHelper.Aux1[Idx, BB, R, RICS], ab: ApplyBind[Idx, L, R] {
-        type LCS = LICS
-        type RCS = RICS
-      }): ab.OCS#C[sh2.A] = ab.trans(sh1.l.apply(f))({ a ⇒ sh2.l.apply(g(a)) })
   }
 }

@@ -128,34 +128,6 @@ class SortAndNormalizerSpec extends Specification {
 }
 
 @RunWith(classOf[JUnitRunner])
-class ApplyBindSpec extends Specification {
-  val i1 = implicitly[SelectionSort[ListContext :: HNil, HNil] {
-    type ICS = Context.Aux[Id]
-    type O = HNil
-    type OCS = Context.Aux[Id]
-  }]
-  val i2 = implicitly[FunctorStack[ListContext :: HNil]]
-  implicitly[ApplyBind[ListContext :: HNil, HNil, HNil]]
-
-  val ss = SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
-
-  implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
-
-  type StackedContext = Context {
-    type C[A] = EitherR[List[Option[A]]]
-  }
-  "ApplyBind" should {
-    "nillist" in {
-      ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== List(6)
-    }
-    "nileitherlistoption" in {
-      import scalaz.std.either._
-      ApplyBind.forIdx[EitherRContext :: ListContext :: OptionContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== Right(List(Some(6)))
-    }
-  }
-}
-
-@RunWith(classOf[JUnitRunner])
 class TransfigureSpec extends Specification {
 
   "Transfigure" should {
