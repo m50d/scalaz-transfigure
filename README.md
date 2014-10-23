@@ -17,5 +17,5 @@ val g: List[Option[String]] = fa.transfigureTo[List, Option](f)
 ## Todo
 
  * Add more UnapplyC implicits so that it's usable with more container types
- * Make for/yield sugar work
+ * Make for/yield sugar work - I think this is probably impossible :(
  * Add support for MonadTrans, or something more generic (e.g. a port of Haskell's Layer)
