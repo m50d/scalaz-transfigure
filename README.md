@@ -14,6 +14,21 @@ val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
 val g: List[Option[String]] = fa.transfigureTo[List, Option](f)
 ````
 
+## Flatmap API
+````scala
+import scalaz.transfigure.TransfigureSyntax._
+val fa: String \/ Option[Int] = Some(42).right
+val g: Int => Future[String \/ Float]
+val h: Float => Future[Option[String]]
+
+// b will be a Future[String \/ Option[_]]
+// whatever arbitrary combinations of these are returned by g/h
+val b = fa.mapWith[Future, ({type L[A]=String \/ A})#L, Option]
+  .flatMap(g)
+  .flatMap(h) //or
+  .run        //.map(h)
+````
+
 ## Todo
 
  * Add more UnapplyC implicits so that it's usable with more container types
