@@ -1,6 +1,5 @@
 package scalaz.transfigure
 
-import org.specs2.mutable._
 import shapeless.{ Id ⇒ _, _ }
 import shapeless.nat._
 import shapeless.ops.nat._
@@ -13,7 +12,8 @@ import Aliases._
 import org.junit.runner.RunWith
 import scala.Right
 import scalaz.std.either.eitherMonad
-import org.specs2.runner.JUnitRunner
+import org.junit.Test
+import org.fest.assertions.Assertions.assertThat
 
 object Aliases {
   type EitherR[A] = Either[Unit, A]
@@ -29,26 +29,21 @@ object Aliases {
   type Idx = OptionContext :: ListContext :: EitherRContext :: HNil
 }
 
-class IndexOfSpec {
-  val p = IndexOf[String :: Int :: Long :: HNil, Int]
-  implicitly[p.Out =:= _1]
+class IndexOfCompileTest {
+    val p = IndexOf[String :: Int :: Long :: HNil, Int]
+    implicitly[p.Out =:= _1]
 }
 
-class LEEqIndexedSpec {
+class LEEqIndexedCompileTest {
   implicitly[LEIndexed[Int :: String :: HNil, String, Int]]
 }
 
-class SelectionStepSpec extends Specification {
-  "SelectionStep" should {
-    "option.list" in {
-      SelectionStep[Idx, OptionContext, ListContext].trans(Some(List(5))) ====
-        Some(List(5))
-    }
-    "list.option" in {
-      SelectionStep[Idx, ListContext, OptionContext].trans(List(Some(5))) ====
-        Some(List(5))
-    }
-  }
+class SelectionStepTest {
+  @Test def optionList: Unit =
+    assertThat SelectionStep[Idx, OptionContext, ListContext].trans(Some(List(5))) isEqualTo Some(List(5))
+
+  @Test def listOption: Unit = 
+    assertThat SelectionStep[Idx, ListContext, OptionContext].trans(List(Some(5))) isEqualTo Some(List(5))
 }
 
 class SelectLeastSpec extends Specification {
