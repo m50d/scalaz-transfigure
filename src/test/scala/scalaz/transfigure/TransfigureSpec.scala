@@ -67,31 +67,29 @@ class SelectLeastTest {
   }
 }
 
-class SelectionSortSpec extends Specification {
+class SelectionSortTest {
   implicitly[SelectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]]
   SelectionSort.cons[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil, OptionContext, HNil, Context.Aux[Id], Context.Aux[Id]]
 
-  "SelectionSort" should {
-    "nil" in {
-      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]
-      ss.apply(5) isEqualTo 5
-    }
-    "reallynil" in {
-      val ss = SelectionSort.selectionSort[HNil, HNil]
-      ss.apply(5) isEqualTo 5
-    }
-    "option" in {
-      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil]
-      ss.apply(Some(5)) isEqualTo Some(5)
-    }
-    "list.either.option" in {
-      val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
-      ss.apply(List(Some(Right(5)))) isEqualTo Some(Right(List(5)))
-    }
-    "option.option" in {
-      val ss = SelectionSort.selectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
-      ss.apply(Some(Some(5))) isEqualTo Some(Some(5))
-    }
+  @Test def nil: Unit = {
+    val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]
+    assertThat(ss.apply(5)) isEqualTo 5
+  }
+  @Test def reallynil: Unit = {
+    val ss = SelectionSort.selectionSort[HNil, HNil]
+    assertThat(ss.apply(5)) isEqualTo 5
+  }
+  @Test def option: Unit = {
+    val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil]
+    assertThat(ss.apply(Some(5))) isEqualTo Some(5)
+  }
+  @Test def listEitherOption: Unit = {
+    val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
+    assertThat(ss.apply(List(Some(Right(5))))) isEqualTo Some(Right(List(5)))
+  }
+  @Test def optionOption: Unit = {
+    val ss = SelectionSort.selectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
+    assertThat(ss.apply(Some(Some(5)))) isEqualTo Some(Some(5))
   }
 }
 
@@ -100,174 +98,169 @@ class NormalizerCompileTest {
   implicitly[Normalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]]
 }
 
-class SortAndNormalizerSpec extends Specification {
+class SortAndNormalizerTest {
   val ss = SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
   implicitly[=:=[ss.ICS, OptionOptionContext]]
   implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
 
-  "SortAndNormalizer" should {
-    "nil" in {
-      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, HNil]
-      sn.trans.apply(5) isEqualTo Some(List(5))
-    }
-    "list.option" in {
-      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
-      sn.trans.apply(List(Some(5))) isEqualTo Some(List(5))
-    }
-    "option.option" in {
-      val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
-      sn.trans.apply(Some(Some(5))) isEqualTo Some(List(5))
-    }
+  @Test def nil: Unit = {
+    val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, HNil]
+    assertThat(sn.trans.apply(5)) isEqualTo Some(List(5))
+  }
+  @Test def listOption: Unit = {
+    val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
+    assertThat(sn.trans.apply(List(Some(5)))) isEqualTo Some(List(5))
+  }
+  @Test def optionOption: Unit = {
+    val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
+    assertThat(sn.trans.apply(Some(Some(5)))) isEqualTo Some(List(5))
   }
 }
 
-class TransfigureSpec extends Specification {
+class TransfigureTest {
 
-  "Transfigure" should {
+  @Test def map: Unit = {
+    val fa: Option[Int] = Some(42)
+    val f: Int ⇒ String = _.toString
 
-    "map" in {
-      val fa: Option[Int] = Some(42)
-      val f: Int ⇒ String = _.toString
+    assertThat(fa.transfigureTo[Option](f)) isEqualTo Some("42")
+  }
 
-      fa.transfigureTo[Option](f) isEqualTo Some("42")
-    }
+  @Test def mapEither: Unit = {
+    import scalaz.std.either._
 
-    "map (either)" in {
-      import scalaz.std.either._
+    val fa: EitherR[Int] = Right(42)
+    val f: Int ⇒ String = _.toString
 
-      val fa: EitherR[Int] = Right(42)
-      val f: Int ⇒ String = _.toString
+    assertThat(fa.transfigureTo[EitherR](f)) isEqualTo Right("42")
+  }
 
-      fa.transfigureTo[EitherR](f) isEqualTo Right("42")
-    }
+  @Test def flatMap: Unit = {
+    val fa: Option[Int] = Some(42)
+    val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
 
-    "flatMap" in {
-      val fa: Option[Int] = Some(42)
-      val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
+    assertThat(fa.transfigureTo[Option](f)) isEqualTo Some("32")
+  }
 
-      fa.transfigureTo[Option](f) isEqualTo Some("32")
-    }
+  @Test def join: Unit = {
+    val fa: Option[Option[Int]] = Some(Some(42))
+    val f: Int ⇒ Int = _ + 1
 
-    "join" in {
-      val fa: Option[Option[Int]] = Some(Some(42))
-      val f: Int ⇒ Int = _ + 1
+    assertThat(fa.transfigureTo[Option](f)) isEqualTo Some(43)
+  }
 
-      fa.transfigureTo[Option](f) isEqualTo Some(43)
-    }
+  @Test def point: Unit = {
+    val fa: Option[Int] = Some(42)
+    val f: Int ⇒ String = _.toString
 
-    "point" in {
-      val fa: Option[Int] = Some(42)
-      val f: Int ⇒ String = _.toString
+    assertThat(fa.transfigureTo[List, Option](f)) isEqualTo List(Some("42"))
+  }
 
-      fa.transfigureTo[List, Option](f) isEqualTo List(Some("42"))
-    }
+  @Test def traverse: Unit = {
+    val fa: Option[Int] = Some(42)
+    val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
 
-    "traverse" in {
-      val fa: Option[Int] = Some(42)
-      val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
+    assertThat(fa.transfigureTo[List, Option](f)) isEqualTo List(Some("32"))
+  }
 
-      fa.transfigureTo[List, Option](f) isEqualTo List(Some("32"))
-    }
+  @Test def bindTraverse: Unit = {
+    val fa: List[Option[Int]] = List(Some(42))
+    val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
 
-    "bind.traverse" in {
-      val fa: List[Option[Int]] = List(Some(42))
-      val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
+    assertThat(fa.transfigureTo[List, Option](f)) isEqualTo List(Some("32"))
+  }
 
-      fa.transfigureTo[List, Option](f) isEqualTo List(Some("32"))
-    }
+  @Test def traverseJoin: Unit = {
+    val fa: List[Option[Int]] = List(Some(42))
+    val f: Int ⇒ List[Option[String]] = x ⇒ List(Some((x - 10).toString))
 
-    "traverse.join" in {
-      val fa: List[Option[Int]] = List(Some(42))
-      val f: Int ⇒ List[Option[String]] = x ⇒ List(Some((x - 10).toString))
+    assertThat(fa.transfigureTo[List, Option](f)) isEqualTo List(Some("32"))
+  }
 
-      fa.transfigureTo[List, Option](f) isEqualTo List(Some("32"))
-    }
+  @Test def mapMap: Unit = {
+    val fa: List[Option[Int]] = List(Some(42))
+    val f: Int ⇒ String = _.toString
 
-    "map.map" in {
-      val fa: List[Option[Int]] = List(Some(42))
-      val f: Int ⇒ String = _.toString
+    assertThat(fa.transfigureTo[List, Option](f)) isEqualTo List(Some("42"))
+  }
 
-      fa.transfigureTo[List, Option](f) isEqualTo List(Some("42"))
-    }
+  @Test def mapFlatMap: Unit = {
+    val fa: List[Option[Int]] = List(Some(42))
+    val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
 
-    "map.flatMap" in {
-      val fa: List[Option[Int]] = List(Some(42))
-      val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
+    assertThat(fa.transfigureTo[List, Option](f)) isEqualTo List(Some("32"))
+  }
 
-      fa.transfigureTo[List, Option](f) isEqualTo List(Some("32"))
-    }
+  @Test def mapMapMap: Unit = {
+    import scalaz.std.either._
+    val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+    val f: Int ⇒ Int = x ⇒ x + 2
 
-    "map.map.map" in {
-      import scalaz.std.either._
-      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
-      val f: Int ⇒ Int = x ⇒ x + 2
+    assertThat(fa.transfigureTo[EitherR, List, Option](f)) isEqualTo Right(List(Some(4)))
+  }
 
-      fa.transfigureTo[EitherR, List, Option](f) isEqualTo Right(List(Some(4)))
-    }
+  @Test def flatMapMapFlatMap: Unit = {
+    import scalaz.std.either._
+    val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+    val f: Int ⇒ EitherR[Option[Int]] = x ⇒ Right(Some(x + 2))
 
-    "flatMap.map.flatMap" in {
-      import scalaz.std.either._
-      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
-      val f: Int ⇒ EitherR[Option[Int]] = x ⇒ Right(Some(x + 2))
+    assertThat(fa.transfigureTo[EitherR, List, Option](f)) isEqualTo Right(List(Some(4)))
+  }
 
-      fa.transfigureTo[EitherR, List, Option](f) isEqualTo Right(List(Some(4)))
-    }
+  @Test def functor: Unit = {
+    val fa: Int = 4
+    val f: Int ⇒ ValidationS[Int] = x ⇒ (x - 1).success
 
-    "functor" in {
-      val fa: Int = 4
-      val f: Int ⇒ ValidationS[Int] = x ⇒ (x - 1).success
+    assertThat(fa.transfigureTo[ValidationS](f)) isEqualTo 3.success
+  }
 
-      fa.transfigureTo[ValidationS](f) isEqualTo 3.success
-    }
+  @Test def mapFunctor: Unit = {
+    val fa: ValidationS[Int] = 5.success
+    val f: Int ⇒ Int = x ⇒ x + 3
 
-    "map functor" in {
-      val fa: ValidationS[Int] = 5.success
-      val f: Int ⇒ Int = x ⇒ x + 3
+    assertThat(fa.transfigureTo[ValidationS](f)) isEqualTo 8.success
+  }
 
-      fa.transfigureTo[ValidationS](f) isEqualTo 8.success
-    }
+  @Test def pointFunctor: Unit = {
+    val fa: Int = 4
+    val f: Int ⇒ Int = x ⇒ x + 2
 
-    "point functor" in {
-      val fa: Int = 4
-      val f: Int ⇒ Int = x ⇒ x + 2
+    assertThat(fa.transfigureTo[ValidationS](f)) isEqualTo 6.success
+  }
 
-      fa.transfigureTo[ValidationS](f) isEqualTo 6.success
-    }
+  @Test def distribute: Unit = {
+    val fa: Name[Int] = Name(5)
+    val f: Int ⇒ IntReader[Int] = i ⇒ Reader(j ⇒ i + j)
 
-    "distribute" in {
-      val fa: Name[Int] = Name(5)
-      val f: Int ⇒ IntReader[Int] = i ⇒ Reader(j ⇒ i + j)
+    assertThat(fa.transfigureTo[IntReader, Name](f).run(4).value) isEqualTo 9
+  }
 
-      fa.transfigureTo[IntReader, Name](f).run(4).value isEqualTo 9
-    }
+  @Test def sugar: Unit = {
+    import scalaz.std.either._
+    val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+    val f: Int ⇒ EitherR[Option[Float]] = x ⇒ Right(Some(x + 2.0f))
+    val g: Float ⇒ List[Float] = x ⇒ List(x, x, x)
+    val h: Float ⇒ Option[String] = x ⇒ Some(x.toString)
 
-    "sugar" in {
-      import scalaz.std.either._
-      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
-      val f: Int ⇒ EitherR[Option[Float]] = x ⇒ Right(Some(x + 2.0f))
-      val g: Float ⇒ List[Float] = x ⇒ List(x, x, x)
-      val h: Float ⇒ Option[String] = x ⇒ Some(x.toString)
+    for {
+      a ← fa.mapWith[EitherR]
+    } yield a
 
-      for {
-        a ← fa.mapWith[EitherR]
-      } yield a
+    val fb = fa.mapWith[EitherR, List, Option].flatMap(f).flatMap(g).flatMap(h).map(identity)
+    //    (for {
+    //      a ← fa.mapWith[EitherR, List, Option]
+    //      b ← f(a)
+    //      c ← g(b)
+    //      d ← h(c)
+    //    } yield d) 
+    assertThat(fb) isEqualTo Right(List(Some("4.0"), Some("4.0"), Some("4.0")))
+  }
 
-      val fb = fa.mapWith[EitherR, List, Option].flatMap(f).flatMap(g).flatMap(h).map(identity)
-      //    (for {
-      //      a ← fa.mapWith[EitherR, List, Option]
-      //      b ← f(a)
-      //      c ← g(b)
-      //      d ← h(c)
-      //    } yield d) 
-      fb isEqualTo Right(List(Some("4.0"), Some("4.0"), Some("4.0")))
-    }
+  @Test def ignoreUnindexed: Unit = {
+    val fa: Option[List[Int]] = Some(List(42))
+    val f: List[Int] ⇒ List[String] = _.map(_.toString)
 
-    "ignoreUnindexed" in {
-      val fa: Option[List[Int]] = Some(List(42))
-      val f: List[Int] ⇒ List[String] = _.map(_.toString)
-
-      fa.transfigureTo[Option](f) isEqualTo Some(List("42"))
-    }
+    assertThat(fa.transfigureTo[Option](f)) isEqualTo Some(List("42"))
   }
 }
 
