@@ -16,7 +16,8 @@ object Transfigure extends Build {
     libraryDependencies ++= Seq(
       "org.scalaz" %% "scalaz-core" % "7.1.0",
       "com.chuusai" %% "shapeless" % "2.0.0",
-      "org.specs2" %% "specs2" % "2.4.1" % "test"
+      "org.specs2" %% "specs2" % "2.4.1" % "test",
+      "junit" % "junit" % "4.11" % "test"
     )
   )
 }

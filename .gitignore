@@ -5,3 +5,4 @@ lib_managed
 .classpath
 .project
 .settings
+/bin

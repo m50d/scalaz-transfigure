@@ -1,17 +1,23 @@
 package scalaz.transfigure
 
-import org.specs2._
+import org.specs2.mutable._
 import shapeless.{ Id ⇒ _, _ }
-import nat._
-import ops.nat._
-import ops.hlist._
-import test._
+import shapeless.nat._
+import shapeless.ops.nat._
+import shapeless.ops.hlist._
+import shapeless.test._
 import scalaz._
 import scalaz.Scalaz._
 import TransfigureToSyntax._
+import Aliases._
+import org.junit.runner.RunWith
+import scala.Right
+import scalaz.std.either.eitherMonad
+import org.specs2.runner.JUnitRunner
 
 object Aliases {
   type EitherR[A] = Either[Unit, A]
+  type ValidationS[A] = Validation[String, A]
   type IntReader[A] = scalaz.Reader[Int, A]
   type OptionContext = Context.Aux[Option]
   type ListContext = Context.Aux[List]
@@ -23,8 +29,6 @@ object Aliases {
   type Idx = OptionContext :: ListContext :: EitherRContext :: HNil
 }
 
-import Aliases._
-
 class IndexOfSpec {
   val p = IndexOf[String :: Int :: Long :: HNil, Int]
   implicitly[p.Out =:= _1]
@@ -34,8 +38,7 @@ class LEEqIndexedSpec {
   implicitly[LEIndexed[Int :: String :: HNil, String, Int]]
 }
 
-class SelectionStepSpec extends mutable.Specification {
-
+class SelectionStepSpec extends Specification {
   "SelectionStep" should {
     "option.list" in {
       SelectionStep[Idx, OptionContext, ListContext].trans(Some(List(5))) ====
@@ -48,7 +51,7 @@ class SelectionStepSpec extends mutable.Specification {
   }
 }
 
-class SelectLeastSpec extends mutable.Specification {
+class SelectLeastSpec extends Specification {
   "SelectLeast" should {
     "list" in {
       val sl = SelectLeast.selectLeast[ListContext :: HNil, ListContext :: HNil]
@@ -69,13 +72,17 @@ class SelectLeastSpec extends mutable.Specification {
   }
 }
 
-class SelectionSortSpec extends mutable.Specification {
+class SelectionSortSpec extends Specification {
   implicitly[SelectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]]
   SelectionSort.cons[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil, OptionContext, HNil, Context.Aux[Id], Context.Aux[Id]]
 
   "SelectionSort" should {
     "nil" in {
       val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]
+      ss.apply(5) ==== 5
+    }
+    "reallynil" in {
+      val ss = SelectionSort.selectionSort[HNil, HNil]
       ss.apply(5) ==== 5
     }
     "option" in {
@@ -98,7 +105,8 @@ class NormalizerSpec {
   implicitly[Normalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]]
 }
 
-class SortAndNormalizerSpec extends mutable.Specification {
+@RunWith(classOf[JUnitRunner])
+class SortAndNormalizerSpec extends Specification {
   val ss = SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
   implicitly[=:=[ss.ICS, OptionOptionContext]]
   implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
@@ -119,34 +127,8 @@ class SortAndNormalizerSpec extends mutable.Specification {
   }
 }
 
-class ApplyBindSpec extends mutable.Specification {
-  val i1 = implicitly[SelectionSort[ListContext :: HNil, HNil] {
-    type ICS = Context.Aux[Id]
-    type O = HNil
-    type OCS = Context.Aux[Id]
-  }]
-  val i2 = implicitly[MonadStack[ListContext :: HNil]]
-  implicitly[ApplyBind[ListContext :: HNil, HNil, HNil]]
-
-  val ss = SelectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
-
-  implicitly[=:=[ss.O, OptionContext :: OptionContext :: HNil]]
-
-  type StackedContext = Context {
-    type C[A] = EitherR[List[Option[A]]]
-  }
-  "ApplyBind" should {
-    "nillist" in {
-      ApplyBind.forIdx[ListContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== List(6)
-    }
-    "nileitherlistoption" in {
-      import scalaz.std.either._
-      ApplyBind.forIdx[EitherRContext :: ListContext :: OptionContext :: HNil].apply(5, { x: Int ⇒ x + 1 }) ==== Right(List(Some(6)))
-    }
-  }
-}
-
-class TransfigureSpec extends mutable.Specification {
+@RunWith(classOf[JUnitRunner])
+class TransfigureSpec extends Specification {
 
   "Transfigure" should {
 
@@ -154,7 +136,7 @@ class TransfigureSpec extends mutable.Specification {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo1[Option](f) ==== Some("42")
+      fa.transfigureTo[Option](f) ==== Some("42")
     }
 
     "map (either)" in {
@@ -163,63 +145,63 @@ class TransfigureSpec extends mutable.Specification {
       val fa: EitherR[Int] = Right(42)
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo1[EitherR](f) ==== Right("42")
+      fa.transfigureTo[EitherR](f) ==== Right("42")
     }
 
     "flatMap" in {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
 
-      fa.transfigureTo1[Option](f) ==== Some("32")
+      fa.transfigureTo[Option](f) ==== Some("32")
     }
 
     "join" in {
       val fa: Option[Option[Int]] = Some(Some(42))
       val f: Int ⇒ Int = _ + 1
 
-      fa.transfigureTo1[Option](f) ==== Some(43)
+      fa.transfigureTo[Option](f) ==== Some(43)
     }
 
     "point" in {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("42"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("42"))
     }
 
     "traverse" in {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
     }
 
     "bind.traverse" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
     }
 
     "traverse.join" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ List[Option[String]] = x ⇒ List(Some((x - 10).toString))
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
     }
 
     "map.map" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("42"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("42"))
     }
 
     "map.flatMap" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
 
-      fa.transfigureTo2[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
     }
 
     "map.map.map" in {
@@ -227,7 +209,7 @@ class TransfigureSpec extends mutable.Specification {
       val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
       val f: Int ⇒ Int = x ⇒ x + 2
 
-      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
+      fa.transfigureTo[EitherR, List, Option](f) ==== Right(List(Some(4)))
     }
 
     "flatMap.map.flatMap" in {
@@ -235,7 +217,63 @@ class TransfigureSpec extends mutable.Specification {
       val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
       val f: Int ⇒ EitherR[Option[Int]] = x ⇒ Right(Some(x + 2))
 
-      fa.transfigureTo3[EitherR, List, Option](f) ==== Right(List(Some(4)))
+      fa.transfigureTo[EitherR, List, Option](f) ==== Right(List(Some(4)))
+    }
+
+    "functor" in {
+      val fa: Int = 4
+      val f: Int ⇒ ValidationS[Int] = x ⇒ (x - 1).success
+
+      fa.transfigureTo[ValidationS](f) ==== 3.success
+    }
+
+    "map functor" in {
+      val fa: ValidationS[Int] = 5.success
+      val f: Int ⇒ Int = x ⇒ x + 3
+
+      fa.transfigureTo[ValidationS](f) ==== 8.success
+    }
+
+    "point functor" in {
+      val fa: Int = 4
+      val f: Int ⇒ Int = x ⇒ x + 2
+
+      fa.transfigureTo[ValidationS](f) ==== 6.success
+    }
+
+    "distribute" in {
+      val fa: Name[Int] = Name(5)
+      val f: Int ⇒ IntReader[Int] = i ⇒ Reader(j ⇒ i + j)
+
+      fa.transfigureTo[IntReader, Name](f).run(4).value ==== 9
+    }
+
+    "sugar" in {
+      import scalaz.std.either._
+      val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
+      val f: Int ⇒ EitherR[Option[Float]] = x ⇒ Right(Some(x + 2.0f))
+      val g: Float ⇒ List[Float] = x ⇒ List(x, x, x)
+      val h: Float ⇒ Option[String] = x ⇒ Some(x.toString)
+
+      for {
+        a ← fa.mapWith[EitherR]
+      } yield a
+
+      val fb = fa.mapWith[EitherR, List, Option].flatMap(f).flatMap(g).flatMap(h).map(identity)
+      //    (for {
+      //      a ← fa.mapWith[EitherR, List, Option]
+      //      b ← f(a)
+      //      c ← g(b)
+      //      d ← h(c)
+      //    } yield d) 
+      fb ==== Right(List(Some("4.0"), Some("4.0"), Some("4.0")))
+    }
+
+    "ignoreUnindexed" in {
+      val fa: Option[List[Int]] = Some(List(42))
+      val f: List[Int] ⇒ List[String] = _.map(_.toString)
+
+      fa.transfigureTo[Option](f) ==== Some(List("42"))
     }
   }
 }
