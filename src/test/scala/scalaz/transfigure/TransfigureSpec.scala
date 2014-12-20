@@ -30,8 +30,8 @@ object Aliases {
 }
 
 class IndexOfCompileTest {
-    val p = IndexOf[String :: Int :: Long :: HNil, Int]
-    implicitly[p.Out =:= _1]
+  val p = IndexOf[String :: Int :: Long :: HNil, Int]
+  implicitly[p.Out =:= _1]
 }
 
 class LEEqIndexedCompileTest {
@@ -40,30 +40,30 @@ class LEEqIndexedCompileTest {
 
 class SelectionStepTest {
   @Test def optionList: Unit =
-    assertThat SelectionStep[Idx, OptionContext, ListContext].trans(Some(List(5))) isEqualTo Some(List(5))
+    assertThat(SelectionStep[Idx, OptionContext, ListContext].trans(Some(List(5)))) isEqualTo Some(List(5))
 
-  @Test def listOption: Unit = 
-    assertThat SelectionStep[Idx, ListContext, OptionContext].trans(List(Some(5))) isEqualTo Some(List(5))
+  @Test def listOption: Unit =
+    assertThat(SelectionStep[Idx, ListContext, OptionContext].trans(List(Some(5)))) isEqualTo Some(List(5))
 }
 
-class SelectLeastSpec extends Specification {
-  "SelectLeast" should {
-    "list" in {
-      val sl = SelectLeast.selectLeast[ListContext :: HNil, ListContext :: HNil]
-      sl.apply(List(5)) ==== List(5)
-    }
-    "list.option" in {
-      val sl = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
-      sl.apply(List(Some(5))) ==== Some(List(5))
-    }
-    "option.list" in {
-      val sl = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil]
-      sl.apply(Some(List(5))) ==== Some(List(5))
-    }
-    "list.either.option" in {
-      val sl = SelectLeast.selectLeast[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
-      sl.apply(List(Some(Right(5)))) ==== Some(List(Right(5)))
-    }
+class SelectLeastTest {
+  @Test def list: Unit = {
+    val sl = SelectLeast.selectLeast[ListContext :: HNil, ListContext :: HNil]
+    assertThat(sl.apply(List(5))) isEqualTo List(5)
+  }
+
+  @Test def listOption: Unit = {
+    val sl = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
+    assertThat(sl.apply(List(Some(5)))) isEqualTo Some(List(5))
+  }
+  @Test def optionList: Unit = {
+    val sl = SelectLeast.selectLeast[OptionContext :: ListContext :: HNil, OptionContext :: ListContext :: HNil]
+    assertThat(sl.apply(Some(List(5)))) isEqualTo Some(List(5))
+  }
+
+  @Test def listEitherOption: Unit = {
+    val sl = SelectLeast.selectLeast[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
+    assertThat(sl.apply(List(Some(Right(5))))) isEqualTo Some(List(Right(5)))
   }
 }
 
@@ -74,33 +74,32 @@ class SelectionSortSpec extends Specification {
   "SelectionSort" should {
     "nil" in {
       val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, HNil]
-      ss.apply(5) ==== 5
+      ss.apply(5) isEqualTo 5
     }
     "reallynil" in {
       val ss = SelectionSort.selectionSort[HNil, HNil]
-      ss.apply(5) ==== 5
+      ss.apply(5) isEqualTo 5
     }
     "option" in {
       val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, OptionContext :: HNil]
-      ss.apply(Some(5)) ==== Some(5)
+      ss.apply(Some(5)) isEqualTo Some(5)
     }
     "list.either.option" in {
       val ss = SelectionSort.selectionSort[OptionContext :: EitherRContext :: ListContext :: HNil, ListContext :: OptionContext :: EitherRContext :: HNil]
-      ss.apply(List(Some(Right(5)))) ==== Some(Right(List(5)))
+      ss.apply(List(Some(Right(5)))) isEqualTo Some(Right(List(5)))
     }
     "option.option" in {
       val ss = SelectionSort.selectionSort[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]
-      ss.apply(Some(Some(5))) ==== Some(Some(5))
+      ss.apply(Some(Some(5))) isEqualTo Some(Some(5))
     }
   }
 }
 
-class NormalizerSpec {
+class NormalizerCompileTest {
   implicitly[Normalizer[OptionContext :: HNil, OptionContext :: OptionContext :: HNil]]
   implicitly[Normalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]]
 }
 
-@RunWith(classOf[JUnitRunner])
 class SortAndNormalizerSpec extends Specification {
   val ss = SelectionSort[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
   implicitly[=:=[ss.ICS, OptionOptionContext]]
@@ -109,20 +108,19 @@ class SortAndNormalizerSpec extends Specification {
   "SortAndNormalizer" should {
     "nil" in {
       val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, HNil]
-      sn.trans.apply(5) ==== Some(List(5))
+      sn.trans.apply(5) isEqualTo Some(List(5))
     }
     "list.option" in {
       val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, ListContext :: OptionContext :: HNil]
-      sn.trans.apply(List(Some(5))) ==== Some(List(5))
+      sn.trans.apply(List(Some(5))) isEqualTo Some(List(5))
     }
     "option.option" in {
       val sn = SortAndNormalizer[OptionContext :: ListContext :: HNil, OptionContext :: OptionContext :: HNil]
-      sn.trans.apply(Some(Some(5))) ==== Some(List(5))
+      sn.trans.apply(Some(Some(5))) isEqualTo Some(List(5))
     }
   }
 }
 
-@RunWith(classOf[JUnitRunner])
 class TransfigureSpec extends Specification {
 
   "Transfigure" should {
@@ -131,7 +129,7 @@ class TransfigureSpec extends Specification {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo[Option](f) ==== Some("42")
+      fa.transfigureTo[Option](f) isEqualTo Some("42")
     }
 
     "map (either)" in {
@@ -140,63 +138,63 @@ class TransfigureSpec extends Specification {
       val fa: EitherR[Int] = Right(42)
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo[EitherR](f) ==== Right("42")
+      fa.transfigureTo[EitherR](f) isEqualTo Right("42")
     }
 
     "flatMap" in {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
 
-      fa.transfigureTo[Option](f) ==== Some("32")
+      fa.transfigureTo[Option](f) isEqualTo Some("32")
     }
 
     "join" in {
       val fa: Option[Option[Int]] = Some(Some(42))
       val f: Int ⇒ Int = _ + 1
 
-      fa.transfigureTo[Option](f) ==== Some(43)
+      fa.transfigureTo[Option](f) isEqualTo Some(43)
     }
 
     "point" in {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo[List, Option](f) ==== List(Some("42"))
+      fa.transfigureTo[List, Option](f) isEqualTo List(Some("42"))
     }
 
     "traverse" in {
       val fa: Option[Int] = Some(42)
       val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
 
-      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) isEqualTo List(Some("32"))
     }
 
     "bind.traverse" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ List[String] = x ⇒ List((x - 10).toString)
 
-      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) isEqualTo List(Some("32"))
     }
 
     "traverse.join" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ List[Option[String]] = x ⇒ List(Some((x - 10).toString))
 
-      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) isEqualTo List(Some("32"))
     }
 
     "map.map" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ String = _.toString
 
-      fa.transfigureTo[List, Option](f) ==== List(Some("42"))
+      fa.transfigureTo[List, Option](f) isEqualTo List(Some("42"))
     }
 
     "map.flatMap" in {
       val fa: List[Option[Int]] = List(Some(42))
       val f: Int ⇒ Option[String] = x ⇒ Some((x - 10).toString)
 
-      fa.transfigureTo[List, Option](f) ==== List(Some("32"))
+      fa.transfigureTo[List, Option](f) isEqualTo List(Some("32"))
     }
 
     "map.map.map" in {
@@ -204,7 +202,7 @@ class TransfigureSpec extends Specification {
       val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
       val f: Int ⇒ Int = x ⇒ x + 2
 
-      fa.transfigureTo[EitherR, List, Option](f) ==== Right(List(Some(4)))
+      fa.transfigureTo[EitherR, List, Option](f) isEqualTo Right(List(Some(4)))
     }
 
     "flatMap.map.flatMap" in {
@@ -212,35 +210,35 @@ class TransfigureSpec extends Specification {
       val fa: EitherR[List[Option[Int]]] = Right(List(Some(2)))
       val f: Int ⇒ EitherR[Option[Int]] = x ⇒ Right(Some(x + 2))
 
-      fa.transfigureTo[EitherR, List, Option](f) ==== Right(List(Some(4)))
+      fa.transfigureTo[EitherR, List, Option](f) isEqualTo Right(List(Some(4)))
     }
 
     "functor" in {
       val fa: Int = 4
       val f: Int ⇒ ValidationS[Int] = x ⇒ (x - 1).success
 
-      fa.transfigureTo[ValidationS](f) ==== 3.success
+      fa.transfigureTo[ValidationS](f) isEqualTo 3.success
     }
 
     "map functor" in {
       val fa: ValidationS[Int] = 5.success
       val f: Int ⇒ Int = x ⇒ x + 3
 
-      fa.transfigureTo[ValidationS](f) ==== 8.success
+      fa.transfigureTo[ValidationS](f) isEqualTo 8.success
     }
 
     "point functor" in {
       val fa: Int = 4
       val f: Int ⇒ Int = x ⇒ x + 2
 
-      fa.transfigureTo[ValidationS](f) ==== 6.success
+      fa.transfigureTo[ValidationS](f) isEqualTo 6.success
     }
 
     "distribute" in {
       val fa: Name[Int] = Name(5)
       val f: Int ⇒ IntReader[Int] = i ⇒ Reader(j ⇒ i + j)
 
-      fa.transfigureTo[IntReader, Name](f).run(4).value ==== 9
+      fa.transfigureTo[IntReader, Name](f).run(4).value isEqualTo 9
     }
 
     "sugar" in {
@@ -261,14 +259,14 @@ class TransfigureSpec extends Specification {
       //      c ← g(b)
       //      d ← h(c)
       //    } yield d) 
-      fb ==== Right(List(Some("4.0"), Some("4.0"), Some("4.0")))
+      fb isEqualTo Right(List(Some("4.0"), Some("4.0"), Some("4.0")))
     }
 
     "ignoreUnindexed" in {
       val fa: Option[List[Int]] = Some(List(42))
       val f: List[Int] ⇒ List[String] = _.map(_.toString)
 
-      fa.transfigureTo[Option](f) ==== Some(List("42"))
+      fa.transfigureTo[Option](f) isEqualTo Some(List("42"))
     }
   }
 }
