@@ -7,6 +7,10 @@
     <properties>
         <scala.version>2.11.4</scala.version>
     </properties>
+    <scm>
+        <connection>git:ssh://git@github.com:m50d/scalaz-transfigure.git</connection>
+        <tag>HEAD</tag>
+    </scm>
     <distributionManagement>
         <repository>
             <id>bintray-lmm-maven-scalaz-transfigure</id>
