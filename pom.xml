@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.m50d</groupId>
     <artifactId>scalaz-transfigure</artifactId>
-    <version>0.4-SNAPSHOT</version>
+    <version>0.5-SNAPSHOT</version>
     <properties>
         <scala.version>2.11.4</scala.version>
     </properties>
