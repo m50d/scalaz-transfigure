@@ -1,15 +1,14 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.m50d</groupId>
     <artifactId>scalaz-transfigure</artifactId>
-    <version>0.6-SNAPSHOT</version>
+    <version>0.6</version>
     <properties>
         <scala.version>2.11.4</scala.version>
     </properties>
     <scm>
         <connection>scm:git:git@github.com:m50d/scalaz-transfigure.git</connection>
-        <tag>HEAD</tag>
+        <tag>scalaz-transfigure-0.6</tag>
     </scm>
     <distributionManagement>
         <repository>
