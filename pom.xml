@@ -7,6 +7,13 @@
     <properties>
         <scala.version>2.11.4</scala.version>
     </properties>
+    <distributionManagement>
+        <repository>
+            <id>bintray-lmm-maven-scalaz-transfigure</id>
+            <name>lmm-maven-scalaz-transfigure</name>
+            <url>https://api.bintray.com/maven/lmm/maven/scalaz-transfigure</url>
+        </repository>
+    </distributionManagement>
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
