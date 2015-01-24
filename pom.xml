@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.m50d</groupId>
     <artifactId>scalaz-transfigure</artifactId>
-    <version>0.8-SNAPSHOT</version>
+    <version>0.8</version>
     <properties>
         <scala.version>2.11.4</scala.version>
     </properties>
@@ -27,7 +27,7 @@
         <connection>scm:git:git@github.com:m50d/scalaz-transfigure.git</connection>
         <developerConnection>scm:git:git@github.com:m50d/scalaz-transfigure.git</developerConnection>
         <url>git@github.com/m50d/scalaz-transfigure.git</url>
-        <tag>HEAD</tag>
+        <tag>scalaz-transfigure-0.8</tag>
     </scm>
     <distributionManagement>
         <repository>
