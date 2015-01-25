@@ -2,6 +2,18 @@
 
 A library for genericly composing/lifting operations in a stack of monadic contexts
 
+## Maven Dependency
+
+````xml
+<dependency>
+  <groupId>com.github.m50d</groupId>
+  <artifactId>scalaz-transfigure</artifactId>
+  <version>0.8</version>
+</dependency>
+````
+
+scalaz-transfigure is currently built against scala 2.11 and scalaz 7.1.
+
 ## Basic Usage
 
 ````scala
