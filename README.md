@@ -12,7 +12,7 @@ A library for genericly composing/lifting operations in a stack of monadic conte
 </dependency>
 ````
 
-scalaz-transfigure is currently built against scala 2.11 and scalaz 7.1.
+scalaz-transfigure is currently built against scala 2.11, scalaz 7.1 and shapeless 2.0.
 
 ## Basic Usage
 
